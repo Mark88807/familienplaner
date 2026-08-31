@@ -74,9 +74,6 @@
     .progress-compact:last-child{border-bottom:0}
     .dash-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
     .dash-card-head .title{margin:0}
-    .dash-calendar{grid-column:1/-1}
-    .calendar-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-    .calendar-toolbar .title{margin:0}
     .sixweek-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
     .sixweek-head{font-size:12px;font-weight:750;text-align:center;color:var(--muted);padding:4px}
     .sixweek-day{min-height:88px;border:1px solid var(--line);border-radius:12px;padding:7px;background:linear-gradient(180deg,#fff,#fbfdff)}
@@ -92,7 +89,7 @@
     .weekday-row label{display:flex;align-items:center;gap:4px;font-size:13px}
     .ideas-compact{display:none}
     .ideas-compact button{min-width:0;text-align:left}
-    @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}.dash-calendar{grid-column:auto}}
+    @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}}
     .modal,.gate{position:fixed;inset:0;z-index:20;background:rgba(16,24,20,.35);display:none;align-items:center;justify-content:center;padding:18px}
     .modal.open,.gate.open{display:flex}
     .box{width:min(500px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:21px;box-shadow:0 24px 80px rgba(0,0,0,.18)}
@@ -108,7 +105,7 @@
     .voice-btn.listening{animation:pulse 1s infinite;background:#e2d7fa}
     @keyframes pulse{50%{transform:scale(1.06)}}
     .mobile-datetime{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-calendar{grid-column:1/-1}.dash-wide{grid-column:1/-1}.dash-grid>.card:nth-child(3){grid-column:1/-1}}
+    @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-wide{grid-column:1/-1}.dash-grid>.card:nth-child(3){grid-column:1/-1}}
     @media(max-width:780px){
       body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid,.dash-grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
       h1{font-size:24px}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
@@ -178,17 +175,6 @@
         <div class="card">
           <div class="title">Punkte & Bonus</div>
           <div id="dashboardProgress"></div>
-        </div>
-
-        <div class="card dash-calendar">
-          <div class="calendar-toolbar">
-            <div class="title">Kalender</div>
-            <div class="calendar-switch">
-              <button class="ghost active" id="dashWeekBtn">Woche</button>
-              <button class="ghost" id="dashSixWeekBtn">6 Wochen</button>
-            </div>
-          </div>
-          <div class="calendar-wrap"><div class="calendar" id="dashboardCalendar"></div></div>
         </div>
       </div>
     </section>
@@ -275,7 +261,9 @@
 </div></div></div>
 
 <div class="modal" id="eventModal"><div class="box"><h2>Termin hinzufügen</h2><div class="form">
-  <input id="eventName" placeholder="Titel, z. B. Fußballtraining">
+  <input id="eventName" placeholder="Titel, z. B. Fußballtraining" list="eventDatalist">
+  <datalist id="eventDatalist"></datalist>
+  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Termin-Gedächtnis</div><div class="suggestions" id="eventModalSuggestions"></div></div>
   <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time"></div>
   <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
   <select id="eventPerson"></select>
@@ -283,7 +271,7 @@
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
-  <div class="form" style="margin-top:14px"><input id="voiceText" inputmode="text" placeholder="Satz sprechen oder eintippen"><div class="actions"><button class="ghost" onclick="closeModal('voiceModal')">Abbrechen</button><button class="primary" id="voiceUseBtn">Text auswerten</button></div></div>
+  <div class="form" style="margin-top:14px"><div class="actions"><button class="ghost" onclick="closeModal('voiceModal')">Abbrechen</button></div></div>
 </div></div>
 
 <div class="modal" id="importModal"><div class="box"><h2>Kalender importieren (.ics)</h2><p>Eine exportierte Kalenderdatei auswählen. Unterstützt einfache VEVENT-Termine.</p>
@@ -318,13 +306,14 @@
   const LS_FAMILY="familienplaner_family_id_v2";
   const COLORS=["#238f57","#3974d8","#8054d8","#e58a21","#e74f87","#1fa3a3"];
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Staubsaugen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
+  const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", dashboardCalendarMode="week";
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},eventMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week";
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
   const escapeHtml=(s="")=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  const person=id=>state.people?.[id]||{name:"Unbekannt",emoji:"🙂",points:0};
+  const person=id=>state.people?.[id]||{name:"Unbekannt",points:0};
   const isoLocal=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
   function hexToSoft(hex){ return hex+"18"; }
   function applyTheme(){
@@ -346,7 +335,7 @@
   window.openModal=id=>$(id).classList.add("open");
   window.closeModal=id=>$(id).classList.remove("open");
   window.openTaskModal=()=>{renderTaskSuggestions();openModal("taskModal")};
-  window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)}openModal("eventModal")};
+  window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)}renderEventSuggestions();openModal("eventModal")};
   window.openVoiceModal=()=>{openModal("voiceModal");$("voiceText").value="";$("voiceStatus").textContent="Tippen und sprechen"};
 
   document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>{
@@ -369,8 +358,8 @@
       const taskMemory={};PREFILL_TASKS.forEach((name,i)=>taskMemory["seed"+i]={name,uses:0,lastUsed:0,prefill:true});
       const starter={
         name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),
-        people:{lisa:{name:"Lisa",emoji:"👧",points:0,color:"#e74f87"},max:{name:"Max",emoji:"👦",points:0,color:"#3974d8"},papa:{name:"Papa",emoji:"👨",points:0,color:"#8054d8"},mama:{name:"Mama",emoji:"👩",points:0,color:"#e58a21"}},
-        tasks:{},taskMemory,rewardLog:{},
+        people:{lisa:{name:"Lisa",points:0,color:"#e74f87"},max:{name:"Max",points:0,color:"#3974d8"},papa:{name:"Papa",points:0,color:"#8054d8"},mama:{name:"Mama",points:0,color:"#e58a21"}},
+        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
         rewards:{
           lisa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
           max:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
@@ -391,7 +380,7 @@
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
-      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.taskMemory||={};state.rewardLog||={};
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.taskMemory||={};state.eventMemory||={};state.rewardLog||={};
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
       applyTheme();render();
     },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
@@ -403,7 +392,7 @@
     $("dashboardDate").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date());
   }
   function fillPeople(){
-    const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${p.emoji||"🙂"} ${escapeHtml(p.name)}</option>`).join("");
+    const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
     ["taskPerson","rewardPerson","eventPerson","icsDefaultPerson"].forEach(id=>$(id).innerHTML=opts)
   }
   function taskMemorySorted(){
@@ -414,61 +403,52 @@
     ["taskMemorySide","taskModalSuggestions"].forEach(id=>{if($(id)){$(id).innerHTML=html;$(id).querySelectorAll("[data-mem]").forEach(b=>b.onclick=()=>{$("taskName").value=state.taskMemory[b.dataset.mem].name;if(id!=="taskModalSuggestions")openTaskModal()})}});
     $("taskDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("")
   }
+  function eventMemorySorted(){
+    return Object.entries(state.eventMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,25)
+  }
+  function renderEventSuggestions(){
+    if(!$("eventModalSuggestions")) return;
+    const list=eventMemorySorted();
+    $("eventModalSuggestions").innerHTML=list.slice(0,10).map(([id,m])=>`<button class="suggestion" data-event-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    $("eventDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
+    $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{$("eventName").value=state.eventMemory[b.dataset.eventMem].name});
+  }
+  async function rememberEvent(name){
+    const norm=name.trim().toLowerCase();
+    const existing=Object.entries(state.eventMemory||{}).find(([id,m])=>(m.name||"").trim().toLowerCase()===norm);
+    if(existing){
+      const [id,m]=existing;
+      await update(ref(db,`families/${familyId}/eventMemory/${id}`),{uses:(m.uses||0)+1,lastUsed:Date.now()});
+    }else{
+      const key=push(ref(db,`families/${familyId}/eventMemory`)).key;
+      await set(ref(db,`families/${familyId}/eventMemory/${key}`),{name:name.trim(),uses:1,lastUsed:Date.now(),prefill:false});
+    }
+  }
+
   function renderDashboard(){
     const today=isoLocal(new Date()),events=Object.values(state.events||{}).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     const upcoming=events.filter(e=>e.date>=today).slice(0,5);
-    $("dashboardEvents").innerHTML=upcoming.length?upcoming.map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><div class="muted" style="font-size:11px">${new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(new Date(e.date+"T12:00:00"))}</div><b>${e.time||"--:--"}</b> &nbsp; ${escapeHtml(e.name)} <span class="muted">(${escapeHtml(person(e.person).name)})</span></div>`).join(""):`<div class="muted">Keine kommenden Termine.</div>`;
+    $("dashboardEvents").innerHTML=upcoming.length?upcoming.map(e=>{const p=person(e.person);return `<div style="display:grid;grid-template-columns:54px 12px minmax(70px,auto) 1fr;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)"><b>${e.time||"--:--"}</b><span class="member-color" style="background:${p.color||'#999'};margin:0"></span><span style="font-weight:700">${escapeHtml(p.name)}</span><span>${escapeHtml(e.name)}</span></div>`}).join(""):`<div class="muted">Keine kommenden Termine.</div>`;
 
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
     $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><b>${escapeHtml(t.name)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${Number(t.points)||10} Punkte${t.recurring?' · ↻':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
 
-    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"} <b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
+    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
 
-    renderDashboardCalendar();
   }
 
-  function renderDashboardCalendar(){
-    if(!$("dashboardCalendar")) return;
-    const events=Object.values(state.events||{});
-    if(dashboardCalendarMode==="six"){
-      const start=new Date(), day=(start.getDay()+6)%7;
-      start.setHours(0,0,0,0); start.setDate(start.getDate()-day);
-      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
-      const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
-      $("dashboardCalendar").className="";
-      $("dashboardCalendar").style.minWidth="0";
-      $("dashboardCalendar").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,2),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${evs.map(e=>`<div class="sixweek-event">${e.time||""} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;
-      return;
-    }
-
-    $("dashboardCalendar").className="calendar";
-    $("dashboardCalendar").style.minWidth="730px";
-    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);
-    monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
-    const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
-    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`;
-    const hours=[8,10,12,14,16,18,20];
-    hours.forEach(h=>{
-      html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;
-      dates.forEach(d=>{
-        const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);
-        html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`;
-      })
-    });
-    $("dashboardCalendar").innerHTML=html;
-  }
 
   function renderTasks(){
     const items=Object.entries(state.tasks||{});
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b>${escapeHtml(t.name)}</b><br><small>${p.emoji||"🙂"} ${escapeHtml(p.name)}</small></div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(p.name)}</small></div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
     document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
   }
   function renderRewards(){
     if(!selectedPerson)return;
-    $("rewardPersons").innerHTML=Object.entries(state.people).map(([id,p])=>`<button class="person ${selectedPerson===id?"active":""}" data-person="${id}"><div><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"}</div><b>${escapeHtml(p.name)}</b></button>`).join("");
+    $("rewardPersons").innerHTML=Object.entries(state.people).map(([id,p])=>`<button class="person ${selectedPerson===id?"active":""}" data-person="${id}"><div><span class="member-color" style="background:${p.color||'#999'}"></span></div><b>${escapeHtml(p.name)}</b></button>`).join("");
     document.querySelectorAll("[data-person]").forEach(b=>b.onclick=()=>{selectedPerson=b.dataset.person;renderRewards();renderRewardLog()});
     const p=person(selectedPerson),pts=Number(p.points)||0,nb=nextBonus(pts);$("rewardTitle").textContent=`Belohnungen für ${p.name}`;$("personPoints").textContent=pts;$("personBar").style.width=`${(pts%10)/10*100}%`;$("personNext").textContent=`Noch ${nb.missing} Punkte bis Bonus ${nb.next}.`;
     const rewards=Object.entries(state.rewards?.[selectedPerson]||{});
@@ -507,7 +487,7 @@
       const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
       const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
-      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${evs.map(e=>`<div class="sixweek-event">${e.time||""} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;
+      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${evs.map(e=>`<div class="sixweek-event" style="background:${person(e.person).color||'#2f73d9'}18;color:${person(e.person).color||'#2f73d9'};border-left:3px solid ${person(e.person).color||'#2f73d9'}">${e.time||""} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;
       return;
     }
 
@@ -516,11 +496,11 @@
     monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
     let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
-    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
+    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);html+=`<div>${evs.map(e=>`<div class="event" style="background:${person(e.person).color||'#2f73d9'}18;color:${person(e.person).color||'#2f73d9'};border-left:3px solid ${person(e.person).color||'#2f73d9'}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
     $("calendarGrid").innerHTML=html
   }
   function renderFamily(){
-    $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="card member"><div class="avatar" style="box-shadow:0 0 0 3px ${p.color||'#999'}22;border:2px solid ${p.color||'#999'}">${p.emoji||"🙂"}</div><div style="flex:1"><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div>${pts} Punkte</div><div class="muted">Noch ${nb.missing} bis Bonus ${nb.next}</div><div class="bar" style="margin-top:8px"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`}).join("");
+    $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="card member"><div class="avatar" style="box-shadow:0 0 0 3px ${p.color||'#999'}22;border:2px solid ${p.color||'#999'}"></div><div style="flex:1"><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div>${pts} Punkte</div><div class="muted">Noch ${nb.missing} bis Bonus ${nb.next}</div><div class="bar" style="margin-top:8px"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`}).join("");
     document.querySelectorAll("[data-edit-member]").forEach(b=>b.onclick=()=>openMemberEdit(b.dataset.editMember));
   }
   function renderMemberColors(){
@@ -566,7 +546,7 @@
     closeModal("taskModal")
   };
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim();if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:10});$("rewardName").value="";closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:$("eventPerson").value,date,time:$("eventTime").value||"00:00"});$("eventName").value="";closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:$("eventPerson").value,date,time:$("eventTime").value||"00:00"});await rememberEvent(name);$("eventName").value="";closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
@@ -587,7 +567,7 @@
     const txt=await f.text(),items=parseIcs(txt);if(!items.length){$("icsStatus").textContent="Keine unterstützten Termine gefunden.";return}
     $("icsStatus").textContent=`Importiere ${items.length} Termine …`;const personId=$("icsDefaultPerson").value;
     const updates={};items.forEach(it=>{const key=push(ref(db,`families/${familyId}/events`)).key;updates[key]={...it,person:personId,source:"ics"}});
-    await update(ref(db,`families/${familyId}/events`),updates);$("icsStatus").textContent=`${items.length} Termine importiert.`;setTimeout(()=>closeModal("importModal"),700)
+    await update(ref(db,`families/${familyId}/events`),updates);for(const it of items.slice(0,25)) await rememberEvent(it.name);$("icsStatus").textContent=`${items.length} Termine importiert.`;setTimeout(()=>closeModal("importModal"),700)
   };
 
   function showFamilyCode(){$("codeValue").textContent=familyId||"";openModal("codeModal")}
@@ -595,7 +575,7 @@
   $("editFamilyBtn").onclick=()=>{selectedColor=state.color||COLORS[0];$("familyNameEdit").value=state.name||"";renderColorPickers();openModal("familyEditModal")};
   $("saveFamilyEditBtn").onclick=async()=>{await update(familyRef(),{name:$("familyNameEdit").value.trim()||"Meine Familie",color:selectedColor});closeModal("familyEditModal")};
   $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
-  $("weekViewBtn").onclick=()=>{calendarMode="week", dashboardCalendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
+  $("weekViewBtn").onclick=()=>{calendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
   $("monthViewBtn").onclick=()=>{calendarMode="month";$("monthViewBtn").classList.add("active");$("weekViewBtn").classList.remove("active");renderCalendar()};
   $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
