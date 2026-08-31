@@ -7,74 +7,83 @@
   <title>Familienplaner</title>
   <style>
     :root{
-      --bg:#f7f9f8;--card:#fff;--text:#17211b;--muted:#748078;--line:#e6ece8;
-      --green:#238f57;--green-soft:#eaf6ee;--blue:#3974d8;--purple:#8054d8;--orange:#e58a21;
+      --accent:#238f57;--accent-soft:#eaf6ee;--bg:#f7f9f8;--card:#fff;--text:#17211b;
+      --muted:#748078;--line:#e6ece8;--blue:#3974d8;--purple:#8054d8;--orange:#e58a21;
       --shadow:0 10px 28px rgba(25,42,31,.06);--r:18px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    button,input,select{font:inherit}
-    button{cursor:pointer}
-    .hidden{display:none!important}
+    button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
     .shell{min-height:100vh;display:grid;grid-template-columns:208px 1fr}
     aside{position:sticky;top:0;height:100vh;padding:20px 14px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column}
     .brand{font-weight:850;font-size:18px;padding:8px 10px 20px}
     nav{display:grid;gap:6px}
     nav button{border:0;background:transparent;color:#344139;padding:11px 12px;text-align:left;border-radius:12px}
-    nav button.active{background:var(--green-soft);color:var(--green);font-weight:750}
+    nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:750}
     .aside-bottom{margin-top:auto;display:grid;gap:8px}
     .family-badge{padding:11px;border-radius:13px;border:1px solid var(--line);background:#fafcfb;font-size:13px}
+    .color-dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--accent);margin-right:6px}
     main{width:min(1160px,100%);margin:0 auto;padding:26px}
     .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
     h1{margin:0;font-size:28px;letter-spacing:-.02em}.sub{color:var(--muted);font-size:14px;margin-top:4px}
     .primary,.ghost,.danger{border-radius:11px;padding:10px 14px;font-weight:750}
-    .primary{border:0;background:var(--green);color:white}
-    .ghost{border:1px solid var(--line);background:white;color:var(--text)}
+    .primary{border:0;background:var(--accent);color:white}.ghost{border:1px solid var(--line);background:white;color:var(--text)}
     .danger{border:1px solid #f1cccc;background:#fff5f5;color:#b14242}
     .view{display:none}.view.active{display:block}
     .grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:16px}
+    .dash-grid{display:grid;grid-template-columns:1.1fr .8fr .8fr;gap:14px}
     .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:17px;box-shadow:var(--shadow)}
-    .title{font-weight:800;font-size:16px;margin-bottom:12px}
-    .muted{color:var(--muted)}
+    .title{font-weight:800;font-size:16px;margin-bottom:12px}.muted{color:var(--muted)}
+    .metric{font-size:34px;font-weight:850;line-height:1}
     .tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin-bottom:18px}
     .tabs button{border:0;background:none;padding:8px 0;color:var(--muted)}
-    .tabs button.active{color:var(--green);border-bottom:2px solid var(--green);font-weight:750}
+    .tabs button.active{color:var(--accent);border-bottom:2px solid var(--accent);font-weight:750}
     .list{display:grid;gap:9px}
     .task{display:grid;grid-template-columns:38px 1fr auto 28px;gap:11px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:13px}
-    .ico{width:38px;height:38px;border-radius:11px;background:var(--green-soft);display:grid;place-items:center}
+    .ico{width:38px;height:38px;border-radius:11px;background:var(--accent-soft);display:grid;place-items:center}
     .task small{color:var(--muted)}.points{font-weight:800;white-space:nowrap}
     .check{width:28px;height:28px;border-radius:50%;border:2px solid #adb9b2;background:white}
-    .check.done{background:var(--green);border-color:var(--green);color:#fff}
-    .bar{height:8px;background:#edf1ef;border-radius:999px;overflow:hidden}.bar span{height:100%;display:block;background:var(--green)}
-    .ring{width:126px;height:126px;border-radius:50%;background:conic-gradient(var(--green) var(--p),#edf1ef 0);display:grid;place-items:center;margin:8px auto;position:relative}
+    .check.done{background:var(--accent);border-color:var(--accent);color:#fff}
+    .bar{height:8px;background:#edf1ef;border-radius:999px;overflow:hidden}.bar span{height:100%;display:block;background:var(--accent)}
+    .ring{width:126px;height:126px;border-radius:50%;background:conic-gradient(var(--accent) var(--p),#edf1ef 0);display:grid;place-items:center;margin:8px auto;position:relative}
     .ring:after{content:"";position:absolute;width:98px;height:98px;border-radius:50%;background:white}
     .ring-content{z-index:1;text-align:center}.ring-content b{font-size:28px}
     .person-row{display:flex;gap:8px;overflow:auto;padding-bottom:4px}
     .person{min-width:78px;border:1px solid var(--line);background:#fff;border-radius:13px;padding:8px 10px;text-align:center}
-    .person.active{background:var(--green-soft);border-color:#cce7d6}
+    .person.active{background:var(--accent-soft);border-color:#cce7d6}
     .reward{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
     .family-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .member{display:flex;gap:12px;align-items:center}.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#f1f4f2;font-size:22px}
     .calendar-wrap{overflow:auto}.calendar{display:grid;grid-template-columns:64px repeat(7,1fr);min-width:730px}
     .calendar>div{min-height:56px;padding:7px;border-right:1px solid #f1f3f2;border-bottom:1px solid var(--line);font-size:12px}
-    .calendar .head{min-height:auto;text-align:center;font-weight:750}.event{padding:6px;border-radius:8px;background:var(--green-soft);color:#266e47;font-weight:700}
+    .calendar .head{min-height:auto;text-align:center;font-weight:750}.event{padding:6px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:700;margin-bottom:3px}
     .settings{display:grid;gap:10px}.setting{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:13px}
+    .suggestions{display:flex;gap:8px;flex-wrap:wrap}
+    .suggestion{border:1px solid var(--line);background:white;border-radius:999px;padding:8px 11px}
+    .suggestion:hover{border-color:var(--accent);color:var(--accent)}
+    .idea{padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}
     .modal,.gate{position:fixed;inset:0;z-index:20;background:rgba(16,24,20,.35);display:none;align-items:center;justify-content:center;padding:18px}
     .modal.open,.gate.open{display:flex}
-    .box{width:min(450px,100%);background:#fff;border-radius:20px;padding:21px;box-shadow:0 24px 80px rgba(0,0,0,.18)}
+    .box{width:min(500px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:21px;box-shadow:0 24px 80px rgba(0,0,0,.18)}
     .box h2{margin:0 0 7px}.box p{margin:0 0 16px;color:var(--muted);line-height:1.45}
     .form{display:grid;gap:11px}.form input,.form select{padding:12px;border:1px solid var(--line);border-radius:11px;width:100%;background:white}
-    .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px}
-    .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;background:#f4f7f5;border:1px solid var(--line);padding:12px;border-radius:11px;font-size:13px}
+    .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;background:#f4f7f5;border:1px solid var(--line);padding:12px;border-radius:11px;font-size:13px}
     .notice{padding:11px 12px;border-radius:11px;background:#fff8e9;color:#805c19;font-size:13px}
-    .mobile-nav{display:none}
-    .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:#27a663;margin-right:6px}
+    .mobile-nav{display:none}.quick-row{display:flex;gap:8px;flex-wrap:wrap}.quick-row button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px}
+    .color-picker{display:flex;gap:10px;flex-wrap:wrap}.color-choice{width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px var(--line)}
+    .color-choice.active{box-shadow:0 0 0 3px #222}
+    .voice-box{padding:18px;border:1px dashed #d6deda;border-radius:14px;text-align:center;background:#fafcfb}
+    .voice-btn{width:72px;height:72px;border-radius:50%;border:0;background:#efe9fb;font-size:32px}
+    .voice-btn.listening{animation:pulse 1s infinite;background:#e2d7fa}
+    @keyframes pulse{50%{transform:scale(1.06)}}
+    .mobile-datetime{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-wide{grid-column:1/-1}}
     @media(max-width:780px){
-      body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
+      body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid,.dash-grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
       h1{font-size:24px}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
       .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
-      .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--green);font-weight:800}
-      .top .desktop-actions{display:none}
+      .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--accent);font-weight:800}
+      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}
     }
   </style>
 </head>
@@ -87,8 +96,10 @@
 <div class="gate" id="familyGate">
   <div class="box">
     <h2>Familie verbinden</h2>
-    <p>Nur beim ersten Start auf diesem Gerät. Danach öffnet sich der Familienplaner automatisch.</p>
+    <p>Beim ersten Start einmal einrichten. Danach öffnet sich der Planer direkt.</p>
     <div class="form">
+      <input id="newFamilyName" placeholder="Familienname, z. B. Sonnenschein" value="Meine Familie">
+      <div><div class="muted" style="margin-bottom:8px">Familienfarbe</div><div class="color-picker" id="gateColors"></div></div>
       <button class="primary" id="createFamilyBtn">Neue Familie erstellen</button>
       <div style="text-align:center;color:var(--muted);font-size:13px">oder</div>
       <input id="joinCode" autocomplete="off" placeholder="Familiencode eingeben">
@@ -98,46 +109,54 @@
   </div>
 </div>
 
-<div class="shell" id="appShell">
+<div class="shell">
   <aside>
     <div class="brand">⌂ Familienplaner</div>
     <nav>
-      <button class="active" data-view="tasks">✓ Aufgaben</button>
+      <button class="active" data-view="dashboard">⌂ Dashboard</button>
+      <button data-view="tasks">✓ Aufgaben</button>
       <button data-view="rewards">🎁 Belohnungen</button>
       <button data-view="calendar">▣ Kalender</button>
       <button data-view="family">♙ Familie</button>
       <button data-view="settings">⚙ Einstellungen</button>
     </nav>
-    <div class="aside-bottom">
-      <div class="family-badge"><span class="status-dot"></span><span id="familyLabel">Familie verbunden</span></div>
-    </div>
+    <div class="aside-bottom"><div class="family-badge"><span class="color-dot"></span><span id="familyLabel">Familie</span></div></div>
   </aside>
 
   <main>
-    <section class="view active" id="tasks">
+    <section class="view active" id="dashboard">
       <div class="top">
-        <div><h1>Aufgaben</h1><div class="sub">Schnell erledigen, Punkte sammeln.</div></div>
-        <button class="primary" onclick="openModal('taskModal')">+ Aufgabe</button>
+        <div><h1 id="dashboardTitle">Dashboard</h1><div class="sub" id="dashboardDate"></div></div>
+        <div class="desktop-actions" style="display:flex;gap:8px">
+          <button class="ghost" onclick="openModal('importModal')">⇧ .ics Import</button>
+          <button class="ghost" onclick="openVoiceModal()">🎙 Sprache</button>
+          <button class="primary" onclick="openModal('taskModal')">+ Aufgabe</button>
+        </div>
       </div>
+      <div class="dash-grid">
+        <div class="card"><div class="title">Heute</div><div id="dashboardEvents"></div></div>
+        <div class="card"><div class="title">Offene Aufgaben</div><div class="metric" id="openTaskCount">0</div><div class="muted">noch offen</div></div>
+        <div class="card"><div class="title">Punkte</div><div id="dashboardPoints"></div></div>
+        <div class="card"><div class="title">Nächste Belohnungen</div><div id="dashboardRewards"></div></div>
+        <div class="card dash-wide"><div class="title">3 Ideen für heute</div><div class="suggestions" id="dailyIdeas"></div></div>
+        <div class="card dash-wide"><div class="title">Aufgaben-Vorschläge aus Gedächtnis</div><div class="suggestions" id="memorySuggestions"></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="tasks">
+      <div class="top"><div><h1>Aufgaben</h1><div class="sub">Schnell erledigen, Punkte sammeln.</div></div><button class="primary" onclick="openTaskModal()">+ Aufgabe</button></div>
       <div class="tabs"><button class="active">Heute</button><button>Woche</button><button>Alle</button></div>
       <div class="grid">
         <div class="card"><div class="title">Heute</div><div class="list" id="taskList"></div></div>
         <div style="display:grid;gap:16px">
-          <div class="card">
-            <div class="title">Familienpunkte</div>
-            <div class="ring" id="familyRing" style="--p:0%"><div class="ring-content"><b id="familyPoints">0</b><div class="muted">Punkte</div></div></div>
-            <div class="muted" id="familyNext" style="text-align:center"></div>
-          </div>
-          <div class="card"><div class="title">Nächster Termin</div><div id="nextEvent"></div></div>
+          <div class="card"><div class="title">Familienpunkte</div><div class="ring" id="familyRing" style="--p:0%"><div class="ring-content"><b id="familyPoints">0</b><div class="muted">Punkte</div></div></div><div class="muted" id="familyNext" style="text-align:center"></div></div>
+          <div class="card"><div class="title">Vorschläge</div><div class="suggestions" id="taskMemorySide"></div></div>
         </div>
       </div>
     </section>
 
     <section class="view" id="rewards">
-      <div class="top">
-        <div><h1>Belohnungen</h1><div class="sub">Je Person – mit Status bis zum nächsten 10er-Bonus.</div></div>
-        <button class="primary" onclick="openModal('rewardModal')">+ Belohnung</button>
-      </div>
+      <div class="top"><div><h1>Belohnungen</h1><div class="sub">Je Person – Status bis zum nächsten 10er-Bonus.</div></div><button class="primary" onclick="openModal('rewardModal')">+ Belohnung</button></div>
       <div class="person-row" id="rewardPersons"></div>
       <div class="grid" style="margin-top:15px">
         <div class="card"><div class="title" id="rewardTitle"></div><div id="rewardList"></div></div>
@@ -146,10 +165,7 @@
     </section>
 
     <section class="view" id="calendar">
-      <div class="top">
-        <div><h1>Kalender</h1><div class="sub">Alle Familientermine kompakt.</div></div>
-        <button class="primary" onclick="openModal('eventModal')">+ Termin</button>
-      </div>
+      <div class="top"><div><h1>Kalender</h1><div class="sub">Termine kompakt – Import oder Sprache möglich.</div></div><div style="display:flex;gap:8px"><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openVoiceModal()">🎙</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
     </section>
 
@@ -159,46 +175,56 @@
     </section>
 
     <section class="view" id="settings">
-      <div class="top"><div><h1>Einstellungen</h1><div class="sub">Nur die wichtigsten Optionen.</div></div></div>
+      <div class="top"><div><h1>Einstellungen</h1><div class="sub">Einfach halten.</div></div></div>
       <div class="card settings">
+        <div class="setting"><span>Familienname</span><button class="ghost" id="editFamilyBtn">Ändern</button></div>
         <div class="setting"><span>Familiencode</span><button class="ghost" id="showCodeBtn">Anzeigen</button></div>
         <div class="setting"><span>Dieses Gerät von Familie trennen</span><button class="danger" id="leaveFamilyBtn">Trennen</button></div>
       </div>
-      <div class="notice" style="margin-top:14px">Der Familiencode ist der Zugang zu euren gemeinsamen Daten. Teile ihn nur mit Familienmitgliedern.</div>
     </section>
   </main>
 </div>
 
 <div class="mobile-nav">
-  <button class="active" data-view="tasks">✓<br>Aufgaben</button>
-  <button data-view="rewards">🎁<br>Belohnungen</button>
+  <button class="active" data-view="dashboard">⌂<br>Start</button>
+  <button data-view="tasks">✓<br>Aufgaben</button>
+  <button data-view="rewards">🎁<br>Bonus</button>
   <button data-view="calendar">▣<br>Kalender</button>
-  <button data-view="family">♙<br>Familie</button>
   <button data-view="settings">•••<br>Mehr</button>
 </div>
 
 <div class="modal" id="taskModal"><div class="box"><h2>Aufgabe</h2><div class="form">
-  <input id="taskName" placeholder="z. B. Tisch decken">
+  <input id="taskName" placeholder="z. B. Bad säubern" list="taskDatalist"><datalist id="taskDatalist"></datalist>
+  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Gedächtnis</div><div class="suggestions" id="taskModalSuggestions"></div></div>
   <select id="taskPerson"></select>
   <input id="taskPoints" type="number" min="1" value="10">
   <div class="actions"><button class="ghost" onclick="closeModal('taskModal')">Abbrechen</button><button class="primary" id="saveTaskBtn">Speichern</button></div>
 </div></div></div>
 
 <div class="modal" id="rewardModal"><div class="box"><h2>Belohnung</h2><div class="form">
-  <select id="rewardPerson"></select>
-  <input id="rewardName" placeholder="z. B. 30 Min. Gaming">
-  <input id="rewardCost" type="number" min="1" step="10" value="10">
+  <select id="rewardPerson"></select><input id="rewardName" placeholder="z. B. 30 Min. Gaming"><input id="rewardCost" type="number" min="1" step="10" value="10">
   <div class="actions"><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="eventModal"><div class="box"><h2>Termin</h2><div class="form">
-  <input id="eventName" placeholder="z. B. Fußballtraining">
+<div class="modal" id="eventModal"><div class="box"><h2>Termin hinzufügen</h2><div class="form">
+  <input id="eventName" placeholder="Titel, z. B. Fußballtraining">
+  <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time"></div>
+  <div class="quick-row"><button type="button" data-datequick="today">Heute</button><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
   <select id="eventPerson"></select>
-  <input id="eventDate" type="date">
-  <input id="eventTime" type="time">
+  <button class="ghost" type="button" onclick="openVoiceModal()">🎙 Per Sprache ausfüllen</button>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
+<div class="modal" id="voiceModal"><div class="box"><h2>Termin per Sprache</h2><p>Zum Beispiel: „Morgen um 17 Uhr Zahnarzt für Lisa“.</p>
+  <div class="voice-box"><button class="voice-btn" id="voiceBtn">🎙</button><div id="voiceStatus" class="muted" style="margin-top:10px">Tippen und sprechen</div></div>
+  <div class="form" style="margin-top:14px"><input id="voiceText" placeholder="Erkannter Text"><div class="actions"><button class="ghost" onclick="closeModal('voiceModal')">Abbrechen</button><button class="primary" id="voiceUseBtn">Übernehmen</button></div></div>
+</div></div>
+
+<div class="modal" id="importModal"><div class="box"><h2>Kalender importieren (.ics)</h2><p>Eine exportierte Kalenderdatei auswählen. Unterstützt einfache VEVENT-Termine.</p>
+  <div class="form"><input id="icsFile" type="file" accept=".ics,text/calendar"><select id="icsDefaultPerson"></select><div id="icsStatus" class="muted"></div><div class="actions"><button class="ghost" onclick="closeModal('importModal')">Abbrechen</button><button class="primary" id="importIcsBtn">Importieren</button></div></div>
+</div></div>
+
+<div class="modal" id="familyEditModal"><div class="box"><h2>Familie bearbeiten</h2><div class="form"><input id="familyNameEdit"><div class="color-picker" id="editColors"></div><div class="actions"><button class="ghost" onclick="closeModal('familyEditModal')">Abbrechen</button><button class="primary" id="saveFamilyEditBtn">Speichern</button></div></div></div></div>
 <div class="modal" id="codeModal"><div class="box"><h2>Familiencode</h2><p>Diesen Code auf einem weiteren Familiengerät einmalig eingeben.</p><div class="code" id="codeValue"></div><div class="actions"><button class="ghost" id="copyCodeBtn">Kopieren</button><button class="primary" onclick="closeModal('codeModal')">Fertig</button></div></div></div>
 
 <script type="module">
@@ -216,275 +242,203 @@
     appId: "1:532428903393:web:b245e605d3fe214293f8a0"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-
-  const LS_FAMILY = "familienplaner_family_id_v1";
-  let familyId = localStorage.getItem(LS_FAMILY);
-  let state = { people:{},tasks:{},rewards:{},events:{} };
-  let selectedPerson = null;
-  let unsubscribe = null;
-
-  const starterData = {
-    name:"Meine Familie",
-    createdAt:Date.now(),
-    people:{
-      lisa:{name:"Lisa",emoji:"👧",points:0},
-      max:{name:"Max",emoji:"👦",points:0},
-      papa:{name:"Papa",emoji:"👨",points:0},
-      mama:{name:"Mama",emoji:"👩",points:0}
-    },
-    tasks:{},
-    rewards:{
-      lisa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
-      max:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
-      papa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}},
-      mama:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}}
-    },
-    events:{}
-  };
-
-  const $ = id => document.getElementById(id);
-  const familyRef = () => ref(db, `families/${familyId}`);
-
-  function cleanCode(v){ return v.trim().replace(/\s+/g,""); }
-  function makeFamilyCode(){
-    const bytes = new Uint8Array(18);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
+  const app = initializeApp(firebaseConfig), auth=getAuth(app), db=getDatabase(app);
+  const LS_FAMILY="familienplaner_family_id_v2";
+  const COLORS=["#238f57","#3974d8","#8054d8","#e58a21","#e74f87","#1fa3a3"];
+  const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Staubsaugen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
+  const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{}}, selectedPerson=null, unsubscribe=null, selectedColor=COLORS[0];
+  const $=id=>document.getElementById(id);
+  const familyRef=()=>ref(db,`families/${familyId}`);
+  const cleanCode=v=>v.trim().replace(/\s+/g,"");
+  const escapeHtml=(s="")=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  const person=id=>state.people?.[id]||{name:"Unbekannt",emoji:"🙂",points:0};
+  const isoLocal=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
+  function hexToSoft(hex){ return hex+"18"; }
+  function applyTheme(){
+    const c=state.color||COLORS[0];
+    document.documentElement.style.setProperty("--accent",c);
+    document.documentElement.style.setProperty("--accent-soft",hexToSoft(c));
   }
-  function nextBonus(points){
-    const mod = points % 10;
-    const missing = mod === 0 ? 10 : 10-mod;
-    return { next: points + missing, missing };
+  function makeFamilyCode(){const b=new Uint8Array(18);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("")}
+  function nextBonus(points){const mod=points%10,missing=mod===0?10:10-mod;return{next:points+missing,missing}}
+
+  function renderColorPickers(){
+    ["gateColors","editColors"].forEach(id=>{
+      $(id).innerHTML=COLORS.map(c=>`<button type="button" class="color-choice ${c===selectedColor?"active":""}" data-color="${c}" style="background:${c}" aria-label="${c}"></button>`).join("");
+      $(id).querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{selectedColor=b.dataset.color;renderColorPickers()});
+    });
   }
-  function person(id){ return state.people?.[id] || {name:"Unbekannt",emoji:"🙂",points:0}; }
+  renderColorPickers();
 
   window.openModal=id=>$(id).classList.add("open");
   window.closeModal=id=>$(id).classList.remove("open");
+  window.openTaskModal=()=>{renderTaskSuggestions();openModal("taskModal")};
+  window.openEventModal=()=>{if(!$("eventDate").value)$("eventDate").value=isoLocal(new Date());openModal("eventModal")};
+  window.openVoiceModal=()=>{openModal("voiceModal");$("voiceText").value="";$("voiceStatus").textContent="Tippen und sprechen"};
 
-  document.querySelectorAll("[data-view]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const id=btn.dataset.view;
-      document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));
-      document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
-    });
+  document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>{
+    const id=btn.dataset.view;document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
   });
-
-  async function ensureAnonymousAuth(){
-    if(auth.currentUser) return auth.currentUser;
-    const cred = await signInAnonymously(auth);
-    return cred.user;
-  }
+  document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
+  document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
 
   async function createFamily(){
     $("gateMsg").textContent="Familie wird erstellt …";
     try{
-      familyId = makeFamilyCode();
-      await set(ref(db,`families/${familyId}`),starterData);
-      localStorage.setItem(LS_FAMILY,familyId);
-      $("familyGate").classList.remove("open");
-      startSync();
-      setTimeout(()=>showFamilyCode(),300);
-    }catch(e){
-      $("gateMsg").textContent="Fehler: "+e.message;
-    }
+      familyId=makeFamilyCode();
+      const taskMemory={};PREFILL_TASKS.forEach((name,i)=>taskMemory["seed"+i]={name,uses:0,lastUsed:0,prefill:true});
+      const starter={
+        name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),
+        people:{lisa:{name:"Lisa",emoji:"👧",points:0},max:{name:"Max",emoji:"👦",points:0},papa:{name:"Papa",emoji:"👨",points:0},mama:{name:"Mama",emoji:"👩",points:0}},
+        tasks:{},taskMemory,
+        rewards:{
+          lisa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
+          max:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
+          papa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}},
+          mama:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}}
+        },events:{}
+      };
+      await set(ref(db,`families/${familyId}`),starter);localStorage.setItem(LS_FAMILY,familyId);$("familyGate").classList.remove("open");startSync();setTimeout(showFamilyCode,250)
+    }catch(e){$("gateMsg").textContent="Fehler: "+e.message}
   }
-
   async function joinFamily(){
-    const code = cleanCode($("joinCode").value);
-    if(code.length < 24){
-      $("gateMsg").textContent="Der Familiencode ist zu kurz.";
-      return;
-    }
+    const code=cleanCode($("joinCode").value); if(code.length<24){$("gateMsg").textContent="Der Familiencode ist zu kurz.";return}
     $("gateMsg").textContent="Familie wird geprüft …";
-    try{
-      const snap = await get(ref(db,`families/${code}`));
-      if(!snap.exists()){
-        $("gateMsg").textContent="Kein Familienplaner mit diesem Code gefunden.";
-        return;
-      }
-      familyId=code;
-      localStorage.setItem(LS_FAMILY,familyId);
-      $("familyGate").classList.remove("open");
-      startSync();
-    }catch(e){
-      $("gateMsg").textContent="Zugriff nicht möglich: "+e.message;
-    }
+    try{const snap=await get(ref(db,`families/${code}`));if(!snap.exists()){ $("gateMsg").textContent="Keine Familie mit diesem Code gefunden.";return } familyId=code;localStorage.setItem(LS_FAMILY,familyId);$("familyGate").classList.remove("open");startSync()}
+    catch(e){$("gateMsg").textContent="Zugriff nicht möglich: "+e.message}
   }
-
   function startSync(){
-    if(unsubscribe) unsubscribe();
-    unsubscribe = onValue(familyRef(),snap=>{
-      if(!snap.exists()){
-        localStorage.removeItem(LS_FAMILY);
-        familyId=null;
-        $("familyGate").classList.add("open");
-        return;
-      }
-      state = snap.val();
-      state.people ||= {};
-      state.tasks ||= {};
-      state.rewards ||= {};
-      state.events ||= {};
-      if(!selectedPerson || !state.people[selectedPerson]) selectedPerson=Object.keys(state.people)[0] || null;
-      render();
-    },err=>{
-      alert("Firebase-Zugriff fehlgeschlagen: "+err.message);
-    });
+    if(unsubscribe)unsubscribe();
+    unsubscribe=onValue(familyRef(),snap=>{
+      if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.taskMemory||={};
+      if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
+      applyTheme();render();
+    },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
   }
 
   function render(){
-    fillPeople();
-    renderTasks();
-    renderRewards();
-    renderCalendar();
-    renderFamily();
-    $("familyLabel").textContent=state.name || "Familie verbunden";
+    fillPeople();renderDashboard();renderTasks();renderRewards();renderCalendar();renderFamily();renderTaskSuggestions();
+    $("familyLabel").textContent=state.name||"Familie"; $("dashboardTitle").textContent=state.name||"Dashboard";
+    $("dashboardDate").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date());
   }
-
   function fillPeople(){
-    const entries=Object.entries(state.people||{});
-    const options=entries.map(([id,p])=>`<option value="${id}">${p.emoji||"🙂"} ${p.name}</option>`).join("");
-    ["taskPerson","rewardPerson","eventPerson"].forEach(id=>$(id).innerHTML=options);
+    const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${p.emoji||"🙂"} ${escapeHtml(p.name)}</option>`).join("");
+    ["taskPerson","rewardPerson","eventPerson","icsDefaultPerson"].forEach(id=>$(id).innerHTML=opts)
   }
-
+  function taskMemorySorted(){
+    return Object.entries(state.taskMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,8)
+  }
+  function renderTaskSuggestions(){
+    const list=taskMemorySorted();const html=list.map(([id,m])=>`<button class="suggestion" data-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    ["memorySuggestions","taskMemorySide","taskModalSuggestions"].forEach(id=>{if($(id)){$(id).innerHTML=html;$(id).querySelectorAll("[data-mem]").forEach(b=>b.onclick=()=>{$("taskName").value=state.taskMemory[b.dataset.mem].name;if(id!=="taskModalSuggestions")openTaskModal()})}});
+    $("taskDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("")
+  }
+  function renderDashboard(){
+    const today=isoLocal(new Date()),events=Object.values(state.events||{}).filter(e=>e.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+    $("dashboardEvents").innerHTML=events.length?events.map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${e.time||"--:--"}</b> &nbsp; ${escapeHtml(e.name)} <span class="muted">(${escapeHtml(person(e.person).name)})</span></div>`).join(""):`<div class="muted">Heute keine Termine.</div>`;
+    const open=Object.values(state.tasks||{}).filter(t=>!t.done).length;$("openTaskCount").textContent=open;
+    $("dashboardPoints").innerHTML=Object.entries(state.people).map(([id,p])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span>${p.emoji||"🙂"} ${escapeHtml(p.name)}</span><b>${Number(p.points)||0}</b></div>`).join("");
+    $("dashboardRewards").innerHTML=Object.entries(state.people).map(([id,p])=>{const nb=nextBonus(Number(p.points)||0);return `<div style="padding:5px 0">${escapeHtml(p.name)}: noch <b>${nb.missing}</b> bis ${nb.next}</div>`}).join("");
+    const seed=(new Date().getDate()+new Date().getMonth()*31)%DAILY_IDEAS.length;
+    const ideas=[0,1,2].map(i=>DAILY_IDEAS[(seed+i)%DAILY_IDEAS.length]);
+    $("dailyIdeas").innerHTML=ideas.map(x=>`<button class="suggestion" data-idea="${escapeHtml(x)}">💡 ${escapeHtml(x)}</button>`).join("");
+    $("dailyIdeas").querySelectorAll("[data-idea]").forEach(b=>b.onclick=()=>{$("taskName").value=b.dataset.idea;openTaskModal()})
+  }
   function renderTasks(){
     const items=Object.entries(state.tasks||{});
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{
-      const p=person(t.person);
-      return `<div class="task">
-        <div class="ico">✓</div>
-        <div><b>${escapeHtml(t.name)}</b><br><small>${p.emoji||"🙂"} ${escapeHtml(p.name)}</small></div>
-        <div class="points">★ ${Number(t.points)||10}</div>
-        <button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button>
-      </div>`;
-    }).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
-
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b>${escapeHtml(t.name)}</b><br><small>${p.emoji||"🙂"} ${escapeHtml(p.name)}</small></div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
     document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
-
-    const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0);
-    $("familyPoints").textContent=total;
-    const mod=total%50, remain=mod===0?50:50-mod;
-    $("familyRing").style.setProperty("--p",`${mod/50*100}%`);
-    $("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`;
+    const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
+    $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
   }
-
   function renderRewards(){
-    if(!selectedPerson) return;
-    $("rewardPersons").innerHTML=Object.entries(state.people).map(([id,p])=>
-      `<button class="person ${selectedPerson===id?"active":""}" data-person="${id}"><div>${p.emoji||"🙂"}</div><b>${escapeHtml(p.name)}</b></button>`
-    ).join("");
+    if(!selectedPerson)return;
+    $("rewardPersons").innerHTML=Object.entries(state.people).map(([id,p])=>`<button class="person ${selectedPerson===id?"active":""}" data-person="${id}"><div>${p.emoji||"🙂"}</div><b>${escapeHtml(p.name)}</b></button>`).join("");
     document.querySelectorAll("[data-person]").forEach(b=>b.onclick=()=>{selectedPerson=b.dataset.person;renderRewards()});
-
-    const p=person(selectedPerson), pts=Number(p.points)||0, nb=nextBonus(pts);
-    $("rewardTitle").textContent=`Belohnungen für ${p.name}`;
-    $("personPoints").textContent=pts;
-    $("personBar").style.width=`${(pts%10)/10*100}%`;
-    $("personNext").textContent=`Noch ${nb.missing} Punkte bis zum nächsten 10er-Bonus (${nb.next}).`;
-
-    const rewards=Object.entries(state.rewards?.[selectedPerson]||{}).sort((a,b)=>(a[1].cost||0)-(b[1].cost||0));
-    $("rewardList").innerHTML=rewards.length?rewards.map(([id,r])=>
-      `<div class="reward"><span>○</span><div><b>${r.cost} Punkte</b><div class="muted">${escapeHtml(r.name)}</div></div><span>${pts>=r.cost?"✓ verfügbar":"gesperrt"}</span></div>`
-    ).join(""):`<div class="muted">Noch keine Belohnungen.</div>`;
+    const p=person(selectedPerson),pts=Number(p.points)||0,nb=nextBonus(pts);$("rewardTitle").textContent=`Belohnungen für ${p.name}`;$("personPoints").textContent=pts;$("personBar").style.width=`${(pts%10)/10*100}%`;$("personNext").textContent=`Noch ${nb.missing} Punkte bis Bonus ${nb.next}.`;
+    const rewards=Object.values(state.rewards?.[selectedPerson]||{}).sort((a,b)=>(a.cost||0)-(b.cost||0));
+    $("rewardList").innerHTML=rewards.length?rewards.map(r=>`<div class="reward"><span>○</span><div><b>${r.cost} Punkte</b><div class="muted">${escapeHtml(r.name)}</div></div><span>${pts>=r.cost?"✓ verfügbar":"gesperrt"}</span></div>`).join(""):`<div class="muted">Noch keine Belohnungen.</div>`
   }
-
   function renderCalendar(){
-    const days=["Mo","Di","Mi","Do","Fr","Sa","So"];
-    const now=new Date();
-    const day=(now.getDay()+6)%7;
-    const monday=new Date(now); monday.setHours(0,0,0,0); monday.setDate(now.getDate()-day);
+    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
-    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`;
-    const hours=[8,10,12,14,16,18,20];
-    const events=Object.values(state.events||{});
-
-    hours.forEach(h=>{
-      html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;
-      dates.forEach(d=>{
-        const iso=d.toISOString().slice(0,10);
-        const evs=events.filter(e=>e.date===iso && Number((e.time||"00:00").slice(0,2))>=h && Number((e.time||"00:00").slice(0,2))<h+2);
-        html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`;
-      });
-    });
-    $("calendarGrid").innerHTML=html;
-
-    const today=new Date().toISOString().slice(0,10);
-    const future=events.filter(e=>e.date>=today).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")))[0];
-    $("nextEvent").innerHTML=future?`<b>${escapeHtml(future.name)}</b><div class="muted">${future.date} · ${future.time||""} · ${escapeHtml(person(future.person).name)}</div>`:`<span class="muted">Kein kommender Termin.</span>`;
+    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20],events=Object.values(state.events||{});
+    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
+    $("calendarGrid").innerHTML=html
   }
-
   function renderFamily(){
-    $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>{
-      const pts=Number(p.points)||0, nb=nextBonus(pts);
-      return `<div class="card member"><div class="avatar">${p.emoji||"🙂"}</div><div style="flex:1"><b>${escapeHtml(p.name)}</b><div>${pts} Punkte</div><div class="muted">Noch ${nb.missing} bis Bonus ${nb.next}</div><div class="bar" style="margin-top:8px"><span style="width:${(pts%10)/10*100}%"></span></div></div></div>`;
-    }).join("");
+    $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="card member"><div class="avatar">${p.emoji||"🙂"}</div><div style="flex:1"><b>${escapeHtml(p.name)}</b><div>${pts} Punkte</div><div class="muted">Noch ${nb.missing} bis Bonus ${nb.next}</div><div class="bar" style="margin-top:8px"><span style="width:${(pts%10)/10*100}%"></span></div></div></div>`}).join("")
   }
 
+  async function rememberTask(name){
+    const norm=name.trim().toLowerCase();let existing=Object.entries(state.taskMemory||{}).find(([id,m])=>(m.name||"").trim().toLowerCase()===norm);
+    if(existing){const [id,m]=existing;await update(ref(db,`families/${familyId}/taskMemory/${id}`),{uses:(m.uses||0)+1,lastUsed:Date.now()})}
+    else{const key=push(ref(db,`families/${familyId}/taskMemory`)).key;await set(ref(db,`families/${familyId}/taskMemory/${key}`),{name:name.trim(),uses:1,lastUsed:Date.now(),prefill:false})}
+  }
   async function toggleTask(id){
-    const t=state.tasks[id], p=person(t.person), pts=Number(t.points)||10, current=Number(p.points)||0;
-    const done=!t.done;
-    await update(familyRef(),{
-      [`tasks/${id}/done`]:done,
-      [`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))
-    });
+    const t=state.tasks[id],p=person(t.person),pts=Number(t.points)||10,current=Number(p.points)||0,done=!t.done;
+    await update(familyRef(),{[`tasks/${id}/done`]:done,[`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))});
+    if(done)await rememberTask(t.name)
+  }
+  $("saveTaskBtn").onclick=async()=>{const name=$("taskName").value.trim();if(!name)return;const key=push(ref(db,`families/${familyId}/tasks`)).key;await set(ref(db,`families/${familyId}/tasks/${key}`),{name,person:$("taskPerson").value,points:Number($("taskPoints").value)||10,done:false});await rememberTask(name);$("taskName").value="";closeModal("taskModal")};
+  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim();if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:Number($("rewardCost").value)||10});$("rewardName").value="";closeModal("rewardModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:$("eventPerson").value,date,time:$("eventTime").value||"00:00"});$("eventName").value="";closeModal("eventModal")};
+
+  function parseGermanVoice(text){
+    let s=text.trim(),date=new Date(),time="09:00";
+    if(/\bübermorgen\b/i.test(s))date.setDate(date.getDate()+2); else if(/\bmorgen\b/i.test(s))date.setDate(date.getDate()+1);
+    const dm=s.match(/\b(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?\b/);if(dm){let y=dm[3]?Number(dm[3]):new Date().getFullYear();if(y<100)y+=2000;date=new Date(y,Number(dm[2])-1,Number(dm[1]))}
+    const tm=s.match(/\b(?:um\s*)?(\d{1,2})(?::|\.)(\d{2})\b|\b(?:um\s*)?(\d{1,2})\s*uhr\b/i);if(tm){const h=Number(tm[1]||tm[3]),m=Number(tm[2]||0);time=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")}
+    let who=Object.entries(state.people).find(([id,p])=>new RegExp("\\b"+p.name+"\\b","i").test(s));
+    let title=s.replace(/\b(heute|morgen|übermorgen)\b/ig,"").replace(/\b(?:um\s*)?\d{1,2}(?::|\.)\d{2}\b/ig,"").replace(/\b(?:um\s*)?\d{1,2}\s*uhr\b/ig,"").replace(/\b\d{1,2}\.\d{1,2}(?:\.\d{2,4})?\b/g,"").replace(/\bfür\s+\w+\b/ig,"").trim().replace(/\s{2,}/g," ");
+    return{title:title||"Termin",date:isoLocal(date),time,person:who?who[0]:Object.keys(state.people)[0]}
   }
 
-  $("saveTaskBtn").onclick=async()=>{
-    const name=$("taskName").value.trim(); if(!name)return;
-    const key=push(ref(db,`families/${familyId}/tasks`)).key;
-    await set(ref(db,`families/${familyId}/tasks/${key}`),{name,person:$("taskPerson").value,points:Number($("taskPoints").value)||10,done:false});
-    $("taskName").value=""; closeModal("taskModal");
-  };
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let recognition=null;
+  if(SR){
+    recognition=new SR();recognition.lang="de-DE";recognition.interimResults=false;recognition.maxAlternatives=1;
+    recognition.onstart=()=>{$("voiceBtn").classList.add("listening");$("voiceStatus").textContent="Ich höre zu …"};
+    recognition.onend=()=>{$("voiceBtn").classList.remove("listening")};
+    recognition.onerror=e=>$("voiceStatus").textContent="Spracherkennung: "+e.error;
+    recognition.onresult=e=>{$("voiceText").value=e.results[0][0].transcript;$("voiceStatus").textContent="Erkannt – prüfen und übernehmen."}
+  } else $("voiceStatus").textContent="Dieser Browser unterstützt keine Spracherkennung.";
+  $("voiceBtn").onclick=()=>{if(recognition)recognition.start()};
+  $("voiceUseBtn").onclick=()=>{const p=parseGermanVoice($("voiceText").value);$("eventName").value=p.title;$("eventDate").value=p.date;$("eventTime").value=p.time;$("eventPerson").value=p.person;closeModal("voiceModal");openModal("eventModal")};
 
-  $("saveRewardBtn").onclick=async()=>{
-    const name=$("rewardName").value.trim(); if(!name)return;
-    const who=$("rewardPerson").value;
-    const key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;
-    await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:Number($("rewardCost").value)||10});
-    $("rewardName").value=""; closeModal("rewardModal");
-  };
-
-  $("saveEventBtn").onclick=async()=>{
-    const name=$("eventName").value.trim(), date=$("eventDate").value; if(!name||!date)return;
-    const key=push(ref(db,`families/${familyId}/events`)).key;
-    await set(ref(db,`families/${familyId}/events/${key}`),{name,person:$("eventPerson").value,date,time:$("eventTime").value||"00:00"});
-    $("eventName").value=""; closeModal("eventModal");
-  };
-
-  function showFamilyCode(){
-    $("codeValue").textContent=familyId||"";
-    openModal("codeModal");
+  function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
+  function parseIcsDate(v){
+    if(!v)return null;const x=v.replace(/Z$/,"");
+    if(/^\d{8}$/.test(x))return{date:`${x.slice(0,4)}-${x.slice(4,6)}-${x.slice(6,8)}`,time:"00:00"};
+    const m=x.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);if(!m)return null;return{date:`${m[1]}-${m[2]}-${m[3]}`,time:`${m[4]}:${m[5]}`}
   }
-  $("showCodeBtn").onclick=showFamilyCode;
-  $("copyCodeBtn").onclick=async()=>{
-    await navigator.clipboard.writeText(familyId);
-    $("copyCodeBtn").textContent="Kopiert";
-    setTimeout(()=>$("copyCodeBtn").textContent="Kopieren",1200);
-  };
-  $("leaveFamilyBtn").onclick=()=>{
-    if(!confirm("Dieses Gerät wirklich von der Familie trennen? Die gemeinsamen Firebase-Daten werden nicht gelöscht."))return;
-    localStorage.removeItem(LS_FAMILY);
-    location.reload();
-  };
-  $("createFamilyBtn").onclick=createFamily;
-  $("joinFamilyBtn").onclick=joinFamily;
-
-  function escapeHtml(s=""){
-    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  function parseIcs(text){
+    text=unfoldIcs(text);const blocks=text.split("BEGIN:VEVENT").slice(1).map(x=>x.split("END:VEVENT")[0]),out=[];
+    for(const b of blocks){
+      const lines=b.split(/\r?\n/),getProp=name=>{const l=lines.find(x=>x.startsWith(name+":")||x.startsWith(name+";"));return l?l.slice(l.indexOf(":")+1).replace(/\\,/g,",").replace(/\\n/g," ").trim():""};
+      const start=parseIcsDate(getProp("DTSTART"));if(!start)continue;out.push({name:getProp("SUMMARY")||"Importierter Termin",date:start.date,time:start.time})
+    }return out
   }
+  $("importIcsBtn").onclick=async()=>{
+    const f=$("icsFile").files[0];if(!f){$("icsStatus").textContent="Bitte zuerst eine .ics-Datei wählen.";return}
+    const txt=await f.text(),items=parseIcs(txt);if(!items.length){$("icsStatus").textContent="Keine unterstützten Termine gefunden.";return}
+    $("icsStatus").textContent=`Importiere ${items.length} Termine …`;const personId=$("icsDefaultPerson").value;
+    const updates={};items.forEach(it=>{const key=push(ref(db,`families/${familyId}/events`)).key;updates[key]={...it,person:personId,source:"ics"}});
+    await update(ref(db,`families/${familyId}/events`),updates);$("icsStatus").textContent=`${items.length} Termine importiert.`;setTimeout(()=>closeModal("importModal"),700)
+  };
+
+  function showFamilyCode(){$("codeValue").textContent=familyId||"";openModal("codeModal")}
+  $("showCodeBtn").onclick=showFamilyCode;$("copyCodeBtn").onclick=async()=>{await navigator.clipboard.writeText(familyId);$("copyCodeBtn").textContent="Kopiert";setTimeout(()=>$("copyCodeBtn").textContent="Kopieren",1200)};
+  $("editFamilyBtn").onclick=()=>{selectedColor=state.color||COLORS[0];$("familyNameEdit").value=state.name||"";renderColorPickers();openModal("familyEditModal")};
+  $("saveFamilyEditBtn").onclick=async()=>{await update(familyRef(),{name:$("familyNameEdit").value.trim()||"Meine Familie",color:selectedColor});closeModal("familyEditModal")};
+  $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
+  $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
   onAuthStateChanged(auth,user=>{
-    if(!user){
-      signInAnonymously(auth).catch(e=>{
-        $("loading").innerHTML=`<div class="box"><h2>Firebase Authentication fehlt</h2><p>Aktiviere in Firebase Authentication die Anmeldemethode <b>Anonym</b>.</p><div class="notice">${escapeHtml(e.message)}</div></div>`;
-      });
-      return;
-    }
-    $("loading").style.display="none";
-    if(familyId) startSync();
-    else $("familyGate").classList.add("open");
+    if(!user){signInAnonymously(auth).catch(e=>$("loading").innerHTML=`<div class="box"><h2>Firebase Authentication fehlt</h2><p>Aktiviere in Firebase Authentication die Anmeldemethode <b>Anonym</b>.</p><div class="notice">${escapeHtml(e.message)}</div></div>`);return}
+    $("loading").style.display="none";if(familyId)startSync();else $("familyGate").classList.add("open")
   });
 </script>
 </body>
