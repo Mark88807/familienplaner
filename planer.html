@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4f8cff">
+<title>Familienplaner</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html,body{min-height:100%;background:#f0f4f8;color:#1c1c1e}
+body{overflow-y:auto}
+.wrap{width:100%;max-width:100%;min-height:100vh;padding:10px;display:flex;flex-direction:column}
+
+/* HEADER */
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+h1{font-size:22px;font-weight:800;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;background:#4cd964;border-radius:50%;display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.sync-mini{font-size:11px;color:#2e7d32;font-weight:700;background:#e8f5e9;padding:3px 10px;border-radius:12px;display:flex;align-items:center;gap:5px}
+
+/* AVATAR-LEISTE Kompakt */
+.fam-strip{display:flex;justify-content:center;gap:14px;margin-bottom:10px;flex-shrink:0}
+.fam-item{position:relative;display:flex;flex-direction:column;align-items:center}
+.fam-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+.fam-badge{position:absolute;bottom:-6px;right:-8px;background:#fff;color:#e6a700;font-size:11px;font-weight:800;border-radius:10px;padding:2px 6px;box-shadow:0 1px 4px rgba(0,0,0,0.15);white-space:nowrap}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:8px;flex-shrink:0}
+.tab{flex:1;text-align:center;padding:10px;border-radius:12px;background:#fff;border:1.5px solid #e5e5ea;font-size:14px;font-weight:600;cursor:pointer}
+.tab.a{background:#4f8cff;color:#fff;border-color:#4f8cff}.hid{display:none!important}
+
+/* CARDS */
+.card{background:#fff;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06);padding:12px;margin-bottom:10px}
+.ct{font-size:15px;font-weight:700;margin-bottom:10px}
+
+/* KOMPAKTES AUFGABEN-FORMULAR */
+.task-form .fr{display:flex;gap:6px;margin-bottom:0;align-items:stretch}
+.task-form .inp{flex:1;padding:12px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px;outline:none}
+.task-form .inp:focus{border-color:#4f8cff}
+.task-form .sel{max-width:110px;padding:12px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px;background:#fff}
+.task-form .btn{white-space:nowrap;padding:12px 16px}
+
+/* AUFGABEN MIT FORTSCHRITTSBALKEN */
+.task{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);margin-bottom:8px}
+.task.d{opacity:0.5;text-decoration:line-through;background:#f0f0f0}
+.task-main{display:flex;align-items:center;gap:10px}
+.cb{width:24px;height:24px;border-radius:50%;border:2.5px solid #e5e5ea;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px;color:#fff}
+.cb.c{background:#4cd964;border-color:#4cd964}.tt{flex:1;font-size:15px;color:#111;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.name-badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.tp{font-size:13px;font-weight:700;color:#e6a700;flex-shrink:0}
+
+/* FORTSCHRITTSBALKEN */
+.goal-wrap{margin-left:34px;display:flex;flex-direction:column;gap:4px}
+.goal-bar{height:6px;background:#e5e5ea;border-radius:3px;overflow:hidden}
+.goal-fill{height:100%;background:#4cd964;border-radius:3px;transition:width .3s}
+.goal-text{font-size:12px;color:#8e8e93;font-weight:600}
+
+.es{text-align:center;padding:20px;color:#8e8e93;font-size:14px}
+
+/* BELOHNUNGEN */
+.rew-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.rew-card.earn{background:#e8f5e9}.rew-card.locked{background:#fff}
+.rew-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.rew-dot.earn{background:#4cd964}.rew-dot.locked{background:#ccc}
+.rew-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
+.rew-name{flex:1;font-size:14px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rew-cost{font-size:13px;font-weight:700;color:#e6a700;flex-shrink:0;margin-right:8px}
+.rew-status{flex-shrink:0;display:flex;align-items:center;justify-content:center;min-width:36px;height:36px;border-radius:50%;cursor:pointer}
+.rew-status.earn{background:#4cd964;color:#fff;font-size:18px;font-weight:700}
+.rew-status.locked{background:#f0f0f0;color:#999;font-size:12px;font-weight:700;padding:0 12px;border-radius:16px;min-width:auto;height:28px;cursor:default}
+.rew-group-title{font-size:13px;font-weight:700;margin:12px 0 8px 4px;display:flex;align-items:center;gap:6px}
+
+.manage-link{font-size:12px;color:#4f8cff;font-weight:600;cursor:pointer;background:none;border:none;padding:4px 8px;border-radius:8px}
+.manage-link:hover{background:#f0f4ff}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.25);width:100%;max-width:400px;padding:20px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:16px}
+.modal-row{margin-bottom:12px}
+.modal-row label{display:block;font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:4px}
+.modal-row .inp,.modal-row .sel{width:100%;padding:12px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.modal-actions .btn{padding:10px 18px}
+
+.manage-list{max-height:300px;overflow-y:auto}
+.manage-item{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #f0f0f0}
+.manage-item:last-child{border-bottom:none}
+.manage-name{flex:1;font-size:14px;font-weight:600}.manage-meta{font-size:12px;color:#8e8e93}
+.manage-actions{display:flex;gap:6px}
+.manage-actions .btn{padding:6px 10px;font-size:12px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1c1c1e;color:#fff;padding:14px 24px;border-radius:12px;font-size:15px;font-weight:600;opacity:0;transition:all .3s;z-index:1000}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.undo{display:flex;align-items:center;gap:10px}
+.toast.undo .undo-btn{background:#fff;color:#1c1c1e;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* INPUTS */
+.inp[type="number"]::-webkit-outer-spin-button,.inp[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.inp[type="number"]{-moz-appearance:textfield}
+
+/* FOOTER */
+.footer-link{text-align:center;padding:12px;font-size:13px;color:#8e8e93;cursor:pointer;margin-top:auto}
+.footer-link:hover{color:#4f8cff}
+
+/* LOGS */
+.log-item{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #f0f0f0;font-size:14px}
+.log-item:last-child{border-bottom:none}
+.log-time{font-size:12px;color:#999;flex-shrink:0;width:70px}
+.log-icon{font-size:18px}.log-text{flex:1}
+.log-pts{font-size:13px;font-weight:700;color:#e6a700;flex-shrink:0}
+.log-pts.minus{color:#ff3b30}
+
+/* MEMBERS HIDDEN PAGE */
+#tab-members{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;flex-shrink:0}
+.mi{flex:1}.mn{font-size:16px;font-weight:700}.mp{font-size:13px;color:#8e8e93}
+.btn{border:none;border-radius:10px;padding:10px 16px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(0.97)}.b1{background:#4f8cff;color:#fff}.bd{background:#ff3b30;color:#fff;padding:8px 12px;font-size:13px}
+.sel{width:100%;padding:12px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px;background:#fff}
+.fr{display:flex;gap:8px;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <!-- HEADER: Titel + Live -->
+  <div class="header-row">
+    <h1>🏠 Familienplaner</h1>
+    <div class="sync-mini" id="syncBadge"><span class="dot"></span>Live</div>
+  </div>
+
+  <!-- AVATAR-LEISTE -->
+  <div class="fam-strip" id="famGrid"></div>
+
+  <!-- TABS: Nur Aufgaben + Belohnungen -->
+  <div class="tabs">
+    <div class="tab a" onclick="sw('tasks')">📋 Aufgaben</div>
+    <div class="tab" onclick="sw('rewards')">🏆 Belohnungen</div>
+  </div>
+
+  <!-- AUFGABEN-TAB -->
+  <div id="tab-tasks">
+    <!-- Kompaktes Formular ohne Überschrift -->
+    <div class="card task-form">
+      <div class="fr">
+        <div class="sugg-wrap" style="position:relative;flex:1">
+          <input class="inp" id="tIn" placeholder="Was ist zu tun?" oninput="filterSugg()" onkeydown="navSugg(event)" onkeypress="if(event.key==='Enter'){if(curSugg>=0&&suggVisible){pickSugg(curSugg);event.preventDefault();}else addT();}">
+          <div class="sugg-list" id="suggList" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #e5e5ea;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);z-index:100;max-height:140px;overflow-y:auto;display:none"></div>
+        </div>
+        <select class="sel" id="tAs"></select>
+        <button class="btn b1" onclick="addT()">+</button>
+      </div>
+    </div>
+    <div class="card"><div class="ct">📋 Offen</div><div id="tOpen"></div></div>
+    <div class="card"><div class="ct">✅ Erledigt</div><div id="tDone"></div></div>
+  </div>
+
+  <!-- BELOHNUNGEN-TAB -->
+  <div id="tab-rewards" class="hid">
+    <div class="card" style="padding:10px 12px">
+      <div class="ct" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:15px">➕ Neue Belohnung (10⭐)<button class="manage-link" onclick="openManageModal()">📋 Verwalten</button></div>
+      <div style="display:flex;gap:6px;align-items:flex-end">
+        <input class="inp" id="rNa" placeholder="z.B. Eis" style="flex:1;padding:12px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px">
+        <select class="sel" id="rMem" style="max-width:120px;padding:12px;font-size:14px;flex-shrink:0"></select>
+        <button class="btn" onclick="addR()" style="width:44px;height:44px;padding:0;font-size:22px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;border:2px solid #c7c7cc;color:#8e8e93">💾</button>
+      </div>
+    </div>
+    <div class="card" style="padding:10px 12px">
+      <div class="ct" style="font-size:15px;margin-bottom:8px">🏆 Wer kann was holen?</div>
+      <div id="rList"></div>
+    </div>
+    <div class="card">
+      <div class="ct">📜 Was ist passiert?</div>
+      <div id="logList"></div>
+    </div>
+  </div>
+
+  <!-- FAMILIE (versteckt, nur über Footer) -->
+  <div id="tab-members" class="hid">
+    <div class="ct">➕ Mitglied</div>
+    <div class="fr">
+      <input class="inp" id="mNa" placeholder="Name" onkeypress="if(event.key==='Enter')addM()" style="flex:1;padding:12px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px">
+      <select class="sel" id="mCo" style="max-width:120px">
+        <option value="#0072B2">Blau</option>
+        <option value="#ff6b6b">Rot</option>
+        <option value="#4cd964">Grün</option>
+        <option value="#ffcc00">Gelb</option>
+        <option value="#CC79A7">Lila</option>
+        <option value="#ff9500">Orange</option>
+        <option value="#222222">Schwarz</option>
+      </select>
+    </div>
+    <button class="btn b1" onclick="addM()" style="width:100%">Hinzufügen</button>
+    <div style="margin-top:12px"><div class="ct">👨‍👩‍👧‍👦 Alle</div><div id="mList"></div></div>
+  </div>
+
+  <!-- MODAL: Belohnung bearbeiten -->
+  <div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal-box">
+      <div class="modal-title">✏️ Belohnung bearbeiten</div>
+      <div class="modal-row">
+        <label>Name</label>
+        <input class="inp" id="eNa" placeholder="z.B. Eis">
+      </div>
+      <div class="modal-row">
+        <label>Für wen?</label>
+        <select class="sel" id="eMem"></select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" style="background:#f0f0f0;color:#666" onclick="closeEditModal()">Abbrechen</button>
+        <button class="btn b1" onclick="saveEditModal()">💾 Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Belohnungen verwalten -->
+  <div class="modal-overlay" id="manageModal" onclick="if(event.target===this)closeManageModal()">
+    <div class="modal-box">
+      <div class="modal-title">📋 Belohnungen verwalten</div>
+      <div class="manage-list" id="manageList"></div>
+      <div class="modal-actions">
+        <button class="btn" style="background:#f0f0f0;color:#666" onclick="closeManageModal()">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<div class="footer-link" onclick="swMembers()">⚙️ Familie bearbeiten</div>
+
+<script>
+var members=[],tasks=[],rewards=[],logs=[];
+var famId='FamilienplanerV3';
+var db=null,unsub=null;
+var nid={m:1,t:1,r:1,l:1};
+
+var cfg={
+  apiKey:"AIzaSyDvoYKOAkyMtaYdORCgcSXi4VFLGTnT2Ps",
+  authDomain:"familienplaner-28ed7.firebaseapp.com",
+  databaseURL:"https://familienplaner-28ed7-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"familienplaner-28ed7",
+  storageBucket:"familienplaner-28ed7.firebasestorage.app",
+  messagingSenderId:"1096548545716",
+  appId:"1:1096548545716:web:4d71fb9dbe98a9026493e1"
+};
+
+function textColor(bg){if(bg==='#ffcc00'||bg==='#4cd964')return'#111';return'#fff';}
+
+function init(){
+  if(typeof firebase==='undefined'){
+    document.getElementById('syncBadge').innerHTML='<span style="color:#c62828">⚠️ Offline</span>';
+    alert('DEIN BROWSER BLOCKIERT FIREBASE!\n\nLÖSUNG:\n1. Chrome oder Samsung Internet öffnen\n2. Diese Datei dort erneut öffnen');
+    return;
+  }
+  startFirebase();
+}
+
+function startFirebase(){
+  try{
+    firebase.initializeApp(cfg);
+    db=firebase.firestore();
+    document.getElementById('syncBadge').innerHTML='<span class="dot"></span>Verbinden...';
+    loadData();
+  }catch(e){
+    document.getElementById('syncBadge').innerHTML='<span style="color:#c62828">⚠️ Fehler</span>';
+    alert('Fehler: '+e.message);
+  }
+}
+
+function loadData(){
+  if(unsub)unsub();
+  unsub=db.collection('families').doc(famId).onSnapshot(
+    function(doc){
+      document.getElementById('syncBadge').innerHTML='<span class="dot"></span>Live';
+      if(doc.exists){
+        var d=doc.data();
+        members=d.members||[];
+        tasks=d.tasks||[];
+        rewards=d.rewards||[];
+        logs=d.logs||[];
+        nid.m=Math.max.apply(null,members.map(function(x){return x.id}).concat([0]))+1;
+        nid.t=Math.max.apply(null,tasks.map(function(x){return x.id}).concat([0]))+1;
+        nid.r=Math.max.apply(null,rewards.map(function(x){return x.id}).concat([0]))+1;
+        nid.l=Math.max.apply(null,logs.map(function(x){return x.id}).concat([0]))+1;
+      }else{
+        members=[{id:1,name:'Mama',color:'#ff6b6b',points:0},{id:2,name:'Papa',color:'#0072B2',points:0}];
+        tasks=[];rewards=[];logs=[];
+        saveDB();
+      }
+      renAll();
+    },
+    function(err){
+      document.getElementById('syncBadge').innerHTML='<span style="color:#c62828">⚠️ Offline</span>';
+    }
+  );
+}
+
+function saveDB(){
+  if(!db)return;
+  db.collection('families').doc(famId).set({
+    members:members,tasks:tasks,rewards:rewards,logs:logs,
+    updated:firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(e){
+    document.getElementById('syncBadge').innerHTML='<span style="color:#c62828">⚠️ Sync-Fehler</span>';
+  });
+}
+
+function sw(tab){
+  var tabs=document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++)tabs[i].classList.remove('a');
+  event.target.classList.add('a');
+  var ids=['tasks','rewards','members'];
+  for(var i=0;i<ids.length;i++){
+    var el=document.getElementById('tab-'+ids[i]);
+    if(el)el.classList.toggle('hid',ids[i]!==tab);
+  }
+  renAll();
+}
+function swMembers(){sw('members');}
+
+function renAll(){renFam();renM();renT();renR();renLog();}
+
+/* AVATAR-LEISTE */
+function renFam(){
+  var grid=document.getElementById('famGrid');
+  var html='';
+  for(var i=0;i<members.length;i++){
+    var m=members[i];
+    html+='<div class="fam-item"><div class="fam-avatar" style="background:'+m.color+';color:'+textColor(m.color)+'">'+m.name.charAt(0)+'</div><div class="fam-badge">'+m.points+'⭐</div></div>';
+  }
+  grid.innerHTML=html;
+}
+
+/* NÄCHSTE BELOHNUNG FÜR FORTSCHRITTSBALKEN */
+function getNextReward(memberId){
+  var m=null;
+  for(var i=0;i<members.length;i++)if(members[i].id===memberId){m=members[i];break;}
+  if(!m)return null;
+  var nextR=null;
+  for(var j=0;j<rewards.length;j++){
+    if(rewards[j].memberId===memberId){
+      if(m.points<rewards[j].cost){
+        if(!nextR||rewards[j].cost<nextR.cost)nextR=rewards[j];
+      }
+    }
+  }
+  return nextR;
+}
+
+function renM(){
+  var list=document.getElementById('mList');
+  var sel=document.getElementById('tAs');
+  var rSel=document.getElementById('rMem');
+  if(!list)return;
+  var html='';
+  for(var i=0;i<members.length;i++){
+    var m=members[i];
+    html+='<div class="row"><div class="av" style="background:'+m.color+';color:'+textColor(m.color)+'">'+m.name.charAt(0)+'</div><div class="mi"><div class="mn">'+m.name+'</div><div class="mp">'+m.points+' ⭐</div></div><button class="btn bd" onclick="delM('+m.id+')">🗑️</button></div>';
+  }
+  list.innerHTML=html;
+  var opts='';
+  for(var i=0;i<members.length;i++)opts+='<option value="'+members[i].id+'">'+members[i].name+'</option>';
+  if(sel)sel.innerHTML=opts;
+  if(rSel)rSel.innerHTML=opts;
+}
+
+function addM(){
+  var n=document.getElementById('mNa').value.trim();
+  var c=document.getElementById('mCo').value;
+  if(!n)return;
+  members.push({id:nid.m++,name:n,color:c,points:0});
+  document.getElementById('mNa').value='';
+  saveDB();renAll();
+}
+
+function delM(id){
+  var nm=[];for(var i=0;i<members.length;i++)if(members[i].id!==id)nm.push(members[i]);
+  members=nm;
+  var nt=[];for(var i=0;i<tasks.length;i++)if(tasks[i].assigneeId!==id)nt.push(tasks[i]);
+  tasks=nt;
+  saveDB();renAll();
+}
+
+function renT(){
+  var o=document.getElementById('tOpen'),d=document.getElementById('tDone');
+  if(!o)return;
+  var op=[],dn=[];
+  for(var i=0;i<tasks.length;i++)if(tasks[i].done)dn.push(tasks[i]);else op.push(tasks[i]);
+  o.innerHTML=op.length?op.map(tHTML).join(''):'<div class="es">Alles erledigt 🎉</div>';
+  d.innerHTML=dn.length?dn.map(tHTML).join(''):'<div class="es">Noch nichts</div>';
+}
+
+/* AUFGABE MIT GRÜNEM FORTSCHRITTSBALKEN */
+function tHTML(t){
+  var m=null;
+  for(var i=0;i<members.length;i++)if(members[i].id===t.assigneeId){m=members[i];break;}
+  if(!m)m={name:'?',color:'#666'};
+  
+  var nextR=getNextReward(t.assigneeId);
+  var goalHTML='';
+  if(nextR){
+    var pct=Math.min(100,Math.round((m.points/nextR.cost)*100));
+    goalHTML='<div class="goal-wrap"><div class="goal-bar"><div class="goal-fill" style="width:'+pct+'%"></div></div><div class="goal-text">🎯 '+nextR.name+' ('+m.points+'/'+nextR.cost+'⭐)</div></div>';
+  }else{
+    goalHTML='<div class="goal-wrap"><div class="goal-text">🎯 Alles erreicht!</div></div>';
+  }
+  
+  return '<div class="task '+(t.done?'d':'')+'"><div class="task-main"><div class="cb '+(t.done?'c':'')+'" onclick="togT('+t.id+')">'+(t.done?'✓':'')+'</div><div class="tt">'+t.text+'</div><span class="name-badge" style="background:'+m.color+';color:'+textColor(m.color)+'">'+m.name+'</span><span class="tp">⭐ 10</span></div>'+goalHTML+'</div>';
+}
+
+function addT(){
+  var te=document.getElementById('tIn').value.trim();
+  var a=parseInt(document.getElementById('tAs').value);
+  if(!te)return;
+  tasks.push({id:nid.t++,text:te,assigneeId:a,points:10,done:false});
+  document.getElementById('tIn').value='';
+  saveDB();renAll();
+}
+
+/* AUFGABE ABGENICKT MIT 5-SEK UNDO */
+var lastToggle=null;
+function togT(id){
+  var t=null;
+  for(var i=0;i<tasks.length;i++)if(tasks[i].id===id){t=tasks[i];break;}
+  if(!t)return;
+  
+  var oldDone=t.done;
+  var oldPoints=null;
+  var m=null;
+  for(var i=0;i<members.length;i++)if(members[i].id===t.assigneeId){m=members[i];break;}
+  
+  t.done=!t.done;
+  if(m){
+    oldPoints=m.points;
+    m.points+=t.done?t.points:-t.points;
+  }
+  
+  if(t.done)logs.unshift({id:nid.l++,time:'Jetzt',icon:'✅',text:m.name+' hat <strong>'+t.text+'</strong> erledigt',pts:10,minus:false});
+  
+  lastToggle={taskId:id,oldDone:oldDone,oldPoints:oldPoints,memberId:m?m.id:null};
+  saveDB();renAll();
+  
+  if(t.done){
+    showUndoToast('✅ '+m.name+' hat '+t.text+' erledigt!', id);
+  }
+}
+
+function showUndoToast(msg, taskId){
+  var t=document.getElementById('toast');
+  t.innerHTML=msg+' <button class="undo-btn" onclick="undoToggle('+taskId+')">↩️ Rückgängig</button>';
+  t.classList.add('show');
+  t.classList.add('undo');
+  if(window._undoTimer)clearTimeout(window._undoTimer);
+  window._undoTimer=setTimeout(function(){
+    t.classList.remove('show');
+    t.classList.remove('undo');
+    t.textContent='';
+    lastToggle=null;
+  },5000);
+}
+
+function undoToggle(id){
+  if(!lastToggle||lastToggle.taskId!==id){showToast('Nichts zum Rückgängig machen');return;}
+  var t=null;
+  for(var i=0;i<tasks.length;i++)if(tasks[i].id===id){t=tasks[i];break;}
+  if(t){
+    t.done=lastToggle.oldDone;
+    if(lastToggle.memberId){
+      for(var i=0;i<members.length;i++)if(members[i].id===lastToggle.memberId){
+        members[i].points=lastToggle.oldPoints;
+        break;
+      }
+    }
+  }
+  lastToggle=null;
+  saveDB();renAll();
+  var t=document.getElementById('toast');
+  t.classList.remove('show');t.classList.remove('undo');t.textContent='';
+  showToast('↩️ Rückgängig gemacht');
+}
+
+function renR(){
+  var list=document.getElementById('rList');
+  if(!list)return;
+  var html='';
+  for(var i=0;i<members.length;i++){
+    var m=members[i];
+    var mRewards=[];
+    for(var j=0;j<rewards.length;j++)if(rewards[j].memberId===m.id)mRewards.push(rewards[j]);
+    if(mRewards.length===0)continue;
+    html+='<div class="rew-group-title"><div style="width:8px;height:8px;border-radius:50%;background:'+m.color+'"></div>'+m.name+'</div>';
+    for(var j=0;j<mRewards.length;j++){
+      var r=mRewards[j];
+      var can=m.points>=r.cost;
+      var cardCls=can?'rew-card earn':'rew-card locked';
+      var dotCls=can?'rew-dot earn':'rew-dot locked';
+      var status=can?'<div class="rew-status earn" onclick="redeem('+r.id+')">✓</div>':'<div class="rew-status locked">Noch '+(r.cost-m.points)+' ⭐</div>';
+      html+='<div class="'+cardCls+'"><div class="'+dotCls+'"></div><div class="rew-icon">🎁</div><div class="rew-name">'+r.name+'</div><div class="rew-cost">'+r.cost+' ⭐</div>'+status+'</div>';
+    }
+  }
+  if(html==='')html='<div class="es">Noch keine Belohnungen angelegt</div>';
+  list.innerHTML=html;
+}
+
+var editRId=null,lastRedeem=null;
+
+function openEditModal(id){
+  editRId=id;
+  var r=null;
+  for(var i=0;i<rewards.length;i++)if(rewards[i].id===id){r=rewards[i];break;}
+  if(!r)return;
+  document.getElementById('eNa').value=r.name;
+  var sel=document.getElementById('eMem');
+  var opts='';
+  for(var i=0;i<members.length;i++){
+    var s=members[i].id===r.memberId?' selected':'';
+    opts+='<option value="'+members[i].id+'"'+s+'>'+members[i].name+'</option>';
+  }
+  sel.innerHTML=opts;
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal(){
+  document.getElementById('editModal').classList.remove('show');
+  editRId=null;
+}
+function saveEditModal(){
+  if(!editRId)return;
+  var n=document.getElementById('eNa').value.trim();
+  var mId=parseInt(document.getElementById('eMem').value)||0;
+  if(!n){showToast('⚠️ Name eingeben');return;}
+  for(var i=0;i<rewards.length;i++)if(rewards[i].id===editRId){rewards[i].name=n;rewards[i].memberId=mId;break;}
+  closeEditModal();
+  saveDB();renAll();
+  showToast('✅ Belohnung aktualisiert');
+}
+function delR(id){
+  if(!confirm('Belohnung wirklich löschen?'))return;
+  var nr=[];
+  for(var i=0;i<rewards.length;i++)if(rewards[i].id!==id)nr.push(rewards[i]);
+  rewards=nr;
+  saveDB();renAll();
+  showToast('🗑️ Belohnung gelöscht');
+}
+
+function openManageModal(){
+  renderManageList();
+  document.getElementById('manageModal').classList.add('show');
+}
+function closeManageModal(){
+  document.getElementById('manageModal').classList.remove('show');
+}
+function renderManageList(){
+  var list=document.getElementById('manageList');
+  if(!list)return;
+  var html='';
+  for(var i=0;i<rewards.length;i++){
+    var r=rewards[i];
+    var m=null;
+    for(var j=0;j<members.length;j++)if(members[j].id===r.memberId){m=members[j];break;}
+    var mName=m?m.name:'?';
+    html+='<div class="manage-item"><div class="rew-icon">🎁</div><div class="manage-name">'+r.name+'<div class="manage-meta">'+mName+' • '+r.cost+' ⭐</div></div><div class="manage-actions"><button class="btn b1" style="padding:6px 10px;font-size:12px" onclick="openEditModal('+r.id+');closeManageModal();">✏️</button><button class="btn bd" style="padding:6px 10px;font-size:12px" onclick="delR('+r.id+');renderManageList();">🗑️</button></div></div>';
+  }
+  if(html==='')html='<div class="es" style="padding:20px">Noch keine Belohnungen</div>';
+  list.innerHTML=html;
+}
+
+/* BELOHNUNG EINLÖSEN - bleibt erhalten, kann erneut genutzt werden */
+function redeem(id){
+  var r=null;
+  for(var i=0;i<rewards.length;i++)if(rewards[i].id===id){r=rewards[i];break;}
+  if(!r)return;
+  var m=null;
+  for(var i=0;i<members.length;i++)if(members[i].id===r.memberId){m=members[i];break;}
+  if(!m){alert('Mitglied nicht gefunden!');return;}
+  if(m.points<r.cost){alert(m.name+' hat nicht genug Punkte!');return;}
+
+  var oldPts=m.points;
+  m.points-=r.cost;
+  var logEntry={id:nid.l++,time:'Jetzt',icon:'🎁',text:m.name+' hat <strong>'+r.name+'</strong> eingelöst',pts:-r.cost,minus:true};
+  logs.unshift(logEntry);
+  lastRedeem={memberId:m.id,points:r.cost,logId:logEntry.id,oldPoints:oldPts};
+
+  saveDB();renAll();
+  showUndoToast('🎉 '+m.name+' hat '+r.name+' eingelöst! Noch '+m.points+' ⭐.');
+}
+
+function showUndoToast(msg){
+  var t=document.getElementById('toast');
+  t.innerHTML=msg+' <button class="undo-btn" onclick="undoRedeem()">↩️ Rückgängig</button>';
+  t.classList.add('show');
+  t.classList.add('undo');
+  if(window._undoTimer)clearTimeout(window._undoTimer);
+  window._undoTimer=setTimeout(function(){t.classList.remove('show');t.classList.remove('undo');t.textContent='';},5000);
+}
+
+function undoRedeem(){
+  if(!lastRedeem){showToast('Nichts zum Rückgängig machen');return;}
+  for(var i=0;i<members.length;i++)if(members[i].id===lastRedeem.memberId){members[i].points=lastRedeem.oldPoints;break;}
+  var nl=[];
+  for(var i=0;i<logs.length;i++)if(logs[i].id!==lastRedeem.logId)nl.push(logs[i]);
+  logs=nl;
+  lastRedeem=null;
+  saveDB();renAll();
+  var t=document.getElementById('toast');
+  t.classList.remove('show');t.classList.remove('undo');t.textContent='';
+  showToast('↩️ Einlösung rückgängig gemacht – Punkte zurück!');
+}
+
+function renLog(){
+  var list=document.getElementById('logList');
+  if(!list)return;
+  var html='';
+  for(var i=0;i<logs.length;i++){
+    var l=logs[i];
+    var ptCls=l.minus?'log-pts minus':'log-pts';
+    var ptSign=l.minus?'':'+';
+    html+='<div class="log-item"><div class="log-time">'+l.time+'</div><div class="log-icon">'+l.icon+'</div><div class="log-text">'+l.text+'</div><div class="'+ptCls+'">'+ptSign+l.pts+'</div></div>';
+  }
+  list.innerHTML=html;
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+/* AUTOCOMPLETE */
+var commonTasks=[
+  "Geschirr spülen","Staub saugen","Müll rausbringen","Bett machen","Zimmer aufräumen",
+  "Wäsche waschen","Wäsche falten","Wäsche aufhängen","Staub wischen","Bad putzen",
+  "Toilette putzen","Spiegel putzen","Boden wischen","Katze füttern","Hund füttern",
+  "Hund Gassi führen","Pflanzen gießen","Einkaufen gehen","Kochen","Tisch decken",
+  "Tisch abräumen","Abwasch machen","Blumen gießen","Fenster putzen","Schuhe putzen",
+  "Rasen mähen","Unkraut jäten","Blätter harken","Schnee schaufeln","Auto waschen",
+  "Post holen","Paket abholen","Tiere füttern","Aquarium reinigen","Käfig säubern"
+];
+var suggVisible=false,curSugg=-1;
+
+function getAllSugg(){
+  var saved=[];
+  for(var i=0;i<tasks.length;i++){
+    var txt=tasks[i].text.trim();
+    if(txt) saved.push(txt);
+  }
+  var all= saved.concat(commonTasks);
+  var seen={}, uniq=[];
+  for(var i=0;i<all.length;i++){
+    var key=all[i].toLowerCase();
+    if(!seen[key]){seen[key]=true;uniq.push(all[i]);}
+  }
+  return uniq;
+}
+
+function filterSugg(){
+  var val=document.getElementById('tIn').value.trim().toLowerCase();
+  var list=document.getElementById('suggList');
+  if(!val){list.classList.remove('show');suggVisible=false;curSugg=-1;return;}
+  var all=getAllSugg();
+  var matches=[];
+  for(var i=0;i<all.length;i++){
+    if(all[i].toLowerCase().indexOf(val)===0) matches.push(all[i]);
+  }
+  if(matches.length===0){list.classList.remove('show');suggVisible=false;curSugg=-1;return;}
+  var html='';
+  var show=Math.min(matches.length,3);
+  for(var i=0;i<show;i++){
+    var hl=matches[i].replace(new RegExp('^('+val+')','i'),'<span>$1</span>');
+    html+='<div class="sugg-item" data-idx="'+i+'" onclick="pickSugg('+i+')" style="padding:6px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f5f5f5"><span style="color:#4f8cff;font-weight:700">'+hl.replace(val,'<span style="color:#4f8cff;font-weight:700">'+val+'</span>')+'</span></div>';
+  }
+  list.innerHTML=html;
+  list.classList.add('show');
+  suggVisible=true;
+  curSugg=-1;
+}
+
+function navSugg(e){
+  if(!suggVisible)return;
+  var items=document.querySelectorAll('.sugg-item');
+  if(e.key==='ArrowDown'){e.preventDefault();curSugg=Math.min(curSugg+1,items.length-1);updateSuggActive(items);}
+  else if(e.key==='ArrowUp'){e.preventDefault();curSugg=Math.max(curSugg-1,-1);updateSuggActive(items);}
+  else if(e.key==='Escape'){document.getElementById('suggList').classList.remove('show');suggVisible=false;curSugg=-1;}
+}
+
+function updateSuggActive(items){
+  for(var i=0;i<items.length;i++)items[i].classList.toggle('active',i===curSugg);
+}
+
+function pickSugg(idx){
+  var items=document.querySelectorAll('.sugg-item');
+  if(items[idx]){document.getElementById('tIn').value=items[idx].textContent;}
+  document.getElementById('suggList').classList.remove('show');
+  suggVisible=false;curSugg=-1;
+}
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.sugg-wrap')){document.getElementById('suggList').classList.remove('show');suggVisible=false;curSugg=-1;}
+});
+
+/* BELOHNUNG HINZUFÜGEN - IMMER 10 PUNKTE */
+function addR(){
+  var n=document.getElementById('rNa').value.trim();
+  var mId=parseInt(document.getElementById('rMem').value)||0;
+  if(!n){showToast('⚠️ Name eingeben');return;}
+  rewards.push({id:nid.r++,name:n,cost:10,memberId:mId});
+  document.getElementById('rNa').value='';
+  saveDB();renAll();
+  showToast('🏆 Belohnung "'+n+'" für 10 ⭐ gespeichert');
+}
+
+init();
+</script>
+</body>
+</html>
