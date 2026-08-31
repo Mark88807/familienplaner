@@ -7,21 +7,21 @@
   <title>Familienplaner</title>
   <style>
     :root{
-      --accent:#238f57;--accent-soft:#eaf6ee;--bg:#f7f9f8;--card:#fff;--text:#17211b;
-      --muted:#748078;--line:#e6ece8;--blue:#3974d8;--purple:#8054d8;--orange:#e58a21;
+      --accent:#2f73d9;--accent-soft:#edf5ff;--bg:#f5f9fd;--card:#fff;--text:#172133;
+      --muted:#738096;--line:#e2eaf3;--blue:#3974d8;--purple:#8054d8;--orange:#e58a21;
       --shadow:0 10px 28px rgba(25,42,31,.06);--r:18px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#f3f8fd 55%,#f7fbff 100%);color:var(--text)}
     button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
     .shell{min-height:100vh;display:grid;grid-template-columns:208px 1fr}
-    aside{position:sticky;top:0;height:100vh;padding:20px 14px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column}
+    aside{position:sticky;top:0;height:100vh;padding:20px 14px;background:linear-gradient(180deg,#ffffff 0%,#f3f8ff 100%);border-right:1px solid var(--line);display:flex;flex-direction:column}
     .brand{font-weight:850;font-size:18px;padding:8px 10px 20px}
     nav{display:grid;gap:6px}
     nav button{border:0;background:transparent;color:#344139;padding:11px 12px;text-align:left;border-radius:12px}
     nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:750}
     .aside-bottom{margin-top:auto;display:grid;gap:8px}
-    .family-badge{padding:11px;border-radius:13px;border:1px solid var(--line);background:#fafcfb;font-size:13px}
+    .family-badge{padding:11px;border-radius:13px;border:1px solid var(--line);background:linear-gradient(135deg,#f8fbff,#edf5ff);font-size:13px}
     .color-dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--accent);margin-right:6px}
     main{width:min(1160px,100%);margin:0 auto;padding:26px}
     .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
@@ -31,8 +31,8 @@
     .danger{border:1px solid #f1cccc;background:#fff5f5;color:#b14242}
     .view{display:none}.view.active{display:block}
     .grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:16px}
-    .dash-grid{display:grid;grid-template-columns:1.1fr .8fr .8fr;gap:14px}
-    .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:17px;box-shadow:var(--shadow)}
+    .dash-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(220px,.62fr);gap:14px}
+    .card{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);border:1px solid var(--line);border-radius:var(--r);padding:17px;box-shadow:var(--shadow)}
     .title{font-weight:800;font-size:16px;margin-bottom:12px}.muted{color:var(--muted)}
     .metric{font-size:34px;font-weight:850;line-height:1}
     .tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin-bottom:18px}
@@ -72,6 +72,18 @@
     .log-row:last-child{border-bottom:0}
     .progress-compact{display:grid;gap:7px;padding:10px 0;border-bottom:1px solid var(--line)}
     .progress-compact:last-child{border-bottom:0}
+    .dash-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .dash-card-head .title{margin:0}
+    .dash-calendar{grid-column:1/-1}
+    .calendar-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .calendar-toolbar .title{margin:0}
+    .sixweek-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+    .sixweek-head{font-size:12px;font-weight:750;text-align:center;color:var(--muted);padding:4px}
+    .sixweek-day{min-height:88px;border:1px solid var(--line);border-radius:12px;padding:7px;background:linear-gradient(180deg,#fff,#fbfdff)}
+    .sixweek-day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft)}
+    .sixweek-date{font-size:12px;font-weight:800;margin-bottom:5px}
+    .sixweek-event{font-size:10px;line-height:1.3;padding:4px 5px;border-radius:7px;background:var(--accent-soft);color:var(--accent);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis}
+
     .progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center}
     .calendar-switch{display:flex;gap:6px}
     .calendar-switch button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -80,7 +92,7 @@
     .weekday-row label{display:flex;align-items:center;gap:4px;font-size:13px}
     .ideas-compact{display:none}
     .ideas-compact button{min-width:0;text-align:left}
-    @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}}
+    @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}.dash-calendar{grid-column:auto}}
     .modal,.gate{position:fixed;inset:0;z-index:20;background:rgba(16,24,20,.35);display:none;align-items:center;justify-content:center;padding:18px}
     .modal.open,.gate.open{display:flex}
     .box{width:min(500px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:21px;box-shadow:0 24px 80px rgba(0,0,0,.18)}
@@ -96,7 +108,7 @@
     .voice-btn.listening{animation:pulse 1s infinite;background:#e2d7fa}
     @keyframes pulse{50%{transform:scale(1.06)}}
     .mobile-datetime{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-wide{grid-column:1/-1}}
+    @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-calendar{grid-column:1/-1}.dash-wide{grid-column:1/-1}.dash-grid>.card:nth-child(3){grid-column:1/-1}}
     @media(max-width:780px){
       body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid,.dash-grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
       h1{font-size:24px}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
@@ -147,15 +159,37 @@
       <div class="top">
         <div><h1 id="dashboardTitle">Dashboard</h1><div class="sub" id="dashboardDate"></div></div>
         <div class="desktop-actions" style="display:flex;gap:8px">
-          <button class="ghost" onclick="openModal('importModal')">⇧ .ics Import</button>
-          
-          <button class="primary" onclick="openModal('taskModal')">+ Aufgabe</button>
+          <button class="primary" onclick="openTaskModal()">+ Aufgabe</button>
+          <button class="primary" onclick="openEventModal()">+ Termin</button>
         </div>
       </div>
+
       <div class="dash-grid">
-        <div class="card"><div class="title">Heute</div><div id="dashboardEvents"></div></div>
-        <div class="card"><div class="title">Offene Aufgaben <span class="muted" id="openTaskCount" style="font-weight:600"></span></div><div id="dashboardTasks"></div></div>
-        <div class="card"><div class="title">Punkte & nächster Bonus</div><div id="dashboardProgress"></div></div>
+        <div class="card">
+          <div class="dash-card-head"><div class="title">Aufgaben</div><button class="mini" onclick="openTaskModal()">+ Aufgabe</button></div>
+          <div id="dashboardTasks"></div>
+        </div>
+
+        <div class="card">
+          <div class="dash-card-head"><div class="title">Termine</div><button class="mini" onclick="openEventModal()">+ Termin</button></div>
+          <div id="dashboardEvents"></div>
+        </div>
+
+        <div class="card">
+          <div class="title">Punkte & Bonus</div>
+          <div id="dashboardProgress"></div>
+        </div>
+
+        <div class="card dash-calendar">
+          <div class="calendar-toolbar">
+            <div class="title">Kalender</div>
+            <div class="calendar-switch">
+              <button class="ghost active" id="dashWeekBtn">Woche</button>
+              <button class="ghost" id="dashSixWeekBtn">6 Wochen</button>
+            </div>
+          </div>
+          <div class="calendar-wrap"><div class="calendar" id="dashboardCalendar"></div></div>
+        </div>
       </div>
     </section>
 
@@ -182,7 +216,7 @@
     </section>
 
     <section class="view" id="calendar">
-      <div class="top"><div><h1>Kalender</h1><div class="sub">Standard: diese Woche. Optional 30 Tage.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">30 Tage</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
+      <div class="top"><div><h1>Kalender</h1><div class="sub">Standard: diese Woche. Optional 6 Wochen.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">6 Wochen</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
     </section>
 
@@ -285,7 +319,7 @@
   const COLORS=["#238f57","#3974d8","#8054d8","#e58a21","#e74f87","#1fa3a3"];
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Staubsaugen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week";
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", dashboardCalendarMode="week";
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -381,14 +415,50 @@
     $("taskDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("")
   }
   function renderDashboard(){
-    const today=isoLocal(new Date()),events=Object.values(state.events||{}).filter(e=>e.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
-    $("dashboardEvents").innerHTML=events.length?events.slice(0,4).map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${e.time||"--:--"}</b> &nbsp; ${escapeHtml(e.name)} <span class="muted">(${escapeHtml(person(e.person).name)})</span></div>`).join(""):`<div class="muted">Heute keine Termine.</div>`;
+    const today=isoLocal(new Date()),events=Object.values(state.events||{}).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+    const upcoming=events.filter(e=>e.date>=today).slice(0,5);
+    $("dashboardEvents").innerHTML=upcoming.length?upcoming.map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><div class="muted" style="font-size:11px">${new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(new Date(e.date+"T12:00:00"))}</div><b>${e.time||"--:--"}</b> &nbsp; ${escapeHtml(e.name)} <span class="muted">(${escapeHtml(person(e.person).name)})</span></div>`).join(""):`<div class="muted">Keine kommenden Termine.</div>`;
+
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
-    $("openTaskCount").textContent=`· ${openItems.length}`;
     $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><b>${escapeHtml(t.name)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${Number(t.points)||10} Punkte${t.recurring?' · ↻':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
-    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"} <b>${escapeHtml(p.name)}</b></span><b>${pts} Pkt</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:12px">Nächster Bonus bei ${nb.next} · noch ${nb.missing}</div></div>`}).join("");
+
+    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"} <b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
+
+    renderDashboardCalendar();
   }
+
+  function renderDashboardCalendar(){
+    if(!$("dashboardCalendar")) return;
+    const events=Object.values(state.events||{});
+    if(dashboardCalendarMode==="six"){
+      const start=new Date(), day=(start.getDay()+6)%7;
+      start.setHours(0,0,0,0); start.setDate(start.getDate()-day);
+      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
+      const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
+      $("dashboardCalendar").className="";
+      $("dashboardCalendar").style.minWidth="0";
+      $("dashboardCalendar").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,2),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${evs.map(e=>`<div class="sixweek-event">${e.time||""} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;
+      return;
+    }
+
+    $("dashboardCalendar").className="calendar";
+    $("dashboardCalendar").style.minWidth="730px";
+    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);
+    monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
+    const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
+    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`;
+    const hours=[8,10,12,14,16,18,20];
+    hours.forEach(h=>{
+      html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;
+      dates.forEach(d=>{
+        const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);
+        html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`;
+      })
+    });
+    $("dashboardCalendar").innerHTML=html;
+  }
+
   function renderTasks(){
     const items=Object.entries(state.tasks||{});
     $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b>${escapeHtml(t.name)}</b><br><small>${p.emoji||"🙂"} ${escapeHtml(p.name)}</small></div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
@@ -432,22 +502,18 @@
   function renderCalendar(){
     const events=Object.values(state.events||{});
     if(calendarMode==="month"){
-      const start=new Date();start.setHours(0,0,0,0);
-      let html=`<div></div>`;
-      const dates=Array.from({length:30},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
-      html+=dates.map(d=>`<div class="head">${new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d)}</div>`).join("");
-      html=`<div style="display:grid;gap:8px;min-width:0">`+dates.map(d=>{
-        const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
-        return `<div style="padding:10px;border-bottom:1px solid var(--line)"><b>${new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d)}</b>${evs.length?evs.map(e=>`<div class="event" style="margin-top:6px">${e.time||""} · ${escapeHtml(e.name)} · ${escapeHtml(person(e.person).name)}</div>`).join(""):`<div class="muted" style="margin-top:5px">Keine Termine</div>`}</div>`;
-      }).join("")+`</div>`;
-      $("calendarGrid").style.display="block";
-      $("calendarGrid").style.minWidth="0";
-      $("calendarGrid").innerHTML=html;
+      const start=new Date(),day=(start.getDay()+6)%7;
+      start.setHours(0,0,0,0);start.setDate(start.getDate()-day);
+      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
+      const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
+      $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
+      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${evs.map(e=>`<div class="sixweek-event">${e.time||""} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;
       return;
     }
-    $("calendarGrid").style.display="grid";
-    $("calendarGrid").style.minWidth="730px";
-    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
+
+    $("calendarGrid").style.display="grid";$("calendarGrid").style.minWidth="730px";
+    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);
+    monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
     let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
     hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
@@ -529,7 +595,7 @@
   $("editFamilyBtn").onclick=()=>{selectedColor=state.color||COLORS[0];$("familyNameEdit").value=state.name||"";renderColorPickers();openModal("familyEditModal")};
   $("saveFamilyEditBtn").onclick=async()=>{await update(familyRef(),{name:$("familyNameEdit").value.trim()||"Meine Familie",color:selectedColor});closeModal("familyEditModal")};
   $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
-  $("weekViewBtn").onclick=()=>{calendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
+  $("weekViewBtn").onclick=()=>{calendarMode="week", dashboardCalendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
   $("monthViewBtn").onclick=()=>{calendarMode="month";$("monthViewBtn").classList.add("active");$("weekViewBtn").classList.remove("active");renderCalendar()};
   $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
