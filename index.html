@@ -58,6 +58,16 @@
     .calendar>div{min-height:56px;padding:7px;border-right:1px solid #f1f3f2;border-bottom:1px solid var(--line);font-size:12px}
     .calendar .head{min-height:auto;text-align:center;font-weight:750}.event{padding:6px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:700;margin-bottom:3px}
     .settings{display:grid;gap:10px}.setting{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:13px}
+    .meal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .meal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+    .meal-head{text-align:center;font-size:12px;font-weight:800;color:var(--muted);padding:5px}
+    .meal-day{min-height:118px;border:1px solid var(--line);border-radius:14px;padding:8px;background:linear-gradient(180deg,#fff,#fbfdff);display:flex;flex-direction:column;gap:6px}
+    .meal-day.outside{opacity:.45}.meal-day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft)}
+    .meal-date{font-size:12px;font-weight:800}.meal-entry{padding:7px;border-radius:10px;background:linear-gradient(135deg,#edf5ff,#f8fbff);color:#24599e;font-size:12px;font-weight:750;line-height:1.3}
+    .meal-add{margin-top:auto;border:1px dashed var(--line);background:transparent;border-radius:9px;padding:6px;color:var(--muted);font-size:12px}
+    .meal-import-area{width:100%;min-height:170px;padding:12px;border:1px solid var(--line);border-radius:12px;resize:vertical;font:inherit;line-height:1.5}
+    .meal-memory{display:flex;gap:8px;flex-wrap:wrap;max-height:170px;overflow:auto}
+
     .suggestions{display:flex;gap:8px;flex-wrap:wrap}
     .suggestion{border:1px solid var(--line);background:white;border-radius:999px;padding:8px 11px}
     .suggestion:hover{border-color:var(--accent);color:var(--accent)}
@@ -109,9 +119,9 @@
     @media(max-width:780px){
       body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid,.dash-grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
       h1{font-size:24px}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
-      .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+      .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
       .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--accent);font-weight:800}
-      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}
+      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(92px,1fr));min-width:720px}.meal-day{min-height:104px}
     }
   </style>
 </head>
@@ -145,6 +155,7 @@
       <button data-view="tasks">✓ Aufgaben</button>
       <button data-view="rewards">🎁 Belohnungen</button>
       <button data-view="calendar">▣ Kalender</button>
+      <button data-view="meals">🍽 Essenplan</button>
       <button data-view="family">♙ Familie</button>
       <button data-view="settings">⚙ Einstellungen</button>
     </nav>
@@ -206,6 +217,19 @@
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
     </section>
 
+
+    <section class="view" id="meals">
+      <div class="top">
+        <div><h1>Essenplan</h1><div class="sub">Monat planen, Gerichte schnell wiederverwenden oder als Text importieren.</div></div>
+        <div style="display:flex;gap:8px"><button class="ghost" id="mealPrevBtn">‹</button><button class="ghost" id="mealTodayBtn">Dieser Monat</button><button class="ghost" id="mealNextBtn">›</button><button class="primary" onclick="openMealModal()">+ Gericht</button></div>
+      </div>
+      <div class="card">
+        <div class="meal-toolbar"><div class="title" id="mealMonthTitle" style="margin:0"></div><button class="ghost" onclick="openModal('mealImportModal')">Schnellimport Text</button></div>
+        <div class="calendar-wrap"><div class="meal-month" id="mealMonthGrid"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 50</div><div class="meal-memory" id="mealMemoryList"></div></div>
+    </section>
+
     <section class="view" id="family">
       <div class="top"><div><h1>Familie</h1><div class="sub">Punkte und nächster Bonus pro Person.</div></div></div>
       <div class="family-grid" id="familyGrid"></div>
@@ -227,6 +251,7 @@
   <button data-view="tasks">✓<br>Aufgaben</button>
   <button data-view="rewards">🎁<br>Bonus</button>
   <button data-view="calendar">▣<br>Kalender</button>
+  <button data-view="meals">🍽<br>Essen</button>
   <button data-view="settings">•••<br>Mehr</button>
 </div>
 
@@ -280,6 +305,22 @@
 
 <div class="modal" id="familyEditModal"><div class="box"><h2>Familie bearbeiten</h2><div class="form"><input id="familyNameEdit"><div class="color-picker" id="editColors"></div><div class="actions"><button class="ghost" onclick="closeModal('familyEditModal')">Abbrechen</button><button class="primary" id="saveFamilyEditBtn">Speichern</button></div></div></div></div>
 
+
+<div class="modal" id="mealModal"><div class="box"><h2>Gericht eintragen</h2><div class="form">
+  <input id="mealName" placeholder="z. B. Kürbissuppe" list="mealDatalist"><datalist id="mealDatalist"></datalist>
+  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Essens-Gedächtnis</div><div class="meal-memory" id="mealModalMemory"></div></div>
+  <input id="mealDate" type="date">
+  <div class="actions"><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
+</div></div></div>
+
+<div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p>Eine Zeile pro Gericht. Unterstützt Datum oder Wochentag. Beispiele:<br><b>03.09 | Kürbissuppe</b><br><b>Mittwoch | Kürbissuppe</b></p><div class="form">
+  <textarea class="meal-import-area" id="mealImportText" placeholder="01.09 | Kürbissuppe
+02.09 | Spaghetti Bolognese
+Mittwoch | Gemüsepfanne"></textarea>
+  <div class="muted" id="mealImportStatus"></div>
+  <div class="actions"><button class="ghost" onclick="closeModal('mealImportModal')">Abbrechen</button><button class="primary" id="mealImportBtn">Importieren</button></div>
+</div></div></div>
+
 <div class="modal" id="memberEditModal"><div class="box"><h2>Familienmitglied bearbeiten</h2><div class="form">
   <input id="memberNameEdit" placeholder="Name">
   <div><div class="muted" style="margin-bottom:8px">Farbe</div><div class="color-picker" id="memberColors"></div></div>
@@ -306,9 +347,10 @@
   const LS_FAMILY="familienplaner_family_id_v2";
   const COLORS=["#238f57","#3974d8","#8054d8","#e58a21","#e74f87","#1fa3a3"];
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Staubsaugen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
+  const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},eventMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week";
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date();
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -359,7 +401,7 @@
       const starter={
         name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),
         people:{lisa:{name:"Lisa",points:0,color:"#e74f87"},max:{name:"Max",points:0,color:"#3974d8"},papa:{name:"Papa",points:0,color:"#8054d8"},mama:{name:"Mama",points:0,color:"#e58a21"}},
-        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
+        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
         rewards:{
           lisa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
           max:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
@@ -380,14 +422,14 @@
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
-      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.taskMemory||={};state.eventMemory||={};state.rewardLog||={};
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.rewardLog||={};
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
       applyTheme();render();
     },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
   }
 
   function render(){
-    fillPeople();renderDashboard();renderTasks();renderRewards();renderRewardLog();renderCalendar();renderFamily();renderTaskSuggestions();
+    fillPeople();renderDashboard();renderTasks();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderTaskSuggestions();
     $("familyLabel").textContent=state.name||"Familie"; $("dashboardTitle").textContent=state.name||"Dashboard";
     $("dashboardDate").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date());
   }
@@ -425,13 +467,75 @@
     }
   }
 
+  function mealMemorySorted(){
+    return Object.entries(state.mealMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,50)
+  }
+  function renderMealMemory(){
+    const list=mealMemorySorted();
+    const html=list.map(([id,m])=>`<button class="suggestion" data-meal-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    if($("mealMemoryList")) $("mealMemoryList").innerHTML=html;
+    if($("mealModalMemory")) $("mealModalMemory").innerHTML=list.slice(0,20).map(([id,m])=>`<button class="suggestion" data-meal-modal="${id}">${escapeHtml(m.name)}</button>`).join("");
+    if($("mealDatalist")) $("mealDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
+    document.querySelectorAll("[data-meal-mem]").forEach(b=>b.onclick=()=>{const m=state.mealMemory[b.dataset.mealMem];if(m){$("mealName").value=m.name;openMealModal()}});
+    document.querySelectorAll("[data-meal-modal]").forEach(b=>b.onclick=()=>{const m=state.mealMemory[b.dataset.mealModal];if(m)$("mealName").value=m.name});
+  }
+  async function rememberMeal(name){
+    const norm=name.trim().toLowerCase();
+    const existing=Object.entries(state.mealMemory||{}).find(([id,m])=>(m.name||"").trim().toLowerCase()===norm);
+    if(existing){const [id,m]=existing;await update(ref(db,`families/${familyId}/mealMemory/${id}`),{uses:(m.uses||0)+1,lastUsed:Date.now()})}
+    else{const key=push(ref(db,`families/${familyId}/mealMemory`)).key;await set(ref(db,`families/${familyId}/mealMemory/${key}`),{name:name.trim(),uses:1,lastUsed:Date.now(),prefill:false})}
+  }
+  window.openMealModal=(date=null)=>{
+    renderMealMemory();
+    if(date)$("mealDate").value=date;
+    else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
+    openModal("mealModal");
+  };
+  function renderMeals(){
+    if(!$("mealMonthGrid"))return;
+    mealCursor.setDate(1);
+    const year=mealCursor.getFullYear(),month=mealCursor.getMonth();
+    $("mealMonthTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(mealCursor);
+    const first=new Date(year,month,1), offset=(first.getDay()+6)%7, gridStart=new Date(year,month,1-offset);
+    const days=["Mo","Di","Mi","Do","Fr","Sa","So"];
+    let html=days.map(d=>`<div class="meal-head">${d}</div>`).join("");
+    for(let i=0;i<42;i++){
+      const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);const iso=isoLocal(d),outside=d.getMonth()!==month,today=iso===isoLocal(new Date());
+      const meal=state.meals?.[iso];
+      html+=`<div class="meal-day ${outside?'outside':''} ${today?'today':''}"><div class="meal-date">${d.getDate()}.</div>${meal?`<div class="meal-entry">${escapeHtml(meal.name)}</div>`:''}<button class="meal-add" data-meal-date="${iso}">${meal?'Ändern':'+ Gericht'}</button></div>`;
+    }
+    $("mealMonthGrid").innerHTML=html;
+    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(b=>b.onclick=()=>{const iso=b.dataset.mealDate;$("mealName").value=state.meals?.[iso]?.name||"";openMealModal(iso)});
+    renderMealMemory();
+  }
+  function weekdayIndexGerman(text){
+    const map={montag:1,mo:1,dienstag:2,di:2,mittwoch:3,mi:3,donnerstag:4,do:4,freitag:5,fr:5,samstag:6,sa:6,sonntag:0,so:0};
+    return map[text.trim().toLowerCase()] ?? null;
+  }
+  function dateForWeekdayInMealMonth(wd){
+    const year=mealCursor.getFullYear(),month=mealCursor.getMonth(),today=new Date();
+    let start=(today.getFullYear()===year&&today.getMonth()===month)?today.getDate():1;
+    for(let day=start;day<=31;day++){const d=new Date(year,month,day);if(d.getMonth()!==month)break;if(d.getDay()===wd)return isoLocal(d)}
+    for(let day=1;day<start;day++){const d=new Date(year,month,day);if(d.getDay()===wd)return isoLocal(d)}
+    return null;
+  }
+  function parseMealImportLine(line){
+    const parts=line.split(/\s*[|;]\s*/);if(parts.length<2)return null;
+    const left=parts[0].trim(),name=parts.slice(1).join(" ").trim();if(!name)return null;
+    let date=null;
+    let m=left.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?$/);
+    if(m){let y=m[3]?Number(m[3]):mealCursor.getFullYear();if(y<100)y+=2000;date=isoLocal(new Date(y,Number(m[2])-1,Number(m[1])))}
+    else{const wd=weekdayIndexGerman(left);if(wd!==null)date=dateForWeekdayInMealMonth(wd)}
+    return date?{date,name}:null;
+  }
+
   function renderDashboard(){
     const today=isoLocal(new Date()),events=Object.values(state.events||{}).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     const upcoming=events.filter(e=>e.date>=today).slice(0,5);
     $("dashboardEvents").innerHTML=upcoming.length?upcoming.map(e=>{const p=person(e.person);return `<div style="display:grid;grid-template-columns:54px 12px minmax(70px,auto) 1fr;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)"><b>${e.time||"--:--"}</b><span class="member-color" style="background:${p.color||'#999'};margin:0"></span><span style="font-weight:700">${escapeHtml(p.name)}</span><span>${escapeHtml(e.name)}</span></div>`}).join(""):`<div class="muted">Keine kommenden Termine.</div>`;
 
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
-    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><b>${escapeHtml(t.name)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${Number(t.points)||10} Punkte${t.recurring?' · ↻':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
+    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="muted" style="font-size:12px">${Number(t.points)||10} Punkte${t.recurring?' · ↻ wiederkehrend':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
 
     $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
@@ -441,7 +545,7 @@
 
   function renderTasks(){
     const items=Object.entries(state.tasks||{});
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b>${escapeHtml(t.name)}</b><br><small>${escapeHtml(p.name)}</small></div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
     document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
@@ -577,6 +681,14 @@
   $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
   $("weekViewBtn").onclick=()=>{calendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
   $("monthViewBtn").onclick=()=>{calendarMode="month";$("monthViewBtn").classList.add("active");$("weekViewBtn").classList.remove("active");renderCalendar()};
+
+  $("saveMealBtn").onclick=async()=>{const name=$("mealName").value.trim(),date=$("mealDate").value;if(!name||!date)return;await set(ref(db,`families/${familyId}/meals/${date}`),{name,updatedAt:Date.now()});await rememberMeal(name);$("mealName").value="";closeModal("mealModal")};
+  $("mealImportBtn").onclick=async()=>{const lines=$("mealImportText").value.split(/
+?
+/).map(x=>x.trim()).filter(Boolean),items=lines.map(parseMealImportLine).filter(Boolean);if(!items.length){$("mealImportStatus").textContent="Keine gültigen Zeilen erkannt.";return}const updates={};for(const it of items){updates[it.date]={name:it.name,updatedAt:Date.now()}}await update(ref(db,`families/${familyId}/meals`),updates);for(const it of items)await rememberMeal(it.name);$("mealImportStatus").textContent=`${items.length} Gerichte importiert.`;setTimeout(()=>{closeModal("mealImportModal");$("mealImportText").value="";$("mealImportStatus").textContent=""},700)};
+  $("mealPrevBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()-1);renderMeals()};
+  $("mealNextBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()+1);renderMeals()};
+  $("mealTodayBtn").onclick=()=>{mealCursor=new Date();renderMeals()};
   $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
   onAuthStateChanged(auth,user=>{
