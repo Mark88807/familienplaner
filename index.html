@@ -70,7 +70,15 @@
     .mini.primary-mini{background:var(--accent);border-color:var(--accent);color:#fff}
     .log-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
     .log-row:last-child{border-bottom:0}
-    .ideas-compact{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .progress-compact{display:grid;gap:7px;padding:10px 0;border-bottom:1px solid var(--line)}
+    .progress-compact:last-child{border-bottom:0}
+    .progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .calendar-switch{display:flex;gap:6px}
+    .calendar-switch button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .repeat-box{display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fafcfb}
+    .weekday-row{display:flex;gap:6px;flex-wrap:wrap}
+    .weekday-row label{display:flex;align-items:center;gap:4px;font-size:13px}
+    .ideas-compact{display:none}
     .ideas-compact button{min-width:0;text-align:left}
     @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}}
     .modal,.gate{position:fixed;inset:0;z-index:20;background:rgba(16,24,20,.35);display:none;align-items:center;justify-content:center;padding:18px}
@@ -140,16 +148,14 @@
         <div><h1 id="dashboardTitle">Dashboard</h1><div class="sub" id="dashboardDate"></div></div>
         <div class="desktop-actions" style="display:flex;gap:8px">
           <button class="ghost" onclick="openModal('importModal')">⇧ .ics Import</button>
-          <button class="ghost" onclick="openVoiceModal()">🎙 Sprache</button>
+          
           <button class="primary" onclick="openModal('taskModal')">+ Aufgabe</button>
         </div>
       </div>
       <div class="dash-grid">
         <div class="card"><div class="title">Heute</div><div id="dashboardEvents"></div></div>
         <div class="card"><div class="title">Offene Aufgaben <span class="muted" id="openTaskCount" style="font-weight:600"></span></div><div id="dashboardTasks"></div></div>
-        <div class="card"><div class="title">Punkte</div><div id="dashboardPoints"></div></div>
-        <div class="card"><div class="title">Nächste Belohnungen</div><div id="dashboardRewards"></div></div>
-        <div class="card dash-wide"><div class="title">3 Ideen für heute</div><div class="ideas-compact" id="dailyIdeas"></div></div>
+        <div class="card"><div class="title">Punkte & nächster Bonus</div><div id="dashboardProgress"></div></div>
       </div>
     </section>
 
@@ -176,7 +182,7 @@
     </section>
 
     <section class="view" id="calendar">
-      <div class="top"><div><h1>Kalender</h1><div class="sub">Termine kompakt – Import oder Sprache möglich.</div></div><div style="display:flex;gap:8px"><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openVoiceModal()">🎙</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
+      <div class="top"><div><h1>Kalender</h1><div class="sub">Standard: diese Woche. Optional 30 Tage.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">30 Tage</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
     </section>
 
@@ -209,25 +215,40 @@
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Gedächtnis</div><div class="suggestions" id="taskModalSuggestions"></div></div>
   <select id="taskPerson"></select>
   <input id="taskPoints" type="number" min="1" value="10">
+  <div class="repeat-box">
+    <label><input id="taskRecurring" type="checkbox"> Wiederkehrende Aufgabe</label>
+    <select id="taskRepeatType" disabled>
+      <option value="daily">Täglich</option>
+      <option value="weekly" selected>Wöchentlich</option>
+      <option value="weekdays">Bestimmte Wochentage</option>
+    </select>
+    <div class="weekday-row hidden" id="weekdayRow">
+      <label><input type="checkbox" value="1"> Mo</label>
+      <label><input type="checkbox" value="2"> Di</label>
+      <label><input type="checkbox" value="3"> Mi</label>
+      <label><input type="checkbox" value="4"> Do</label>
+      <label><input type="checkbox" value="5"> Fr</label>
+      <label><input type="checkbox" value="6"> Sa</label>
+      <label><input type="checkbox" value="0"> So</label>
+    </div>
+  </div>
   <div class="actions"><button class="ghost" onclick="closeModal('taskModal')">Abbrechen</button><button class="primary" id="saveTaskBtn">Speichern</button></div>
 </div></div></div>
 
 <div class="modal" id="rewardModal"><div class="box"><h2>Belohnung</h2><div class="form">
-  <select id="rewardPerson"></select><input id="rewardName" placeholder="z. B. 30 Min. Gaming"><input id="rewardCost" type="number" min="1" step="10" value="10">
+  <select id="rewardPerson"></select><input id="rewardName" placeholder="z. B. 30 Min. Gaming"><input id="rewardCost" type="number" value="10" disabled>
   <div class="actions"><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
 </div></div></div>
 
 <div class="modal" id="eventModal"><div class="box"><h2>Termin hinzufügen</h2><div class="form">
   <input id="eventName" placeholder="Titel, z. B. Fußballtraining">
   <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time"></div>
-  <div class="quick-row"><button type="button" data-datequick="today">Heute</button><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
+  <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
   <select id="eventPerson"></select>
-  <button class="ghost" type="button" onclick="openVoiceModal()">🎙 Per Sprache ausfüllen</button>
+  
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="voiceModal"><div class="box"><h2>Termin per Sprache</h2><p>Zum Beispiel: „Morgen um 17 Uhr Zahnarzt für Lisa“. Falls dein Browser keine Web-Spracherkennung unterstützt, kannst du denselben Satz eintippen oder die Diktierfunktion deiner Handy-Tastatur nutzen.</p>
-  <div class="voice-box"><button class="voice-btn" id="voiceBtn">🎙</button><div id="voiceStatus" class="muted" style="margin-top:10px">Mikrofon starten</div></div>
   <div class="form" style="margin-top:14px"><input id="voiceText" inputmode="text" placeholder="Satz sprechen oder eintippen"><div class="actions"><button class="ghost" onclick="closeModal('voiceModal')">Abbrechen</button><button class="primary" id="voiceUseBtn">Text auswerten</button></div></div>
 </div></div>
 
@@ -264,7 +285,7 @@
   const COLORS=["#238f57","#3974d8","#8054d8","#e58a21","#e74f87","#1fa3a3"];
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Staubsaugen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0];
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},taskMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week";
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -291,7 +312,7 @@
   window.openModal=id=>$(id).classList.add("open");
   window.closeModal=id=>$(id).classList.remove("open");
   window.openTaskModal=()=>{renderTaskSuggestions();openModal("taskModal")};
-  window.openEventModal=()=>{if(!$("eventDate").value)$("eventDate").value=isoLocal(new Date());openModal("eventModal")};
+  window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)}openModal("eventModal")};
   window.openVoiceModal=()=>{openModal("voiceModal");$("voiceText").value="";$("voiceStatus").textContent="Tippen und sprechen"};
 
   document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>{
@@ -299,6 +320,13 @@
   });
   document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
+  $("taskRecurring").onchange=()=>{
+    $("taskRepeatType").disabled=!$("taskRecurring").checked;
+    $("weekdayRow").classList.toggle("hidden",!$("taskRecurring").checked || $("taskRepeatType").value!=="weekdays");
+  };
+  $("taskRepeatType").onchange=()=>{
+    $("weekdayRow").classList.toggle("hidden",$("taskRepeatType").value!=="weekdays");
+  };
 
   async function createFamily(){
     $("gateMsg").textContent="Familie wird erstellt …";
@@ -357,14 +385,9 @@
     $("dashboardEvents").innerHTML=events.length?events.slice(0,4).map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${e.time||"--:--"}</b> &nbsp; ${escapeHtml(e.name)} <span class="muted">(${escapeHtml(person(e.person).name)})</span></div>`).join(""):`<div class="muted">Heute keine Termine.</div>`;
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
     $("openTaskCount").textContent=`· ${openItems.length}`;
-    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,5).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><b>${escapeHtml(t.name)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${Number(t.points)||10} Punkte</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
+    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><b>${escapeHtml(t.name)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${Number(t.points)||10} Punkte${t.recurring?' · ↻':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
-    $("dashboardPoints").innerHTML=Object.entries(state.people).map(([id,p])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"} ${escapeHtml(p.name)}</span><b>${Number(p.points)||0}</b></div>`).join("");
-    $("dashboardRewards").innerHTML=Object.entries(state.people).map(([id,p])=>{const nb=nextBonus(Number(p.points)||0);return `<div style="padding:5px 0"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}: noch <b>${nb.missing}</b> bis ${nb.next}</div>`}).join("");
-    const seed=(new Date().getDate()+new Date().getMonth()*31)%DAILY_IDEAS.length;
-    const ideas=[0,1,2].map(i=>DAILY_IDEAS[(seed+i)%DAILY_IDEAS.length]);
-    $("dailyIdeas").innerHTML=ideas.map(x=>`<button class="suggestion" data-idea="${escapeHtml(x)}">💡 ${escapeHtml(x)}</button>`).join("");
-    $("dailyIdeas").querySelectorAll("[data-idea]").forEach(b=>b.onclick=()=>{$("taskName").value=b.dataset.idea;openTaskModal()})
+    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"} <b>${escapeHtml(p.name)}</b></span><b>${pts} Pkt</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:12px">Nächster Bonus bei ${nb.next} · noch ${nb.missing}</div></div>`}).join("");
   }
   function renderTasks(){
     const items=Object.entries(state.tasks||{});
@@ -378,14 +401,13 @@
     $("rewardPersons").innerHTML=Object.entries(state.people).map(([id,p])=>`<button class="person ${selectedPerson===id?"active":""}" data-person="${id}"><div><span class="member-color" style="background:${p.color||'#999'}"></span>${p.emoji||"🙂"}</div><b>${escapeHtml(p.name)}</b></button>`).join("");
     document.querySelectorAll("[data-person]").forEach(b=>b.onclick=()=>{selectedPerson=b.dataset.person;renderRewards();renderRewardLog()});
     const p=person(selectedPerson),pts=Number(p.points)||0,nb=nextBonus(pts);$("rewardTitle").textContent=`Belohnungen für ${p.name}`;$("personPoints").textContent=pts;$("personBar").style.width=`${(pts%10)/10*100}%`;$("personNext").textContent=`Noch ${nb.missing} Punkte bis Bonus ${nb.next}.`;
-    const rewards=Object.entries(state.rewards?.[selectedPerson]||{}).sort((a,b)=>(a[1].cost||0)-(b[1].cost||0));
-    $("rewardList").innerHTML=rewards.length?rewards.map(([rid,r])=>`<div class="reward"><span>🎁</span><div><b>${r.cost} Punkte</b><div class="muted">${escapeHtml(r.name)}</div></div><div class="reward-actions"><button class="mini primary-mini" data-redeem="${rid}" ${pts<Number(r.cost)?'disabled style="opacity:.45;cursor:not-allowed"':''}>Einlösen</button></div></div>`).join(""):`<div class="muted">Noch keine Belohnungen.</div>`;
+    const rewards=Object.entries(state.rewards?.[selectedPerson]||{});
+    $("rewardList").innerHTML=rewards.length?rewards.map(([rid,r])=>`<div class="reward"><span>🎁</span><div><b>10 Punkte</b><div class="muted">${escapeHtml(r.name)}</div></div><div class="reward-actions"><button class="mini primary-mini" data-redeem="${rid}" ${pts<10?'disabled style="opacity:.45;cursor:not-allowed"':''}>Einlösen</button></div></div>`).join(""):`<div class="muted">Noch keine Belohnungen.</div>`;
     document.querySelectorAll("[data-redeem]").forEach(b=>b.onclick=()=>redeemReward(selectedPerson,b.dataset.redeem));
   }
   async function redeemReward(personId,rewardId){
     const p=person(personId),r=state.rewards?.[personId]?.[rewardId];if(!r)return;
-    const pts=Number(p.points)||0,cost=Number(r.cost)||0;if(pts<cost)return;
-    if(!confirm(`„${r.name}“ für ${cost} Punkte einlösen?`))return;
+    const pts=Number(p.points)||0,cost=10;if(pts<cost)return;
     const logKey=push(ref(db,`families/${familyId}/rewardLog`)).key;
     await update(familyRef(),{
       [`people/${personId}/points`]:pts-cost,
@@ -395,7 +417,6 @@
   async function undoReward(logId){
     const entry=state.rewardLog?.[logId];if(!entry||entry.undone)return;
     const p=person(entry.personId),current=Number(p.points)||0;
-    if(!confirm(`Einlösung „${entry.rewardName}“ zurücknehmen und ${entry.cost} Punkte gutschreiben?`))return;
     await update(familyRef(),{
       [`people/${entry.personId}/points`]:current+Number(entry.cost||0),
       [`rewardLog/${logId}/undone`]:true,
@@ -409,9 +430,26 @@
     $("rewardLog").innerHTML=rows.length?rows.map(([id,e])=>{const p=person(e.personId),d=e.createdAt?new Date(e.createdAt).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';return `<div class="log-row"><div><b>${escapeHtml(e.rewardName)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${e.cost} Punkte · ${d}${e.undone?' · zurückgenommen':''}</div></div>${e.undone?'':`<button class="mini" onclick="undoReward('${id}')">Rückgängig</button>`}</div>`}).join(""):`<div class="muted">Noch keine Einlösungen.</div>`;
   }
   function renderCalendar(){
+    const events=Object.values(state.events||{});
+    if(calendarMode==="month"){
+      const start=new Date();start.setHours(0,0,0,0);
+      let html=`<div></div>`;
+      const dates=Array.from({length:30},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
+      html+=dates.map(d=>`<div class="head">${new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d)}</div>`).join("");
+      html=`<div style="display:grid;gap:8px;min-width:0">`+dates.map(d=>{
+        const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+        return `<div style="padding:10px;border-bottom:1px solid var(--line)"><b>${new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d)}</b>${evs.length?evs.map(e=>`<div class="event" style="margin-top:6px">${e.time||""} · ${escapeHtml(e.name)} · ${escapeHtml(person(e.person).name)}</div>`).join(""):`<div class="muted" style="margin-top:5px">Keine Termine</div>`}</div>`;
+      }).join("")+`</div>`;
+      $("calendarGrid").style.display="block";
+      $("calendarGrid").style.minWidth="0";
+      $("calendarGrid").innerHTML=html;
+      return;
+    }
+    $("calendarGrid").style.display="grid";
+    $("calendarGrid").style.minWidth="730px";
     const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
-    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20],events=Object.values(state.events||{});
+    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
     hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2);html+=`<div>${evs.map(e=>`<div class="event">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
     $("calendarGrid").innerHTML=html
   }
@@ -432,35 +470,38 @@
     else{const key=push(ref(db,`families/${familyId}/taskMemory`)).key;await set(ref(db,`families/${familyId}/taskMemory/${key}`),{name:name.trim(),uses:1,lastUsed:Date.now(),prefill:false})}
   }
   async function toggleTask(id){
-    const t=state.tasks[id],p=person(t.person),pts=Number(t.points)||10,current=Number(p.points)||0,done=!t.done;
+    const t=state.tasks[id],p=person(t.person),pts=Number(t.points)||10,current=Number(p.points)||0;
+    if(t.recurring){
+      await update(familyRef(),{
+        [`people/${t.person}/points`]:current+pts,
+        [`tasks/${id}/done`]:false,
+        [`tasks/${id}/lastCompletedAt`]:Date.now()
+      });
+      await rememberTask(t.name);
+      return;
+    }
+    const done=!t.done;
     await update(familyRef(),{[`tasks/${id}/done`]:done,[`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))});
     if(done)await rememberTask(t.name)
   }
-  $("saveTaskBtn").onclick=async()=>{const name=$("taskName").value.trim();if(!name)return;const key=push(ref(db,`families/${familyId}/tasks`)).key;await set(ref(db,`families/${familyId}/tasks/${key}`),{name,person:$("taskPerson").value,points:Number($("taskPoints").value)||10,done:false});await rememberTask(name);$("taskName").value="";closeModal("taskModal")};
-  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim();if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:Number($("rewardCost").value)||10});$("rewardName").value="";closeModal("rewardModal")};
+  $("saveTaskBtn").onclick=async()=>{
+    const name=$("taskName").value.trim();if(!name)return;
+    const recurring=$("taskRecurring").checked;
+    const repeatType=recurring?$("taskRepeatType").value:null;
+    const weekdays=repeatType==="weekdays"?Array.from($("weekdayRow").querySelectorAll('input:checked')).map(x=>Number(x.value)):[];
+    const key=push(ref(db,`families/${familyId}/tasks`)).key;
+    await set(ref(db,`families/${familyId}/tasks/${key}`),{
+      name,person:$("taskPerson").value,points:Number($("taskPoints").value)||10,done:false,
+      recurring,repeatType,weekdays,lastCompletedAt:0
+    });
+    await rememberTask(name);
+    $("taskName").value="";
+    $("taskRecurring").checked=false;$("taskRepeatType").disabled=true;$("weekdayRow").classList.add("hidden");
+    closeModal("taskModal")
+  };
+  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim();if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:10});$("rewardName").value="";closeModal("rewardModal")};
   $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:$("eventPerson").value,date,time:$("eventTime").value||"00:00"});$("eventName").value="";closeModal("eventModal")};
 
-  function parseGermanVoice(text){
-    let s=text.trim(),date=new Date(),time="09:00";
-    if(/\bübermorgen\b/i.test(s))date.setDate(date.getDate()+2); else if(/\bmorgen\b/i.test(s))date.setDate(date.getDate()+1);
-    const dm=s.match(/\b(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?\b/);if(dm){let y=dm[3]?Number(dm[3]):new Date().getFullYear();if(y<100)y+=2000;date=new Date(y,Number(dm[2])-1,Number(dm[1]))}
-    const tm=s.match(/\b(?:um\s*)?(\d{1,2})(?::|\.)(\d{2})\b|\b(?:um\s*)?(\d{1,2})\s*uhr\b/i);if(tm){const h=Number(tm[1]||tm[3]),m=Number(tm[2]||0);time=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")}
-    let who=Object.entries(state.people).find(([id,p])=>new RegExp("\\b"+p.name+"\\b","i").test(s));
-    let title=s.replace(/\b(heute|morgen|übermorgen)\b/ig,"").replace(/\b(?:um\s*)?\d{1,2}(?::|\.)\d{2}\b/ig,"").replace(/\b(?:um\s*)?\d{1,2}\s*uhr\b/ig,"").replace(/\b\d{1,2}\.\d{1,2}(?:\.\d{2,4})?\b/g,"").replace(/\bfür\s+\w+\b/ig,"").trim().replace(/\s{2,}/g," ");
-    return{title:title||"Termin",date:isoLocal(date),time,person:who?who[0]:Object.keys(state.people)[0]}
-  }
-
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let recognition=null;
-  if(SR){
-    recognition=new SR();recognition.lang="de-DE";recognition.interimResults=false;recognition.maxAlternatives=1;
-    recognition.onstart=()=>{$("voiceBtn").classList.add("listening");$("voiceStatus").textContent="Ich höre zu …"};
-    recognition.onend=()=>{$("voiceBtn").classList.remove("listening")};
-    recognition.onerror=e=>{$("voiceBtn").classList.remove("listening");$("voiceStatus").textContent=e.error==="not-allowed"?"Mikrofon nicht erlaubt. Browser-Berechtigung prüfen oder Satz eintippen.":"Spracherkennung nicht verfügbar. Satz einfach eintippen."};
-    recognition.onresult=e=>{$("voiceText").value=e.results[0][0].transcript;$("voiceStatus").textContent="Erkannt – jetzt Text auswerten."}
-  } else $("voiceStatus").textContent="Browser-Spracherkennung wird hier nicht unterstützt. Nutze die Diktierfunktion der Tastatur oder tippe den Satz ein.";
-  $("voiceBtn").onclick=()=>{if(!recognition){$("voiceText").focus();return}try{recognition.start()}catch(e){$("voiceStatus").textContent="Mikrofon konnte nicht gestartet werden. Satz bitte eintippen."}};
-  $("voiceUseBtn").onclick=()=>{if(!$("voiceText").value.trim()){$("voiceStatus").textContent="Bitte erst sprechen oder einen Satz eingeben.";return}const p=parseGermanVoice($("voiceText").value);$("eventName").value=p.title;$("eventDate").value=p.date;$("eventTime").value=p.time;$("eventPerson").value=p.person;closeModal("voiceModal");openModal("eventModal")};
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
   function parseIcsDate(v){
@@ -488,6 +529,8 @@
   $("editFamilyBtn").onclick=()=>{selectedColor=state.color||COLORS[0];$("familyNameEdit").value=state.name||"";renderColorPickers();openModal("familyEditModal")};
   $("saveFamilyEditBtn").onclick=async()=>{await update(familyRef(),{name:$("familyNameEdit").value.trim()||"Meine Familie",color:selectedColor});closeModal("familyEditModal")};
   $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
+  $("weekViewBtn").onclick=()=>{calendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
+  $("monthViewBtn").onclick=()=>{calendarMode="month";$("monthViewBtn").classList.add("active");$("weekViewBtn").classList.remove("active");renderCalendar()};
   $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
   onAuthStateChanged(auth,user=>{
