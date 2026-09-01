@@ -433,7 +433,7 @@ Mittwoch | Gemüsepfanne"></textarea>
 
 <div class="modal" id="birthdayModal"><div class="box"><h2 id="birthdayModalTitle">Geburtstag hinzufügen</h2><div class="form">
   <input id="birthdayName" placeholder="Name, z. B. Oma, Paul oder Anna">
-  <label class="muted">Geburtstag · jährlich</label><input id="birthdayDate" inputmode="numeric" autocomplete="off" placeholder="TT.MM., z. B. 14.03.">
+  <label class="muted">Geburtsdatum · wird jedes Jahr automatisch angezeigt</label><input id="birthdayDate" inputmode="numeric" autocomplete="off" placeholder="TT.MM.JJJJ, z. B. 14.03.1985">
   <div class="actions"><button class="ghost" onclick="closeModal('birthdayModal')">Abbrechen</button><button class="primary" id="saveBirthdayBtn">Speichern</button></div>
 </div></div></div>
 
@@ -696,34 +696,41 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
   function birthdayParts(value){
     const v=String(value||"").trim();
-    let m=v.match(/^(?:\d{4}-)?(\d{1,2})-(\d{1,2})$/);
-    if(m)return{month:Number(m[1]),day:Number(m[2])};
+    let m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if(m)return{year:Number(m[1]),month:Number(m[2]),day:Number(m[3])};
+    m=v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if(m)return{year:Number(m[3]),month:Number(m[2]),day:Number(m[1])};
     m=v.match(/^(\d{1,2})\.(\d{1,2})\.?$/);
-    if(m)return{month:Number(m[2]),day:Number(m[1])};
-    m=v.match(/^\d{4}-(\d{1,2})-(\d{1,2})$/);
-    return m?{month:Number(m[1]),day:Number(m[2])}:null;
+    if(m)return{year:null,month:Number(m[2]),day:Number(m[1])};
+    m=v.match(/^(\d{1,2})-(\d{1,2})$/);
+    return m?{year:null,month:Number(m[1]),day:Number(m[2])}:null;
   }
-  function birthdayValueForInput(value){const p=birthdayParts(value);return p?`${String(p.day).padStart(2,"0")}.${String(p.month).padStart(2,"0")}.`:""}
+  function birthdayValueForInput(value){
+    const p=birthdayParts(value);if(!p)return "";
+    return p.year?`${String(p.day).padStart(2,"0")}.${String(p.month).padStart(2,"0")}.${p.year}`:`${String(p.day).padStart(2,"0")}.${String(p.month).padStart(2,"0")}.`;
+  }
   function birthdayStorageValue(value){
-    const p=birthdayParts(value);if(!p)return null;
-    const test=new Date(2024,p.month-1,p.day);
-    if(test.getMonth()!==p.month-1||test.getDate()!==p.day)return null;
-    return `${String(p.month).padStart(2,"0")}-${String(p.day).padStart(2,"0")}`;
+    const p=birthdayParts(value);if(!p||!p.year)return null;
+    const test=new Date(p.year,p.month-1,p.day);
+    if(test.getFullYear()!==p.year||test.getMonth()!==p.month-1||test.getDate()!==p.day)return null;
+    return `${String(p.year).padStart(4,"0")}-${String(p.month).padStart(2,"0")}-${String(p.day).padStart(2,"0")}`;
   }
-  function birthdaysInCurrentWeek(){
-    const {start}=currentWeekRange(),out=[];
-    Object.entries(state.birthdays||{}).forEach(([id,b])=>{
-      const bp=birthdayParts(b.date);if(!bp||!b.name)return;
-      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);if(bp.month===d.getMonth()+1&&bp.day===d.getDate())out.push({id,...b,displayDate:isoLocal(d)})}
-    });
-    return out.sort((a,b)=>a.displayDate.localeCompare(b.displayDate));
+  function birthdayAge(b,year){
+    const p=birthdayParts(b?.date);return p?.year?year-p.year:null;
+  }
+  function birthdaysToday(){
+    const today=new Date(),month=today.getMonth()+1,day=today.getDate(),year=today.getFullYear(),displayDate=isoLocal(today);
+    return Object.entries(state.birthdays||{}).flatMap(([id,b])=>{
+      const bp=birthdayParts(b.date);if(!bp||!b.name||bp.month!==month||bp.day!==day)return[];
+      return[{id,...b,displayDate,age:birthdayAge(b,year)}];
+    }).sort((a,b)=>a.name.localeCompare(b.name,"de"));
   }
   function renderDashboard(){
     const {startIso,endIso}=currentWeekRange();
     const events=Object.values(state.events||{}).filter(e=>e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),time=e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:"",duration=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${day}${time}${duration} · ${escapeHtml(e.name)}</div></div></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
-    const birthdays=birthdaysInCurrentWeek();
-    const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="dash-task"><div><div><b>${escapeHtml(b.name)}</b> · ${day} · Geburtstag</div></div></div>`}).join(""):`<div class="muted">Keine Geburtstage diese Woche.</div>`;
+    const birthdays=birthdaysToday();
+    const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),age=b.age!=null?` · ${b.age} Jahre`:"";return `<div class="dash-task"><div><div><b>${escapeHtml(b.name)}</b> · ${day} · Geburtstag${age}</div></div></div>`}).join(""):`<div class="muted">Heute keine Geburtstage.</div>`;
     $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${eventHtml}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${birthdayHtml}</div>`;
 
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
@@ -839,7 +846,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   if(calendarMedia.addEventListener)calendarMedia.addEventListener("change",()=>{renderCalendar();renderMeals()});
   function renderBirthdays(){
     if(!$("birthdayList"))return;const rows=Object.entries(state.birthdays||{}).sort((a,b)=>{const ap=birthdayParts(a[1].date),bp=birthdayParts(b[1].date);return `${String(ap?.month||99).padStart(2,"0")}${String(ap?.day||99).padStart(2,"0")}`.localeCompare(`${String(bp?.month||99).padStart(2,"0")}${String(bp?.day||99).padStart(2,"0")}`)});
-    $("birthdayList").innerHTML=rows.length?rows.map(([id,b])=>{const label=birthdayValueForInput(b.date);return `<div class="birthday-row"><div><b>${escapeHtml(b.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(label)} · jährlich</div></div><div class="reward-actions"><button class="mini" data-edit-birthday="${id}">Ändern</button><button class="mini" data-delete-birthday="${id}">Löschen</button></div></div>`}).join(""):`<div class="muted">Noch keine Geburtstage gepflegt.</div>`;
+    $("birthdayList").innerHTML=rows.length?rows.map(([id,b])=>{const label=birthdayValueForInput(b.date),p=birthdayParts(b.date),extra=p?.year?"jährlich":"Jahr fehlt · Alter nicht verfügbar";return `<div class="birthday-row"><div><b>${escapeHtml(b.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(label)} · ${extra}</div></div><div class="reward-actions"><button class="mini" data-edit-birthday="${id}">Ändern</button><button class="mini" data-delete-birthday="${id}">Löschen</button></div></div>`}).join(""):`<div class="muted">Noch keine Geburtstage gepflegt.</div>`;
     document.querySelectorAll("[data-edit-birthday]").forEach(b=>b.onclick=()=>openBirthdayModal(b.dataset.editBirthday));
     document.querySelectorAll("[data-delete-birthday]").forEach(b=>b.onclick=async()=>{await set(ref(db,`families/${familyId}/birthdays/${b.dataset.deleteBirthday}`),null)});
   }
@@ -940,7 +947,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   $("monthViewBtn").onclick=()=>{calendarMode="month";$("monthViewBtn").classList.add("active");$("weekViewBtn").classList.remove("active");renderCalendar()};
 
 
-  $("saveBirthdayBtn").onclick=async()=>{const name=$("birthdayName").value.trim(),date=birthdayStorageValue($("birthdayDate").value);if(!name||!date){alert("Bitte Geburtstag als TT.MM. eingeben, z. B. 14.03.");return}const id=editingBirthdayId||push(ref(db,`families/${familyId}/birthdays`)).key;await set(ref(db,`families/${familyId}/birthdays/${id}`),{name,date,recurringYearly:true,updatedAt:Date.now()});editingBirthdayId=null;closeModal("birthdayModal")};
+  $("saveBirthdayBtn").onclick=async()=>{const name=$("birthdayName").value.trim(),date=birthdayStorageValue($("birthdayDate").value);if(!name||!date){alert("Bitte vollständiges Geburtsdatum als TT.MM.JJJJ eingeben, z. B. 14.03.1985.");return}const id=editingBirthdayId||push(ref(db,`families/${familyId}/birthdays`)).key;await set(ref(db,`families/${familyId}/birthdays/${id}`),{name,date,recurringYearly:true,updatedAt:Date.now()});editingBirthdayId=null;closeModal("birthdayModal")};
   $("saveMealWishBtn").onclick=async()=>{const name=$("mealWishName").value.trim(),personId=$("mealWishPerson").value;if(!name||!personId)return;const key=push(ref(db,`families/${familyId}/mealWishes`)).key;await set(ref(db,`families/${familyId}/mealWishes/${key}`),{name,person:personId,createdAt:Date.now()});await rememberMeal(name);$("mealWishName").value="";closeModal("mealWishModal")};
 
   $("saveHolidayBtn").onclick=async()=>{
