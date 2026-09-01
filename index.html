@@ -172,7 +172,12 @@
       h1{font-size:24px}.top{flex-direction:column;align-items:stretch;gap:12px}.top>div:last-child{max-width:100%;flex-wrap:wrap}.top>div:last-child>button{min-width:0}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
       .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding:4px 2px calc(4px + env(safe-area-inset-bottom));min-height:68px}
       .mobile-nav button{border:0;background:white;min-width:0;min-height:56px;padding:7px 1px 5px;font-size:12px;line-height:1.25;color:#536159;touch-action:manipulation}.mobile-nav button.active{color:var(--accent);font-weight:850}
-      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;gap:4px}.meal-day{min-height:66px;padding:5px;border-radius:9px}.meal-day.today{padding:4px}.meal-entry{font-size:10px;padding:4px}.meal-date{font-size:10px}.meal-day:not(:has(.meal-entry))::after{content:"+";font-size:13px}
+      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}
+      .meal-month.meal-mobile-list{display:grid;grid-template-columns:1fr;gap:0;min-width:0;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}
+      .meal-mobile-row{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:8px;min-height:48px;padding:8px 11px;border-bottom:1px solid var(--line);background:#fff;cursor:pointer}
+      .meal-mobile-row:last-child{border-bottom:0}.meal-mobile-row.filled{background:#f8fbff}.meal-mobile-row.today{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+      .meal-mobile-date{display:flex;gap:7px;align-items:center;font-size:12px;color:#334155}.meal-mobile-date b{width:23px;font-size:11px}.meal-mobile-name{font-size:13px;font-weight:750;overflow-wrap:anywhere}.meal-mobile-name span{color:var(--muted);font-weight:700}
+      .meal-day{min-height:66px;padding:5px;border-radius:9px}.meal-day.today{padding:4px}.meal-entry{font-size:10px;padding:4px}.meal-date{font-size:10px}
       .week-meals{grid-template-columns:1fr;min-width:0;gap:4px}.dashboard-meals-wrap{overflow:visible;margin:0;padding:0}.week-meal{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;padding:7px 9px}.week-meal-day{margin:0}.week-meal-name{white-space:normal;overflow:visible}
       .reward-person-card{padding:12px}.reward-person-head{align-items:flex-start}.reward-chip{padding:7px}.weekday-row{gap:4px}.weekday-row label{min-height:40px}
     }
@@ -628,17 +633,29 @@ Mittwoch | Gemüsepfanne"></textarea>
     mealCursor.setDate(1);
     const year=mealCursor.getFullYear(),month=mealCursor.getMonth();
     $("mealMonthTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(mealCursor);
-    const first=new Date(year,month,1), offset=(first.getDay()+6)%7, daysInMonth=new Date(year,month+1,0).getDate();
-    const days=["Mo","Di","Mi","Do","Fr","Sa","So"];
-    let html=days.map(d=>`<div class="meal-head">${d}</div>`).join("");
-    html+=Array.from({length:offset},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
-    for(let day=1;day<=daysInMonth;day++){
-      const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),meal=state.meals?.[iso];
-      html+=`<div class="meal-day ${today?'today':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${day}. ${escapeHtml(meal?.name||'Gericht eintragen')}"><div class="meal-date">${day}.</div>${meal?`<div class="meal-entry">${escapeHtml(meal.name)}</div>`:''}</div>`;
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    if(window.matchMedia("(max-width: 780px)").matches){
+      $("mealMonthGrid").classList.add("meal-mobile-list");
+      let html="";
+      for(let day=1;day<=daysInMonth;day++){
+        const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),meal=state.meals?.[iso],
+          weekday=new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(d).replace(".","").toUpperCase();
+        html+=`<div class="meal-mobile-row ${today?'today':''} ${meal?'filled':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${weekday} ${String(day).padStart(2,"0")}. ${escapeHtml(meal?.name||'Gericht eintragen')}"><div class="meal-mobile-date"><b>${weekday}</b><span>${String(day).padStart(2,"0")}.</span></div><div class="meal-mobile-name">${meal?escapeHtml(meal.name):'<span>+ Gericht</span>'}</div></div>`;
+      }
+      $("mealMonthGrid").innerHTML=html;
+    }else{
+      $("mealMonthGrid").classList.remove("meal-mobile-list");
+      const first=new Date(year,month,1),offset=(first.getDay()+6)%7,days=["Mo","Di","Mi","Do","Fr","Sa","So"];
+      let html=days.map(d=>`<div class="meal-head">${d}</div>`).join("");
+      html+=Array.from({length:offset},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
+      for(let day=1;day<=daysInMonth;day++){
+        const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),meal=state.meals?.[iso];
+        html+=`<div class="meal-day ${today?'today':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${day}. ${escapeHtml(meal?.name||'Gericht eintragen')}"><div class="meal-date">${day}.</div>${meal?`<div class="meal-entry">${escapeHtml(meal.name)}</div>`:''}</div>`;
+      }
+      const trailing=(7-((offset+daysInMonth)%7))%7;
+      html+=Array.from({length:trailing},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
+      $("mealMonthGrid").innerHTML=html;
     }
-    const trailing=(7-((offset+daysInMonth)%7))%7;
-    html+=Array.from({length:trailing},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
-    $("mealMonthGrid").innerHTML=html;
     const openDay=el=>{const iso=el.dataset.mealDate;$("mealName").value=state.meals?.[iso]?.name||"";openMealModal(iso)};
     $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(el=>{el.onclick=()=>openDay(el);el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDay(el)}}});
     renderMealMemory();
@@ -783,7 +800,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   function eventTimeLabel(e){const time=e.time&&e.time!=="00:00"?e.time:"ohne Uhrzeit",dur=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `${time}${dur}`}
   function renderCalendar(){
     const events=Object.values(state.events||{});
-    if(window.matchMedia("(max-width: 780px)").matches){
+    if(window.matchMedia("(max-width: 780px)").matches&&calendarMode==="week"){
       const now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
       const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
@@ -802,7 +819,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
   }
   const calendarMedia=window.matchMedia("(max-width: 780px)");
-  if(calendarMedia.addEventListener)calendarMedia.addEventListener("change",()=>renderCalendar());
+  if(calendarMedia.addEventListener)calendarMedia.addEventListener("change",()=>{renderCalendar();renderMeals()});
   function renderBirthdays(){
     if(!$("birthdayList"))return;const rows=Object.entries(state.birthdays||{}).sort((a,b)=>{const ap=birthdayParts(a[1].date),bp=birthdayParts(b[1].date);return `${String(ap?.month||99).padStart(2,"0")}${String(ap?.day||99).padStart(2,"0")}`.localeCompare(`${String(bp?.month||99).padStart(2,"0")}${String(bp?.day||99).padStart(2,"0")}`)});
     $("birthdayList").innerHTML=rows.length?rows.map(([id,b])=>{const label=birthdayValueForInput(b.date);return `<div class="birthday-row"><div><b>${escapeHtml(b.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(label)} · jährlich</div></div><div class="reward-actions"><button class="mini" data-edit-birthday="${id}">Ändern</button><button class="mini" data-delete-birthday="${id}">Löschen</button></div></div>`}).join(""):`<div class="muted">Noch keine Geburtstage gepflegt.</div>`;
@@ -919,7 +936,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     closeModal("holidayModal");
   };
   $("saveMealBtn").onclick=async()=>{const name=$("mealName").value.trim(),date=$("mealDate").value;if(!name||!date)return;const changes={};if(editingMealDate&&editingMealDate!==date)changes[editingMealDate]=null;changes[date]={name,updatedAt:Date.now()};await update(ref(db,`families/${familyId}/meals`),changes);await rememberMeal(name);const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}editingMealDate=null;$("mealName").value="";closeModal("mealModal")};
-  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;if(!confirm("Dieses Essen aus dem Kalender löschen?"))return;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealName").value="";closeModal("mealModal")};
+  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealName").value="";closeModal("mealModal")};
   $("mealImportBtn").onclick=async()=>{const lines=$("mealImportText").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),items=lines.map(parseMealImportLine).filter(Boolean);if(!items.length){$("mealImportStatus").textContent="Keine gültigen Zeilen erkannt.";return}const updates={};for(const it of items){updates[it.date]={name:it.name,updatedAt:Date.now()}}await update(ref(db,`families/${familyId}/meals`),updates);for(const it of items)await rememberMeal(it.name);$("mealImportStatus").textContent=`${items.length} Gerichte importiert.`;setTimeout(()=>{closeModal("mealImportModal");$("mealImportText").value="";$("mealImportStatus").textContent=""},700)};
   $("mealPrevBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()-1);renderMeals()};
   $("mealNextBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()+1);renderMeals()};
