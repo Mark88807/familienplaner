@@ -179,7 +179,6 @@
       <button data-view="rewards">🎁 Belohnungen</button>
       <button data-view="calendar">▣ Kalender</button>
       <button data-view="meals">🍽 Essenplan</button>
-      <button data-view="family">♙ Familie</button>
       <button data-view="settings">⚙ Einstellungen</button>
     </nav>
     <div class="aside-bottom"><div class="family-badge"><span class="color-dot"></span><span id="familyLabel">Familie</span></div></div>
@@ -259,17 +258,16 @@
       <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 50</div><div class="meal-memory" id="mealMemoryList"></div></div>
     </section>
 
-    <section class="view" id="family">
-      <div class="top"><div><h1>Familie</h1><div class="sub">Punkte und nächster Bonus pro Person.</div></div></div>
-      <div class="family-grid" id="familyGrid"></div>
-    </section>
-
     <section class="view" id="settings">
       <div class="top"><div><h1>Einstellungen</h1><div class="sub">Einfach halten.</div></div></div>
       <div class="card settings">
         <div class="setting"><span>Familienname</span><button class="ghost" id="editFamilyBtn">Ändern</button></div>
         <div class="setting"><span>Familiencode</span><button class="ghost" id="showCodeBtn">Anzeigen</button></div>
         <div class="setting"><span>Dieses Gerät von Familie trennen</span><button class="danger" id="leaveFamilyBtn">Trennen</button></div>
+      </div>
+      <div style="margin-top:18px">
+        <div class="title" style="margin-bottom:10px">Familienmitglieder</div>
+        <div class="family-grid" id="familyGrid"></div>
       </div>
     </section>
   </main>
@@ -595,7 +593,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     $("allRewardsGrid").innerHTML=Object.entries(state.people||{}).map(([pid,p])=>{
       const pts=Number(p.points)||0, nb=nextBonus(pts);
       const rewards=Object.entries(state.rewards?.[pid]||{});
-      return `<div class="card reward-person-card">
+      return `<div class="card reward-person-card" style="background:linear-gradient(145deg,${p.color||'#999'}1F,${p.color||'#999'}0D 58%,#ffffff 100%);border-color:${p.color||'#999'}38">
         <div class="reward-person-head">
           <div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div class="muted reward-person-meta">noch ${nb.missing} bis ${nb.next}</div></div>
           <div class="reward-points">${pts} P</div>
