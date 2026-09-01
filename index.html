@@ -118,6 +118,15 @@
     .week-meal-day{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px}
     .week-meal-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .task-filter-tabs button{cursor:pointer}
+    .dashboard-events-section+.dashboard-events-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+    .dashboard-section-label{font-size:11px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .birthday-row,.wish-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+    .birthday-row:last-child,.wish-row:last-child{border-bottom:0}
+    .settings-section{margin-top:18px}
+    .settings-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .settings-head .title{margin:0}
+    .meal-wishes{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+    .meal-wish-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px}
     .ideas-compact{display:none}
     .ideas-compact button{min-width:0;text-align:left}
     @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}}
@@ -201,7 +210,7 @@
         </div>
 
         <div class="card">
-          <div class="dash-card-head"><div class="title">Termine</div><button class="mini" onclick="openEventModal()">+ Termin</button></div>
+          <div class="dash-card-head"><div class="title">Diese Woche</div><button class="mini" onclick="openEventModal()">+ Termin</button></div>
           <div id="dashboardEvents"></div>
         </div>
 
@@ -218,7 +227,7 @@
 
     <section class="view" id="tasks">
       <div class="top"><div><h1>Aufgaben</h1><div class="sub">Schnell erledigen, Punkte sammeln.</div></div><button class="primary" onclick="openTaskModal()">+ Aufgabe</button></div>
-      <div class="tabs task-filter-tabs"><button class="active" data-task-filter="open">Offen</button><button data-task-filter="recurring">Wiederkehrend</button><button data-task-filter="all">Alle</button></div>
+      <div class="tabs task-filter-tabs"><button class="active" data-task-filter="open">Offen</button><button data-task-filter="recurring">Wiederkehrende Aufgaben & Routinen</button></div>
       <div class="grid">
         <div class="card"><div class="title" id="taskListTitle">Offene Aufgaben</div><div class="list" id="taskList"></div></div>
         <div style="display:grid;gap:16px">
@@ -255,6 +264,10 @@
         <div class="meal-toolbar"><div class="title" id="mealMonthTitle" style="margin:0"></div><button class="ghost" onclick="openModal('mealImportModal')">Schnellimport Text</button></div>
         <div class="calendar-wrap"><div class="meal-month" id="mealMonthGrid"></div></div>
       </div>
+      <div class="card" style="margin-top:14px">
+        <div class="settings-head"><div class="title">Essenswünsche</div><button class="mini" onclick="openModal('mealWishModal')">+ Wunsch</button></div>
+        <div id="mealWishList"></div>
+      </div>
       <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 50</div><div class="meal-memory" id="mealMemoryList"></div></div>
     </section>
 
@@ -265,9 +278,13 @@
         <div class="setting"><span>Familiencode</span><button class="ghost" id="showCodeBtn">Anzeigen</button></div>
         <div class="setting"><span>Dieses Gerät von Familie trennen</span><button class="danger" id="leaveFamilyBtn">Trennen</button></div>
       </div>
-      <div style="margin-top:18px">
+      <div class="settings-section">
         <div class="title" style="margin-bottom:10px">Familienmitglieder</div>
         <div class="family-grid" id="familyGrid"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-head"><div><div class="title">Geburtstage</div><div class="muted" style="font-size:12px">Familie, Freunde und weitere Personen. Geburtstage erscheinen nur im Dashboard, nicht im Kalender.</div></div><button class="mini" onclick="openBirthdayModal()">+ Geburtstag</button></div>
+        <div class="card" id="birthdayList"></div>
       </div>
     </section>
   </main>
@@ -288,7 +305,7 @@
   <select id="taskPerson"></select>
   <input id="taskPoints" type="number" min="1" value="10">
   <div class="repeat-box">
-    <label class="repeat-toggle"><span>Wiederkehrende Aufgabe</span><input id="taskRecurring" type="checkbox" aria-label="Wiederkehrende Aufgabe"></label>
+    <label class="repeat-toggle"><span>Wiederkehrende Aufgabe / Routine</span><input id="taskRecurring" type="checkbox" aria-label="Wiederkehrende Aufgabe"></label>
     <select id="taskRepeatType" disabled>
       <option value="daily">Täglich</option>
       <option value="weekly" selected>Wöchentlich</option>
@@ -319,7 +336,7 @@
   <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time"></div>
   <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
   <select id="eventPerson"></select>
-  
+  <div class="muted" style="font-size:12px">Für gemeinsame Termine „Alle“ wählen. Bei „Ausflug“ wird das automatisch gesetzt.</div>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
@@ -341,6 +358,7 @@
 
 <div class="modal" id="mealModal"><div class="box"><h2>Gericht eintragen</h2><div class="form">
   <input id="mealName" placeholder="z. B. Kürbissuppe" list="mealDatalist"><datalist id="mealDatalist"></datalist>
+  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Essenswünsche</div><div class="meal-wishes" id="mealModalWishes"></div></div>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Essens-Gedächtnis</div><div class="meal-memory" id="mealModalMemory"></div></div>
   <input id="mealDate" type="date">
   <div class="actions"><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
@@ -358,6 +376,18 @@ Mittwoch | Gemüsepfanne"></textarea>
   <input id="memberNameEdit" placeholder="Name">
   <div><div class="muted" style="margin-bottom:8px">Farbe</div><div class="color-picker" id="memberColors"></div></div>
   <div class="actions"><button class="ghost" onclick="closeModal('memberEditModal')">Abbrechen</button><button class="primary" id="saveMemberEditBtn">Speichern</button></div>
+</div></div></div>
+
+<div class="modal" id="birthdayModal"><div class="box"><h2 id="birthdayModalTitle">Geburtstag hinzufügen</h2><div class="form">
+  <input id="birthdayName" placeholder="Name, z. B. Oma, Paul oder Anna">
+  <label class="muted">Geburtsdatum</label><input id="birthdayDate" type="date">
+  <div class="actions"><button class="ghost" onclick="closeModal('birthdayModal')">Abbrechen</button><button class="primary" id="saveBirthdayBtn">Speichern</button></div>
+</div></div></div>
+
+<div class="modal" id="mealWishModal"><div class="box"><h2>Essenswunsch</h2><div class="form">
+  <select id="mealWishPerson"></select>
+  <input id="mealWishName" placeholder="z. B. Lasagne">
+  <div class="actions"><button class="ghost" onclick="closeModal('mealWishModal')">Abbrechen</button><button class="primary" id="saveMealWishBtn">Speichern</button></div>
 </div></div></div>
 <div class="modal" id="codeModal"><div class="box"><h2>Familiencode</h2><p>Diesen Code auf einem weiteren Familiengerät einmalig eingeben.</p><div class="code" id="codeValue"></div><div class="actions"><button class="ghost" id="copyCodeBtn">Kopieren</button><button class="primary" onclick="closeModal('codeModal')">Fertig</button></div></div></div>
 
@@ -383,12 +413,12 @@ Mittwoch | Gemüsepfanne"></textarea>
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open";
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
   const escapeHtml=(s="")=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  const person=id=>state.people?.[id]||{name:"Unbekannt",points:0};
+  const person=id=>id==="all"?{name:"Alle",points:0,color:state.color||COLORS[0]}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});
   const isoLocal=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
   function hexToSoft(hex){ return hex+"18"; }
   function applyTheme(){
@@ -417,6 +447,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
   document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
+  $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
   $("taskRecurring").onchange=()=>{
     $("taskRepeatType").disabled=!$("taskRecurring").checked;
     $("weekdayRow").classList.toggle("hidden",!$("taskRecurring").checked || $("taskRepeatType").value!=="weekdays");
@@ -440,7 +471,7 @@ Mittwoch | Gemüsepfanne"></textarea>
           max:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
           papa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}},
           mama:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}}
-        },events:{},holidays:{}
+        },events:{},holidays:{},birthdays:{},mealWishes:{}
       };
       await set(ref(db,`families/${familyId}`),starter);localStorage.setItem(LS_FAMILY,familyId);$("familyGate").classList.remove("open");startSync();setTimeout(showFamilyCode,250)
     }catch(e){$("gateMsg").textContent="Fehler: "+e.message}
@@ -455,20 +486,21 @@ Mittwoch | Gemüsepfanne"></textarea>
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
-      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.rewardLog||={};
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
       applyTheme();render();
     },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
   }
 
   function render(){
-    fillPeople();renderDashboard();renderTasks();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderTaskSuggestions();
+    fillPeople();renderDashboard();renderTasks();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();
     $("familyLabel").textContent=state.name||"Familie"; $("dashboardTitle").textContent=state.name||"Dashboard";
     $("dashboardDate").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date());
   }
   function fillPeople(){
     const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
-    ["taskPerson","rewardPerson","eventPerson","icsDefaultPerson"].forEach(id=>$(id).innerHTML=opts)
+    ["taskPerson","rewardPerson","icsDefaultPerson","mealWishPerson"].forEach(id=>{if($(id))$(id).innerHTML=opts});
+    if($("eventPerson")) $("eventPerson").innerHTML=`<option value="all">Alle</option>${opts}`
   }
   function taskMemorySorted(){
     return Object.entries(state.taskMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,8)
@@ -486,7 +518,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     const list=eventMemorySorted();
     $("eventModalSuggestions").innerHTML=list.slice(0,10).map(([id,m])=>`<button class="suggestion" data-event-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
     $("eventDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
-    $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{$("eventName").value=state.eventMemory[b.dataset.eventMem].name});
+    $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{const name=state.eventMemory[b.dataset.eventMem].name;$("eventName").value=name;if(name.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
   }
   async function rememberEvent(name){
     const norm=name.trim().toLowerCase();
@@ -519,7 +551,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     else{const key=push(ref(db,`families/${familyId}/mealMemory`)).key;await set(ref(db,`families/${familyId}/mealMemory/${key}`),{name:name.trim(),uses:1,lastUsed:Date.now(),prefill:false})}
   }
   window.openMealModal=(date=null)=>{
-    renderMealMemory();
+    renderMealMemory();renderMealWishes();
     if(date)$("mealDate").value=date;
     else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
     openModal("mealModal");
@@ -562,27 +594,41 @@ Mittwoch | Gemüsepfanne"></textarea>
     return date?{date,name}:null;
   }
 
+  function currentWeekRange(){
+    const now=new Date(),weekday=(now.getDay()+6)%7,start=new Date(now);start.setHours(0,0,0,0);start.setDate(now.getDate()-weekday);
+    const end=new Date(start);end.setDate(start.getDate()+6);return{start,end,startIso:isoLocal(start),endIso:isoLocal(end)};
+  }
+  function birthdaysInCurrentWeek(){
+    const {start}=currentWeekRange(),out=[];
+    Object.entries(state.birthdays||{}).forEach(([id,b])=>{
+      if(!b.date||!b.name)return;const parts=b.date.split("-");if(parts.length!==3)return;
+      for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);if(Number(parts[1])===d.getMonth()+1&&Number(parts[2])===d.getDate())out.push({id,...b,displayDate:isoLocal(d),age:d.getFullYear()-Number(parts[0])})}
+    });
+    return out.sort((a,b)=>a.displayDate.localeCompare(b.displayDate));
+  }
   function renderDashboard(){
-    const today=isoLocal(new Date()),events=Object.values(state.events||{}).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
-    const upcoming=events.filter(e=>e.date>=today).slice(0,5);
-    $("dashboardEvents").innerHTML=upcoming.length?upcoming.map(e=>{const p=person(e.person);return `<div style="display:grid;grid-template-columns:54px 12px minmax(70px,auto) 1fr;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)"><b>${e.time||"--:--"}</b><span class="member-color" style="background:${p.color||'#999'};margin:0"></span><span style="font-weight:700">${escapeHtml(p.name)}</span><span>${escapeHtml(e.name)}</span></div>`}).join(""):`<div class="muted">Keine kommenden Termine.</div>`;
+    const {startIso,endIso}=currentWeekRange();
+    const events=Object.values(state.events||{}).filter(e=>e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+    const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div style="display:grid;grid-template-columns:72px 12px minmax(60px,auto) 1fr;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span class="muted" style="font-size:12px">${day}</span><span class="member-color" style="background:${p.color||'#999'};margin:0"></span><span style="font-weight:700">${escapeHtml(p.name)}</span><span>${escapeHtml(e.name)}${e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:""}</span></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
+    const birthdays=birthdaysInCurrentWeek();
+    const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div style="display:grid;grid-template-columns:72px 1fr;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span class="muted" style="font-size:12px">${day}</span><span><b>${escapeHtml(b.name)}</b><span class="muted"> · Geburtstag${b.age>0?` · ${b.age}`:""}</span></span></div>`}).join(""):`<div class="muted">Keine Geburtstage diese Woche.</div>`;
+    $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${eventHtml}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${birthdayHtml}</div>`;
 
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
-    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="muted" style="font-size:12px">${Number(t.points)||10} Punkte${t.recurring?' · ↻ wiederkehrend':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
+    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="muted" style="font-size:12px">${Number(t.points)||10} Punkte${t.recurring?' · ↻ Routine':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
 
     $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
 
-    const now=new Date(),weekday=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-weekday);
-    const dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
-    $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);const iso=isoLocal(d),meal=state.meals?.[iso]?.name;return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${meal?'':'muted'}" title="${escapeHtml(meal||'Noch offen')}">${escapeHtml(meal||'–')}</div></div>`}).join("");
+    const {start}=currentWeekRange(),dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
+    $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),meal=state.meals?.[iso]?.name;return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${meal?'':'muted'}" title="${escapeHtml(meal||'Noch offen')}">${escapeHtml(meal||'–')}</div></div>`}).join("");
   }
 
 
   function renderTasks(){
     const allItems=Object.entries(state.tasks||{});
-    const items=allItems.filter(([id,t])=>taskFilter==="all"?true:taskFilter==="recurring"?!!t.recurring:!t.done);
-    $("taskListTitle").textContent=taskFilter==="all"?"Alle Aufgaben":taskFilter==="recurring"?"Wiederkehrende Aufgaben":"Offene Aufgaben";
+    const items=allItems.filter(([id,t])=>taskFilter==="recurring"?!!t.recurring:(!t.recurring&&!t.done));
+    $("taskListTitle").textContent=taskFilter==="recurring"?"Wiederkehrende Aufgaben & Routinen":"Offene Aufgaben";
     $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
     document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
@@ -653,6 +699,20 @@ Mittwoch | Gemüsepfanne"></textarea>
     hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" style="background:${person(e.person).color||'#2f73d9'}18;color:${person(e.person).color||'#2f73d9'};border-left:3px solid ${person(e.person).color||'#2f73d9'}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
     $("calendarGrid").innerHTML=html
   }
+  function renderBirthdays(){
+    if(!$("birthdayList"))return;const rows=Object.entries(state.birthdays||{}).sort((a,b)=>(a[1].date||"").slice(5).localeCompare((b[1].date||"").slice(5)));
+    $("birthdayList").innerHTML=rows.length?rows.map(([id,b])=>{const d=b.date?new Date(b.date+"T12:00:00"):null,label=d?new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"long",year:"numeric"}).format(d):"";return `<div class="birthday-row"><div><b>${escapeHtml(b.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(label)}</div></div><div class="reward-actions"><button class="mini" data-edit-birthday="${id}">Ändern</button><button class="mini" data-delete-birthday="${id}">Löschen</button></div></div>`}).join(""):`<div class="muted">Noch keine Geburtstage gepflegt.</div>`;
+    document.querySelectorAll("[data-edit-birthday]").forEach(b=>b.onclick=()=>openBirthdayModal(b.dataset.editBirthday));
+    document.querySelectorAll("[data-delete-birthday]").forEach(b=>b.onclick=async()=>{await set(ref(db,`families/${familyId}/birthdays/${b.dataset.deleteBirthday}`),null)});
+  }
+  window.openBirthdayModal=(id=null)=>{editingBirthdayId=id;const b=id?state.birthdays?.[id]:null;$("birthdayModalTitle").textContent=id?"Geburtstag bearbeiten":"Geburtstag hinzufügen";$("birthdayName").value=b?.name||"";$("birthdayDate").value=b?.date||"";openModal("birthdayModal")};
+  function renderMealWishes(){
+    if(!$("mealWishList"))return;const rows=Object.entries(state.mealWishes||{});
+    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><button class="mini" data-delete-wish="${id}">Erledigt</button></div>`}).join(""):`<div class="muted">Aktuell keine Essenswünsche.</div>`;
+    if($("mealModalWishes"))$("mealModalWishes").innerHTML=rows.map(([id,w])=>{const p=person(w.person);return `<button class="meal-wish-chip" data-use-wish="${id}"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(w.name)}</button>`}).join("")||`<span class="muted" style="font-size:12px">Keine Wünsche</span>`;
+    document.querySelectorAll("[data-delete-wish]").forEach(b=>b.onclick=async()=>set(ref(db,`families/${familyId}/mealWishes/${b.dataset.deleteWish}`),null));
+    document.querySelectorAll("[data-use-wish]").forEach(b=>b.onclick=()=>{const w=state.mealWishes?.[b.dataset.useWish];if(w)$("mealName").value=w.name});
+  }
   function renderFamily(){
     $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="card member"><div class="avatar" style="box-shadow:0 0 0 3px ${p.color||'#999'}22;border:2px solid ${p.color||'#999'}"></div><div style="flex:1"><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div>${pts} Punkte</div><div class="muted">Noch ${nb.missing} bis Bonus ${nb.next}</div><div class="bar" style="margin-top:8px"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`}).join("");
     document.querySelectorAll("[data-edit-member]").forEach(b=>b.onclick=()=>openMemberEdit(b.dataset.editMember));
@@ -700,7 +760,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     closeModal("taskModal")
   };
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim();if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:10});$("rewardName").value="";closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:$("eventPerson").value,date,time:$("eventTime").value||"00:00"});await rememberEvent(name);$("eventName").value="";closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time:$("eventTime").value||"00:00"});await rememberEvent(name);$("eventName").value="";closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
@@ -732,6 +792,9 @@ Mittwoch | Gemüsepfanne"></textarea>
   $("weekViewBtn").onclick=()=>{calendarMode="week";$("weekViewBtn").classList.add("active");$("monthViewBtn").classList.remove("active");renderCalendar()};
   $("monthViewBtn").onclick=()=>{calendarMode="month";$("monthViewBtn").classList.add("active");$("weekViewBtn").classList.remove("active");renderCalendar()};
 
+
+  $("saveBirthdayBtn").onclick=async()=>{const name=$("birthdayName").value.trim(),date=$("birthdayDate").value;if(!name||!date)return;const id=editingBirthdayId||push(ref(db,`families/${familyId}/birthdays`)).key;await set(ref(db,`families/${familyId}/birthdays/${id}`),{name,date,updatedAt:Date.now()});editingBirthdayId=null;closeModal("birthdayModal")};
+  $("saveMealWishBtn").onclick=async()=>{const name=$("mealWishName").value.trim(),personId=$("mealWishPerson").value;if(!name||!personId)return;const key=push(ref(db,`families/${familyId}/mealWishes`)).key;await set(ref(db,`families/${familyId}/mealWishes/${key}`),{name,person:personId,createdAt:Date.now()});await rememberMeal(name);$("mealWishName").value="";closeModal("mealWishModal")};
 
   $("saveHolidayBtn").onclick=async()=>{
     const name=$("holidayName").value.trim(),start=$("holidayStart").value,end=$("holidayEnd").value;
