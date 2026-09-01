@@ -364,8 +364,8 @@
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Termin-Gedächtnis</div><div class="suggestions" id="eventModalSuggestions"></div></div>
   <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time" aria-label="Uhrzeit optional"></div>
   <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="12:00">12:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
-  <input id="eventDuration" type="number" min="0.5" max="24" step="0.5" placeholder="Dauer optional (Stunden)">
-  <div class="quick-row"><button type="button" data-durationquick="2">2 h</button><button type="button" data-durationquick="4">4 h</button><button type="button" data-durationquick="6">6 h</button><button type="button" data-durationquick="10">10 h</button></div>
+  <input id="eventDuration" type="hidden" value="">
+  <div class="quick-row"><span class="muted" style="font-size:12px;align-self:center">Dauer:</span><button type="button" data-durationquick="2">2 h</button><button type="button" data-durationquick="4">4 h</button><button type="button" data-durationquick="6">6 h</button><button type="button" data-durationquick="10">10 h</button></div>
   <select id="eventPerson"></select>
   <div class="muted" style="font-size:12px">Für gemeinsame Termine „Alle“ wählen. Bei „Ausflug“ wird das automatisch gesetzt.</div>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
@@ -568,12 +568,12 @@ Mittwoch | Gemüsepfanne"></textarea>
     $("taskDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("")
   }
   function eventMemorySorted(){
-    return Object.entries(state.eventMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,25)
+    return Object.entries(state.eventMemory||{}).sort((a,b)=>(b[1].uses||0)-(a[1].uses||0)||(b[1].lastUsed||0)-(a[1].lastUsed||0))
   }
   function renderEventSuggestions(){
     if(!$("eventModalSuggestions")) return;
     const list=eventMemorySorted();
-    $("eventModalSuggestions").innerHTML=list.slice(0,10).map(([id,m])=>`<button class="suggestion" data-event-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    $("eventModalSuggestions").innerHTML=list.slice(0,3).map(([id,m])=>`<button class="suggestion" data-event-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
     $("eventDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
     $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{const name=state.eventMemory[b.dataset.eventMem].name;$("eventName").value=name;if(name.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
   }
@@ -801,9 +801,9 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
   function renderMealWishes(){
     if(!$("mealWishList"))return;const rows=Object.entries(state.mealWishes||{}),dateOpts=mealWishDateOptions();
-    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><div class="wish-plan"><select data-wish-date="${id}" aria-label="Kalendertag auswählen">${dateOpts}</select><button class="mini" data-plan-wish="${id}">Eintragen</button></div></div>`}).join(""):`<div class="muted">Aktuell keine Essenswünsche.</div>`;
+    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><div class="wish-plan"><select data-wish-date="${id}" aria-label="Kalendertag auswählen"><option value="" selected disabled>Datum wählen …</option>${dateOpts}</select></div></div>`}).join(""):`<div class="muted">Aktuell keine Essenswünsche.</div>`;
     if($("mealModalWishes"))$("mealModalWishes").innerHTML=rows.map(([id,w])=>{const p=person(w.person);return `<button class="meal-wish-chip" data-use-wish="${id}"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(w.name)}</button>`}).join("")||`<span class="muted" style="font-size:12px">Keine Wünsche</span>`;
-    document.querySelectorAll("[data-plan-wish]").forEach(b=>b.onclick=()=>{const sel=document.querySelector(`[data-wish-date="${b.dataset.planWish}"]`);scheduleMealWish(b.dataset.planWish,sel?.value)});
+    document.querySelectorAll("[data-wish-date]").forEach(sel=>sel.onchange=()=>{if(sel.value)scheduleMealWish(sel.dataset.wishDate,sel.value)});
     document.querySelectorAll("[data-use-wish]").forEach(b=>b.onclick=()=>{const w=state.mealWishes?.[b.dataset.useWish];if(w){$("mealName").value=w.name;$("mealModal").dataset.wishId=b.dataset.useWish}});
   }
   function renderFamily(){
