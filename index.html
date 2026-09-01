@@ -150,6 +150,14 @@
     .form{display:grid;gap:11px}.form input,.form select{padding:12px;border:1px solid var(--line);border-radius:11px;width:100%;background:white}
     .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;background:#f4f7f5;border:1px solid var(--line);padding:12px;border-radius:11px;font-size:13px}
     .notice{padding:11px 12px;border-radius:11px;background:#fff8e9;color:#805c19;font-size:13px}
+
+    .mobile-calendar-list{display:grid;gap:8px}
+    .mobile-cal-day{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff}
+    .mobile-cal-day.today{border:2px solid var(--accent);padding:9px}
+    .mobile-cal-date{font-size:13px;font-weight:900;margin-bottom:5px;text-transform:capitalize}
+    .mobile-cal-event{display:flex;gap:7px;align-items:flex-start;border-left:3px solid;padding:7px 8px;margin-top:5px;background:#f8fafc;border-radius:8px;font-size:12px}
+    .mobile-cal-event .member-color{margin-top:3px;flex:0 0 12px}
+    .mobile-cal-empty{font-size:11px;color:var(--muted);padding:2px 0}
     .mobile-nav{display:none}.quick-row{display:flex;gap:8px;flex-wrap:wrap}.quick-row button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px}
     .color-picker{display:flex;gap:10px;flex-wrap:wrap}.color-choice{width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px var(--line)}
     .color-choice.active{box-shadow:0 0 0 3px #222}
@@ -160,12 +168,12 @@
     .mobile-datetime{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-wide{grid-column:1/-1}.dash-grid>.card:nth-child(3){grid-column:1/-1}}
     @media(max-width:780px){
-      body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid,.dash-grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
+      html,body{width:100%;max-width:100%;overflow-x:hidden}body{padding-bottom:82px}.shell{display:block;width:100%;max-width:100%}aside{display:none}main{padding:14px 12px;width:100%;max-width:100%;min-width:0}.view,.grid,.dash-grid,.card{min-width:0;max-width:100%}.grid,.dash-grid{grid-template-columns:minmax(0,1fr)}.family-grid{grid-template-columns:1fr}
       h1{font-size:24px}.top{flex-direction:column;align-items:stretch;gap:12px}.top>div:last-child{max-width:100%;flex-wrap:wrap}.top>div:last-child>button{min-width:0}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
-      .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
-      .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--accent);font-weight:800}
+      .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding:4px 2px calc(4px + env(safe-area-inset-bottom));min-height:68px}
+      .mobile-nav button{border:0;background:white;min-width:0;min-height:56px;padding:7px 1px 5px;font-size:12px;line-height:1.25;color:#536159;touch-action:manipulation}.mobile-nav button.active{color:var(--accent);font-weight:850}
       .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;gap:4px}.meal-day{min-height:66px;padding:5px;border-radius:9px}.meal-day.today{padding:4px}.meal-entry{font-size:10px;padding:4px}.meal-date{font-size:10px}.meal-day:not(:has(.meal-entry))::after{content:"+";font-size:13px}
-      .week-meals{grid-template-columns:repeat(7,minmax(86px,1fr));min-width:650px}.dashboard-meals-wrap{overflow:auto;margin:0 -2px;padding:2px}
+      .week-meals{grid-template-columns:1fr;min-width:0;gap:4px}.dashboard-meals-wrap{overflow:visible;margin:0;padding:0}.week-meal{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;padding:7px 9px}.week-meal-day{margin:0}.week-meal-name{white-space:normal;overflow:visible}
       .reward-person-card{padding:12px}.reward-person-head{align-items:flex-start}.reward-chip{padding:7px}.weekday-row{gap:4px}.weekday-row label{min-height:40px}
     }
   </style>
@@ -392,7 +400,7 @@
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Essenswünsche</div><div class="meal-wishes" id="mealModalWishes"></div></div>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Essens-Gedächtnis</div><div class="meal-memory" id="mealModalMemory"></div></div>
   <input id="mealDate" type="date">
-  <div class="actions"><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
+  <div class="actions"><button class="danger" id="deleteMealBtn" type="button" style="display:none;margin-right:auto">Löschen</button><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
 </div></div></div>
 
 <div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p>Eine Zeile pro Gericht. Unterstützt Datum oder Wochentag. Beispiele:<br><b>03.09 | Kürbissuppe</b><br><b>Mittwoch | Kürbissuppe</b></p><div class="form">
@@ -446,7 +454,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null;
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -609,8 +617,10 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
   window.openMealModal=(date=null)=>{
     renderMealMemory();renderMealWishes();
+    editingMealDate=date&&state.meals?.[date]?date:null;
     if(date)$("mealDate").value=date;
     else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
+    $("deleteMealBtn").style.display=editingMealDate?"inline-flex":"none";
     openModal("mealModal");
   };
   function renderMeals(){
@@ -773,6 +783,13 @@ Mittwoch | Gemüsepfanne"></textarea>
   function eventTimeLabel(e){const time=e.time&&e.time!=="00:00"?e.time:"ohne Uhrzeit",dur=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `${time}${dur}`}
   function renderCalendar(){
     const events=Object.values(state.events||{});
+    if(window.matchMedia("(max-width: 780px)").matches){
+      const now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
+      const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
+      $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
+      $("calendarGrid").innerHTML=`<div class="mobile-calendar-list">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),label=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="mobile-cal-day ${today?'today':''}"><div class="mobile-cal-date">${label}</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-cal-event" style="border-left-color:${p.color||ALL_COLOR}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><div><b>${escapeHtml(e.name)}</b><div class="muted">${escapeHtml(p.name)} · ${escapeHtml(eventTimeLabel(e))}</div></div></div>`}).join(""):`<div class="mobile-cal-empty">Keine Termine</div>`}</div>`}).join("")}</div>`;
+      return;
+    }
     if(calendarMode==="month"){
       const start=new Date(),day=(start.getDay()+6)%7;start.setHours(0,0,0,0);start.setDate(start.getDate()-day);
       const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d}),heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
@@ -784,6 +801,8 @@ Mittwoch | Gemüsepfanne"></textarea>
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
     hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
   }
+  const calendarMedia=window.matchMedia("(max-width: 780px)");
+  if(calendarMedia.addEventListener)calendarMedia.addEventListener("change",()=>renderCalendar());
   function renderBirthdays(){
     if(!$("birthdayList"))return;const rows=Object.entries(state.birthdays||{}).sort((a,b)=>{const ap=birthdayParts(a[1].date),bp=birthdayParts(b[1].date);return `${String(ap?.month||99).padStart(2,"0")}${String(ap?.day||99).padStart(2,"0")}`.localeCompare(`${String(bp?.month||99).padStart(2,"0")}${String(bp?.day||99).padStart(2,"0")}`)});
     $("birthdayList").innerHTML=rows.length?rows.map(([id,b])=>{const label=birthdayValueForInput(b.date);return `<div class="birthday-row"><div><b>${escapeHtml(b.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(label)} · jährlich</div></div><div class="reward-actions"><button class="mini" data-edit-birthday="${id}">Ändern</button><button class="mini" data-delete-birthday="${id}">Löschen</button></div></div>`}).join(""):`<div class="muted">Noch keine Geburtstage gepflegt.</div>`;
@@ -899,7 +918,8 @@ Mittwoch | Gemüsepfanne"></textarea>
     $("holidayName").value="";
     closeModal("holidayModal");
   };
-  $("saveMealBtn").onclick=async()=>{const name=$("mealName").value.trim(),date=$("mealDate").value;if(!name||!date)return;await set(ref(db,`families/${familyId}/meals/${date}`),{name,updatedAt:Date.now()});await rememberMeal(name);const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}$("mealName").value="";closeModal("mealModal")};
+  $("saveMealBtn").onclick=async()=>{const name=$("mealName").value.trim(),date=$("mealDate").value;if(!name||!date)return;const changes={};if(editingMealDate&&editingMealDate!==date)changes[editingMealDate]=null;changes[date]={name,updatedAt:Date.now()};await update(ref(db,`families/${familyId}/meals`),changes);await rememberMeal(name);const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}editingMealDate=null;$("mealName").value="";closeModal("mealModal")};
+  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;if(!confirm("Dieses Essen aus dem Kalender löschen?"))return;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealName").value="";closeModal("mealModal")};
   $("mealImportBtn").onclick=async()=>{const lines=$("mealImportText").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),items=lines.map(parseMealImportLine).filter(Boolean);if(!items.length){$("mealImportStatus").textContent="Keine gültigen Zeilen erkannt.";return}const updates={};for(const it of items){updates[it.date]={name:it.name,updatedAt:Date.now()}}await update(ref(db,`families/${familyId}/meals`),updates);for(const it of items)await rememberMeal(it.name);$("mealImportStatus").textContent=`${items.length} Gerichte importiert.`;setTimeout(()=>{closeModal("mealImportModal");$("mealImportText").value="";$("mealImportStatus").textContent=""},700)};
   $("mealPrevBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()-1);renderMeals()};
   $("mealNextBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()+1);renderMeals()};
