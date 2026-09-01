@@ -159,7 +159,7 @@
     @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}.dash-wide{grid-column:1/-1}.dash-grid>.card:nth-child(3){grid-column:1/-1}}
     @media(max-width:780px){
       body{padding-bottom:67px}.shell{display:block}aside{display:none}main{padding:16px 13px}.grid,.dash-grid{grid-template-columns:1fr}.family-grid{grid-template-columns:1fr}
-      h1{font-size:24px}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
+      h1{font-size:24px}.top{flex-direction:column;align-items:stretch;gap:12px}.top>div:last-child{max-width:100%;flex-wrap:wrap}.top>div:last-child>button{min-width:0}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
       .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
       .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--accent);font-weight:800}
       .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;gap:4px}.meal-day{min-height:66px;padding:5px;border-radius:9px}.meal-day.today{padding:4px}.meal-entry{font-size:10px;padding:4px}.meal-date{font-size:10px}.meal-day:not(:has(.meal-entry))::after{content:"+";font-size:13px}
@@ -197,7 +197,7 @@
       <button class="active" data-view="dashboard">⌂ Dashboard</button>
       <button data-view="tasks">✓ Aufgaben</button>
       <button data-view="rewards">🎁 Belohnungen</button>
-      <button data-view="calendar">▣ Kalender</button>
+      <button data-view="calendar">▦ Kalender</button>
       <button data-view="meals">🍽 Essenplan</button>
       <button data-view="settings">⚙ Einstellungen</button>
     </nav>
@@ -305,7 +305,7 @@
   <button class="active" data-view="dashboard">⌂<br>Start</button>
   <button data-view="tasks">✓<br>Aufgaben</button>
   <button data-view="rewards">🎁<br>Bonus</button>
-  <button data-view="calendar">▣<br>Kalender</button>
+  <button data-view="calendar">▦<br>Kalender</button>
   <button data-view="meals">🍽<br>Essen</button>
   <button data-view="settings">•••<br>Mehr</button>
 </div>
@@ -314,7 +314,7 @@
   <input id="taskName" placeholder="z. B. Bad säubern" list="taskDatalist"><datalist id="taskDatalist"></datalist>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Gedächtnis</div><div class="suggestions" id="taskModalSuggestions"></div></div>
   <select id="taskPerson"></select>
-  <input id="taskPoints" type="number" min="1" value="10">
+  <div class="notice" style="padding:9px 11px">Aufgabe: <b>10 Punkte</b></div>
   <div class="task-mode" aria-label="Aufgabentyp">
     <button type="button" class="active" id="taskModeTask">Aufgabe</button>
     <button type="button" id="taskModeRoutine">Routine</button>
@@ -436,7 +436,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   const app = initializeApp(firebaseConfig), auth=getAuth(app), db=getDatabase(app);
   const LS_FAMILY="familienplaner_family_id_v2";
   const COLORS=["#17845b","#2f6fce","#6d4acb","#b96800","#c43d3d","#007f83"];
-  const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Staubsaugen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
+  const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
@@ -539,7 +539,10 @@ Mittwoch | Gemüsepfanne"></textarea>
     if($("eventPerson")) $("eventPerson").innerHTML=`<option value="all">Alle</option>${opts}`
   }
   function taskMemorySorted(){
-    return Object.entries(state.taskMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,8)
+    return Object.entries(state.taskMemory||{})
+      .filter(([id,m])=>(m.name||"").trim().toLowerCase()!=="staubsaugen")
+      .sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0)))
+      .slice(0,5)
   }
   function renderTaskSuggestions(){
     const list=taskMemorySorted();const html=list.map(([id,m])=>`<button class="suggestion" data-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
@@ -664,13 +667,13 @@ Mittwoch | Gemüsepfanne"></textarea>
   function renderDashboard(){
     const {startIso,endIso}=currentWeekRange();
     const events=Object.values(state.events||{}).filter(e=>e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
-    const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div style="display:grid;grid-template-columns:72px 12px minmax(60px,auto) 1fr;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span class="muted" style="font-size:12px">${day}</span><span class="member-color" style="background:${p.color||'#999'};margin:0"></span><span style="font-weight:700">${escapeHtml(p.name)}</span><span>${escapeHtml(e.name)}${e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:""}</span></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
+    const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),time=e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:"";return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${day}${time} · ${escapeHtml(e.name)}</div></div></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
     const birthdays=birthdaysInCurrentWeek();
-    const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div style="display:grid;grid-template-columns:72px 1fr;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span class="muted" style="font-size:12px">${day}</span><span><b>${escapeHtml(b.name)}</b><span class="muted"> · Geburtstag</span></span></div>`}).join(""):`<div class="muted">Keine Geburtstage diese Woche.</div>`;
+    const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="dash-task"><div><div><b>${escapeHtml(b.name)}</b> · ${day} · Geburtstag</div></div></div>`}).join(""):`<div class="muted">Keine Geburtstage diese Woche.</div>`;
     $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${eventHtml}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${birthdayHtml}</div>`;
 
     const openItems=Object.entries(state.tasks||{}).filter(([id,t])=>!t.done);
-    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="muted" style="font-size:12px">${Number(t.points)||10} Punkte${t.recurring?' · ↻ Routine':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
+    $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="muted" style="font-size:12px">10 Punkte${t.recurring?' · ↻ Routine':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
 
     $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
@@ -684,7 +687,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     const allItems=Object.entries(state.tasks||{});
     const items=allItems.filter(([id,t])=>taskFilter==="recurring"?!!t.recurring:(!t.recurring&&!t.done));
     $("taskListTitle").textContent=taskFilter==="recurring"?"Routinen":"Offene Aufgaben";
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ 10</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
     document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
@@ -784,7 +787,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     else{const key=push(ref(db,`families/${familyId}/taskMemory`)).key;await set(ref(db,`families/${familyId}/taskMemory/${key}`),{name:name.trim(),uses:1,lastUsed:Date.now(),prefill:false})}
   }
   async function toggleTask(id){
-    const t=state.tasks[id],p=person(t.person),pts=Number(t.points)||10,current=Number(p.points)||0;
+    const t=state.tasks[id],p=person(t.person),pts=10,current=Number(p.points)||0;
     if(t.recurring){
       await update(familyRef(),{
         [`people/${t.person}/points`]:current+pts,
@@ -805,7 +808,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     const weekdays=repeatType==="weekdays"?Array.from($("weekdayRow").querySelectorAll('input:checked')).map(x=>Number(x.value)):[];
     const key=push(ref(db,`families/${familyId}/tasks`)).key;
     await set(ref(db,`families/${familyId}/tasks/${key}`),{
-      name,person:$("taskPerson").value,points:Number($("taskPoints").value)||10,done:false,
+      name,person:$("taskPerson").value,points:10,done:false,
       recurring,repeatType,weekdays,lastCompletedAt:0
     });
     await rememberTask(name);
