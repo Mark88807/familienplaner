@@ -59,12 +59,14 @@
     .calendar .head{min-height:auto;text-align:center;font-weight:750}.event{padding:6px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:700;margin-bottom:3px}
     .settings{display:grid;gap:10px}.setting{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:13px}
     .meal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-    .meal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-    .meal-head{text-align:center;font-size:12px;font-weight:800;color:var(--muted);padding:5px}
-    .meal-day{min-height:118px;border:1px solid var(--line);border-radius:14px;padding:8px;background:linear-gradient(180deg,#fff,#fbfdff);display:flex;flex-direction:column;gap:6px}
-    .meal-day.outside{opacity:.45}.meal-day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft)}
-    .meal-date{font-size:12px;font-weight:800}.meal-entry{padding:7px;border-radius:10px;background:linear-gradient(135deg,#edf5ff,#f8fbff);color:#24599e;font-size:12px;font-weight:750;line-height:1.3}
-    .meal-add{margin-top:auto;border:1px dashed var(--line);background:transparent;border-radius:9px;padding:6px;color:var(--muted);font-size:12px}
+    .meal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+    .meal-head{text-align:center;font-size:11px;font-weight:850;color:var(--muted);padding:4px 2px}
+    .meal-day{min-height:78px;border:1px solid var(--line);border-radius:11px;padding:7px;background:linear-gradient(180deg,#fff,#fbfdff);display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:border-color .15s,transform .15s}
+    .meal-day:hover{border-color:#b9c8da}.meal-day:active{transform:scale(.985)}
+    .meal-day.today{border:2px solid var(--accent);padding:6px;box-shadow:0 0 0 2px var(--accent-soft)}
+    .meal-empty{min-height:1px}
+    .meal-date{font-size:11px;font-weight:850;color:#4b5563}.meal-entry{padding:5px 6px;border-radius:8px;background:linear-gradient(135deg,#edf5ff,#f8fbff);color:#1f4f8d;font-size:11px;font-weight:750;line-height:1.25;overflow-wrap:anywhere}
+    .meal-day:not(:has(.meal-entry))::after{content:"+ Gericht";margin-top:auto;color:var(--muted);font-size:10px;font-weight:700}
     .meal-import-area{width:100%;min-height:170px;padding:12px;border:1px solid var(--line);border-radius:12px;resize:vertical;font:inherit;line-height:1.5}
     .meal-memory{display:flex;gap:8px;flex-wrap:wrap;max-height:170px;overflow:auto}
 
@@ -76,15 +78,20 @@
     .dash-task:last-child{border-bottom:0}
     .member-color{width:12px;height:12px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:6px}
     .reward-actions{display:flex;gap:7px;align-items:center}
-    .reward-person-card{display:grid;gap:9px;padding:14px;border:2px solid var(--person-color,#667085)!important;border-left-width:6px!important;background:linear-gradient(145deg,var(--person-soft,#f5f7fa),#fff 72%)!important}
-    .reward-person-card .bar{height:7px;background:#dfe5ec;border:1px solid #c8d0da}
-    .reward-points{font-size:22px;font-weight:900;line-height:1;color:#111827}
-    .reward-person-meta{font-size:12px;margin-top:3px;color:#4b5563}
-    .reward-chip-list{display:grid;grid-template-columns:1fr;gap:6px}
-    .reward-chip{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 8px;background:rgba(255,255,255,.94);color:#111827}
-    .reward-chip .mini{white-space:nowrap;padding:6px 8px;border-color:#334155;color:#0f172a;background:#fff}
-    .reward-chip .primary-mini{background:#172133;color:#fff;border-color:#172133}
-    .reward-person-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .reward-person-card{display:grid;gap:8px;padding:13px 14px;border:1px solid #cbd5e1!important;border-left:5px solid var(--person-color,#475569)!important;background:linear-gradient(110deg,var(--person-soft,#f1f5f9),#fff 76%)!important;box-shadow:0 5px 16px rgba(15,23,42,.05)}
+    .reward-points{font-size:20px;font-weight:900;line-height:1;color:#0f172a;white-space:nowrap}
+    .reward-person-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:5px;border-bottom:1px solid rgba(100,116,139,.22)}
+    .reward-chip-list{display:grid;grid-template-columns:1fr;gap:2px}
+    .reward-chip{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:9px 2px;border:0;border-bottom:1px solid rgba(100,116,139,.20);background:transparent;color:#0f172a}
+    .reward-chip:last-child{border-bottom:0}
+    .reward-name{font-weight:750;min-width:0;overflow-wrap:anywhere}
+    .reward-cost{font-size:12px;font-weight:900;color:#334155;white-space:nowrap}
+    .reward-redeem{border:1px solid #1e293b;background:#fff;color:#0f172a;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:850;white-space:nowrap}
+    .reward-redeem:not(:disabled):hover{background:#0f172a;color:#fff}
+    .reward-redeem:disabled{opacity:.42;cursor:not-allowed}
+    .reward-quick{display:flex;gap:7px;flex-wrap:wrap}
+    .reward-quick button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 11px;font-weight:800}
+    .reward-quick button:hover{border-color:var(--accent);color:var(--accent)}
     
     .holiday-band{padding:5px 7px;border-radius:8px;background:linear-gradient(135deg,#eaf2ff,#f5f9ff);color:#315f9e;font-size:11px;font-weight:800;border-left:3px solid #7fa9e8}
     .mini{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;font-size:12px;font-weight:700}
@@ -105,10 +112,11 @@
     .progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center}
     .calendar-switch{display:flex;gap:6px}
     .calendar-switch button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .task-mode{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .task-mode button{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px;font-weight:800;color:#475569}
+    .task-mode button.active{background:var(--accent-soft);border:2px solid var(--accent);padding:9px;color:#172133}
     .repeat-box{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fbfdff,#f6f9fc)}
-    .repeat-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:750}
-    .repeat-toggle input{width:20px;height:20px;accent-color:var(--accent)}
-    .repeat-box select:disabled{opacity:.5}
+    .repeat-options.hidden{display:none}
     .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
     .weekday-row label{position:relative;display:grid;place-items:center;min-height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:12px;font-weight:750;cursor:pointer}
     .weekday-row input{position:absolute;opacity:0;pointer-events:none}
@@ -154,7 +162,7 @@
       h1{font-size:24px}.card{padding:14px}.task{grid-template-columns:36px 1fr auto}.task .check{grid-column:3}.points{grid-column:3}
       .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
       .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--accent);font-weight:800}
-      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(92px,1fr));min-width:720px}.meal-day{min-height:104px}
+      .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;gap:4px}.meal-day{min-height:66px;padding:5px;border-radius:9px}.meal-day.today{padding:4px}.meal-entry{font-size:10px;padding:4px}.meal-date{font-size:10px}.meal-day:not(:has(.meal-entry))::after{content:"+";font-size:13px}
       .week-meals{grid-template-columns:repeat(7,minmax(86px,1fr));min-width:650px}.dashboard-meals-wrap{overflow:auto;margin:0 -2px;padding:2px}
       .reward-person-card{padding:12px}.reward-person-head{align-items:flex-start}.reward-chip{padding:7px}.weekday-row{gap:4px}.weekday-row label{min-height:40px}
     }
@@ -242,7 +250,7 @@
 
     <section class="view" id="rewards">
       <div class="top">
-        <div><h1>Belohnungen</h1><div class="sub">Alle Familienmitglieder auf einen Blick. Jede Belohnung kostet 10 Punkte.</div></div>
+        <div><h1>Belohnungen</h1><div class="sub">Alle Familienmitglieder auf einen Blick. Kosten pro Belohnung frei festlegen.</div></div>
         <button class="primary" onclick="openModal('rewardModal')">+ Belohnung</button>
       </div>
       <div class="family-grid" id="allRewardsGrid"></div>
@@ -307,9 +315,14 @@
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Gedächtnis</div><div class="suggestions" id="taskModalSuggestions"></div></div>
   <select id="taskPerson"></select>
   <input id="taskPoints" type="number" min="1" value="10">
-  <div class="repeat-box">
-    <label class="repeat-toggle"><span>Routine</span><input id="taskRecurring" type="checkbox" aria-label="Routine"></label>
-    <select id="taskRepeatType" disabled>
+  <div class="task-mode" aria-label="Aufgabentyp">
+    <button type="button" class="active" id="taskModeTask">Aufgabe</button>
+    <button type="button" id="taskModeRoutine">Routine</button>
+  </div>
+  <input id="taskRecurring" type="checkbox" class="hidden" aria-hidden="true">
+  <div class="repeat-box repeat-options hidden" id="routineOptions">
+    <div class="muted" style="font-size:12px;font-weight:800">Wiederholung</div>
+    <select id="taskRepeatType">
       <option value="daily">Täglich</option>
       <option value="weekly" selected>Wöchentlich</option>
       <option value="weekdays">Bestimmte Wochentage</option>
@@ -328,7 +341,18 @@
 </div></div></div>
 
 <div class="modal" id="rewardModal"><div class="box"><h2>Belohnung</h2><div class="form">
-  <select id="rewardPerson"></select><input id="rewardName" placeholder="z. B. 30 Min. Gaming"><input id="rewardCost" type="number" value="10" disabled>
+  <select id="rewardPerson"></select>
+  <input id="rewardName" placeholder="z. B. Kino">
+  <div>
+    <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Kosten in Punkten</div>
+    <input id="rewardCost" type="number" min="1" step="1" value="50" inputmode="numeric">
+  </div>
+  <div class="reward-quick" aria-label="Punkte Schnellwahl">
+    <button type="button" data-reward-cost="25">25</button>
+    <button type="button" data-reward-cost="50">50</button>
+    <button type="button" data-reward-cost="75">75</button>
+    <button type="button" data-reward-cost="100">100</button>
+  </div>
   <div class="actions"><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
 </div></div></div>
 
@@ -442,7 +466,15 @@ Mittwoch | Gemüsepfanne"></textarea>
 
   window.openModal=id=>$(id).classList.add("open");
   window.closeModal=id=>$(id).classList.remove("open");
-  window.openTaskModal=()=>{renderTaskSuggestions();openModal("taskModal")};
+  function setTaskMode(mode){
+    const routine=mode==="routine";
+    $("taskRecurring").checked=routine;
+    $("taskModeTask").classList.toggle("active",!routine);
+    $("taskModeRoutine").classList.toggle("active",routine);
+    $("routineOptions").classList.toggle("hidden",!routine);
+    $("weekdayRow").classList.toggle("hidden",!routine || $("taskRepeatType").value!=="weekdays");
+  }
+  window.openTaskModal=()=>{setTaskMode("task");renderTaskSuggestions();openModal("taskModal")};
   window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)}renderEventSuggestions();openModal("eventModal")};
   window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
 
@@ -451,13 +483,12 @@ Mittwoch | Gemüsepfanne"></textarea>
   document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
   $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
-  $("taskRecurring").onchange=()=>{
-    $("taskRepeatType").disabled=!$("taskRecurring").checked;
-    $("weekdayRow").classList.toggle("hidden",!$("taskRecurring").checked || $("taskRepeatType").value!=="weekdays");
-  };
+  $("taskModeTask").onclick=()=>setTaskMode("task");
+  $("taskModeRoutine").onclick=()=>setTaskMode("routine");
   $("taskRepeatType").onchange=()=>{
     $("weekdayRow").classList.toggle("hidden",$("taskRepeatType").value!=="weekdays");
   };
+  document.querySelectorAll("[data-reward-cost]").forEach(b=>b.onclick=()=>$("rewardCost").value=b.dataset.rewardCost);
   document.querySelectorAll("[data-task-filter]").forEach(b=>b.onclick=()=>{taskFilter=b.dataset.taskFilter;document.querySelectorAll("[data-task-filter]").forEach(x=>x.classList.toggle("active",x===b));renderTasks()});
 
   async function createFamily(){
@@ -566,16 +597,19 @@ Mittwoch | Gemüsepfanne"></textarea>
     mealCursor.setDate(1);
     const year=mealCursor.getFullYear(),month=mealCursor.getMonth();
     $("mealMonthTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(mealCursor);
-    const first=new Date(year,month,1), offset=(first.getDay()+6)%7, gridStart=new Date(year,month,1-offset);
+    const first=new Date(year,month,1), offset=(first.getDay()+6)%7, daysInMonth=new Date(year,month+1,0).getDate();
     const days=["Mo","Di","Mi","Do","Fr","Sa","So"];
     let html=days.map(d=>`<div class="meal-head">${d}</div>`).join("");
-    for(let i=0;i<42;i++){
-      const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);const iso=isoLocal(d),outside=d.getMonth()!==month,today=iso===isoLocal(new Date());
-      const meal=state.meals?.[iso];
-      html+=`<div class="meal-day ${outside?'outside':''} ${today?'today':''}"><div class="meal-date">${d.getDate()}.</div>${meal?`<div class="meal-entry">${escapeHtml(meal.name)}</div>`:''}<button class="meal-add" data-meal-date="${iso}">${meal?'Ändern':'+ Gericht'}</button></div>`;
+    html+=Array.from({length:offset},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
+    for(let day=1;day<=daysInMonth;day++){
+      const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),meal=state.meals?.[iso];
+      html+=`<div class="meal-day ${today?'today':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${day}. ${escapeHtml(meal?.name||'Gericht eintragen')}"><div class="meal-date">${day}.</div>${meal?`<div class="meal-entry">${escapeHtml(meal.name)}</div>`:''}</div>`;
     }
+    const trailing=(7-((offset+daysInMonth)%7))%7;
+    html+=Array.from({length:trailing},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
     $("mealMonthGrid").innerHTML=html;
-    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(b=>b.onclick=()=>{const iso=b.dataset.mealDate;$("mealName").value=state.meals?.[iso]?.name||"";openMealModal(iso)});
+    const openDay=el=>{const iso=el.dataset.mealDate;$("mealName").value=state.meals?.[iso]?.name||"";openMealModal(iso)};
+    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(el=>{el.onclick=()=>openDay(el);el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDay(el)}}});
     renderMealMemory();
   }
   function weekdayIndexGerman(text){
@@ -658,16 +692,15 @@ Mittwoch | Gemüsepfanne"></textarea>
   function renderRewards(){
     if(!$("allRewardsGrid")) return;
     $("allRewardsGrid").innerHTML=Object.entries(state.people||{}).map(([pid,p])=>{
-      const pts=Number(p.points)||0, nb=nextBonus(pts);
+      const pts=Number(p.points)||0;
       const rewards=Object.entries(state.rewards?.[pid]||{});
       return `<div class="card reward-person-card" style="--person-color:${p.color||'#667085'};--person-soft:${p.color||'#667085'}18">
         <div class="reward-person-head">
-          <div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div class="muted reward-person-meta">noch ${nb.missing} bis ${nb.next}</div></div>
-          <div class="reward-points">${pts} P</div>
+          <div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b></div>
+          <div class="reward-points">${pts} Punkte</div>
         </div>
-        <div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div>
         <div class="reward-chip-list">
-          ${rewards.length?rewards.map(([rid,r])=>`<div class="reward-chip"><span>${escapeHtml(r.name)}</span><button class="mini primary-mini" data-redeem-person="${pid}" data-redeem-id="${rid}" ${pts<10?'disabled style="opacity:.45;cursor:not-allowed"':''}>10 P · Einlösen</button></div>`).join(""):`<span class="muted">Noch keine Belohnungen.</span>`}
+          ${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10);return `<div class="reward-chip"><span class="reward-name">${escapeHtml(r.name)}</span><span class="reward-cost">${cost} P</span><button class="reward-redeem" data-redeem-person="${pid}" data-redeem-id="${rid}" ${pts<cost?'disabled':''}>Einlösen</button></div>`}).join(""):`<span class="muted" style="padding:6px 0">Noch keine Belohnungen.</span>`}
         </div>
       </div>`;
     }).join("");
@@ -675,7 +708,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
   async function redeemReward(personId,rewardId){
     const p=person(personId),r=state.rewards?.[personId]?.[rewardId];if(!r)return;
-    const pts=Number(p.points)||0,cost=10;if(pts<cost)return;
+    const pts=Number(p.points)||0,cost=Math.max(1,Number(r.cost)||10);if(pts<cost)return;
     const logKey=push(ref(db,`families/${familyId}/rewardLog`)).key;
     await update(familyRef(),{
       [`people/${personId}/points`]:pts-cost,
@@ -777,10 +810,10 @@ Mittwoch | Gemüsepfanne"></textarea>
     });
     await rememberTask(name);
     $("taskName").value="";
-    $("taskRecurring").checked=false;$("taskRepeatType").disabled=true;$("weekdayRow").classList.add("hidden");
+    setTaskMode("task");
     closeModal("taskModal")
   };
-  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim();if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost:10});$("rewardName").value="";closeModal("rewardModal")};
+  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50));if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost});$("rewardName").value="";$("rewardCost").value="50";closeModal("rewardModal")};
   $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time:$("eventTime").value||"00:00"});await rememberEvent(name);$("eventName").value="";closeModal("eventModal")};
 
 
