@@ -132,6 +132,7 @@
     .member-compact{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
     .member-compact-name{display:flex;align-items:center;min-width:0}
     .birthday-row,.wish-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+    .wish-plan{display:flex;gap:7px;align-items:center}.wish-plan select{padding:7px 8px;border:1px solid var(--line);border-radius:9px;background:#fff}
     .birthday-row:last-child,.wish-row:last-child{border-bottom:0}
     .settings-section{margin-top:18px}
     .settings-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
@@ -140,7 +141,8 @@
     .meal-wish-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px}
     .ideas-compact{display:none}
     .ideas-compact button{min-width:0;text-align:left}
-    @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}}
+    @media(max-width:780px){
+      .wish-row{grid-template-columns:1fr}.wish-plan{width:100%}.wish-plan select{flex:1;min-width:0}.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}}
     .modal,.gate{position:fixed;inset:0;z-index:20;background:rgba(16,24,20,.35);display:none;align-items:center;justify-content:center;padding:18px}
     .modal.open,.gate.open{display:flex}
     .box{width:min(500px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:21px;box-shadow:0 24px 80px rgba(0,0,0,.18)}
@@ -279,7 +281,7 @@
         <div class="settings-head"><div class="title">Essenswünsche</div><button class="mini" onclick="openModal('mealWishModal')">+ Wunsch</button></div>
         <div id="mealWishList"></div>
       </div>
-      <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 50</div><div class="meal-memory" id="mealMemoryList"></div></div>
+      <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 15</div><div class="meal-memory" id="mealMemoryList"></div></div>
     </section>
 
     <section class="view" id="settings">
@@ -360,8 +362,10 @@
   <input id="eventName" placeholder="Titel, z. B. Fußballtraining" list="eventDatalist">
   <datalist id="eventDatalist"></datalist>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Termin-Gedächtnis</div><div class="suggestions" id="eventModalSuggestions"></div></div>
-  <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time"></div>
-  <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
+  <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time" aria-label="Uhrzeit optional"></div>
+  <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="12:00">12:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
+  <input id="eventDuration" type="number" min="0.5" max="24" step="0.5" placeholder="Dauer optional (Stunden)">
+  <div class="quick-row"><button type="button" data-durationquick="2">2 h</button><button type="button" data-durationquick="4">4 h</button><button type="button" data-durationquick="6">6 h</button><button type="button" data-durationquick="10">10 h</button></div>
   <select id="eventPerson"></select>
   <div class="muted" style="font-size:12px">Für gemeinsame Termine „Alle“ wählen. Bei „Ausflug“ wird das automatisch gesetzt.</div>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
@@ -436,6 +440,8 @@ Mittwoch | Gemüsepfanne"></textarea>
   const app = initializeApp(firebaseConfig), auth=getAuth(app), db=getDatabase(app);
   const LS_FAMILY="familienplaner_family_id_v2";
   const COLORS=["#17845b","#2f6fce","#6d4acb","#b96800","#c43d3d","#007f83"];
+  const ALL_COLOR="#475569";
+  const DATA_RESET_VERSION=1;
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
@@ -445,7 +451,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
   const escapeHtml=(s="")=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  const person=id=>id==="all"?{name:"Alle",points:0,color:state.color||COLORS[0]}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});
+  const person=id=>id==="all"?{name:"Alle",points:0,color:ALL_COLOR}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});
   const isoLocal=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
   function hexToSoft(hex){ return hex+"18"; }
   function applyTheme(){
@@ -465,7 +471,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   renderColorPickers();
 
   window.openModal=id=>$(id).classList.add("open");
-  window.closeModal=id=>$(id).classList.remove("open");
+  window.closeModal=id=>{if(id==="mealModal")delete $("mealModal").dataset.wishId;$(id).classList.remove("open")};
   function setTaskMode(mode){
     const routine=mode==="routine";
     $("taskRecurring").checked=routine;
@@ -482,6 +488,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
   document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
+  document.querySelectorAll("[data-durationquick]").forEach(b=>b.onclick=()=>$("eventDuration").value=b.dataset.durationquick);
   $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
   $("taskModeTask").onclick=()=>setTaskMode("task");
   $("taskModeRoutine").onclick=()=>setTaskMode("routine");
@@ -497,7 +504,7 @@ Mittwoch | Gemüsepfanne"></textarea>
       familyId=makeFamilyCode();
       const taskMemory={};PREFILL_TASKS.forEach((name,i)=>taskMemory["seed"+i]={name,uses:0,lastUsed:0,prefill:true});
       const starter={
-        name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),
+        name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),meta:{dataResetVersion:DATA_RESET_VERSION},
         people:{lisa:{name:"Lisa",points:0,color:"#e74f87"},max:{name:"Max",points:0,color:"#3974d8"},papa:{name:"Papa",points:0,color:"#8054d8"},mama:{name:"Mama",points:0,color:"#c43d3d"}},
         tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
         rewards:{
@@ -516,11 +523,22 @@ Mittwoch | Gemüsepfanne"></textarea>
     try{const snap=await get(ref(db,`families/${code}`));if(!snap.exists()){ $("gateMsg").textContent="Keine Familie mit diesem Code gefunden.";return } familyId=code;localStorage.setItem(LS_FAMILY,familyId);$("familyGate").classList.remove("open");startSync()}
     catch(e){$("gateMsg").textContent="Zugriff nicht möglich: "+e.message}
   }
+  async function runOneTimeDataResetIfNeeded(){
+    if(Number(state.meta?.dataResetVersion||0)>=DATA_RESET_VERSION)return false;
+    const taskMemory=Object.fromEntries(PREFILL_TASKS.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
+    const eventMemory=Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
+    const mealMemory=Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
+    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
+    Object.keys(state.people||{}).forEach(id=>changes[`people/${id}/points`]=0);
+    await update(familyRef(),changes);return true;
+  }
+
   function startSync(){
     if(unsubscribe)unsubscribe();
-    unsubscribe=onValue(familyRef(),snap=>{
+    unsubscribe=onValue(familyRef(),async snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
       state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};
+      if(await runOneTimeDataResetIfNeeded())return;
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
       if(mamaEntry&&["#e74f87","#e58a21"].includes(String(mamaEntry[1].color||"").toLowerCase())){state.people[mamaEntry[0]].color="#c43d3d";update(ref(db,`families/${familyId}/people/${mamaEntry[0]}`),{color:"#c43d3d"}).catch(()=>{});}
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
@@ -572,13 +590,13 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
 
   function mealMemorySorted(){
-    return Object.entries(state.mealMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0))).slice(0,50)
+    return Object.entries(state.mealMemory||{}).sort((a,b)=>((b[1].uses||0)*100000+(b[1].lastUsed||0))-((a[1].uses||0)*100000+(a[1].lastUsed||0)))
   }
   function renderMealMemory(){
     const list=mealMemorySorted();
-    const html=list.map(([id,m])=>`<button class="suggestion" data-meal-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    const html=list.slice(0,15).map(([id,m])=>`<button class="suggestion" data-meal-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
     if($("mealMemoryList")) $("mealMemoryList").innerHTML=html;
-    if($("mealModalMemory")) $("mealModalMemory").innerHTML=list.slice(0,20).map(([id,m])=>`<button class="suggestion" data-meal-modal="${id}">${escapeHtml(m.name)}</button>`).join("");
+    if($("mealModalMemory")) $("mealModalMemory").innerHTML=list.slice(0,15).map(([id,m])=>`<button class="suggestion" data-meal-modal="${id}">${escapeHtml(m.name)}</button>`).join("");
     if($("mealDatalist")) $("mealDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
     document.querySelectorAll("[data-meal-mem]").forEach(b=>b.onclick=()=>{const m=state.mealMemory[b.dataset.mealMem];if(m){$("mealName").value=m.name;openMealModal()}});
     document.querySelectorAll("[data-meal-modal]").forEach(b=>b.onclick=()=>{const m=state.mealMemory[b.dataset.mealModal];if(m)$("mealName").value=m.name});
@@ -667,7 +685,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   function renderDashboard(){
     const {startIso,endIso}=currentWeekRange();
     const events=Object.values(state.events||{}).filter(e=>e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
-    const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),time=e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:"";return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${day}${time} · ${escapeHtml(e.name)}</div></div></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
+    const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),time=e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:"",duration=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${day}${time}${duration} · ${escapeHtml(e.name)}</div></div></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
     const birthdays=birthdaysInCurrentWeek();
     const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="dash-task"><div><div><b>${escapeHtml(b.name)}</b> · ${day} · Geburtstag</div></div></div>`}).join(""):`<div class="muted">Keine Geburtstage diese Woche.</div>`;
     $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${eventHtml}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${birthdayHtml}</div>`;
@@ -752,25 +770,19 @@ Mittwoch | Gemüsepfanne"></textarea>
   function holidaysForDate(iso){
     return Object.values(state.holidays||{}).filter(h=>h.start<=iso && h.end>=iso);
   }
+  function eventTimeLabel(e){const time=e.time&&e.time!=="00:00"?e.time:"ohne Uhrzeit",dur=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `${time}${dur}`}
   function renderCalendar(){
     const events=Object.values(state.events||{});
     if(calendarMode==="month"){
-      const start=new Date(),day=(start.getDay()+6)%7;
-      start.setHours(0,0,0,0);start.setDate(start.getDate()-day);
-      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
-      const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
+      const start=new Date(),day=(start.getDay()+6)%7;start.setHours(0,0,0,0);start.setDate(start.getDate()-day);
+      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d}),heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
-      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" style="background:${person(e.person).color||'#2f73d9'}18;color:${person(e.person).color||'#2f73d9'};border-left:3px solid ${person(e.person).color||'#2f73d9'}">${e.time||""} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;
-      return;
+      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
     }
-
     $("calendarGrid").style.display="grid";$("calendarGrid").style.minWidth="730px";
-    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);
-    monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
-    const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
-    let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
-    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso&&Number((e.time||"00:00").slice(0,2))>=h&&Number((e.time||"00:00").slice(0,2))<h+2),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" style="background:${person(e.person).color||'#2f73d9'}18;color:${person(e.person).color||'#2f73d9'};border-left:3px solid ${person(e.person).color||'#2f73d9'}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${e.time||""}</small></div>`).join("")}</div>`})});
-    $("calendarGrid").innerHTML=html
+    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
+    const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
+    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
   }
   function renderBirthdays(){
     if(!$("birthdayList"))return;const rows=Object.entries(state.birthdays||{}).sort((a,b)=>{const ap=birthdayParts(a[1].date),bp=birthdayParts(b[1].date);return `${String(ap?.month||99).padStart(2,"0")}${String(ap?.day||99).padStart(2,"0")}`.localeCompare(`${String(bp?.month||99).padStart(2,"0")}${String(bp?.day||99).padStart(2,"0")}`)});
@@ -779,12 +791,20 @@ Mittwoch | Gemüsepfanne"></textarea>
     document.querySelectorAll("[data-delete-birthday]").forEach(b=>b.onclick=async()=>{await set(ref(db,`families/${familyId}/birthdays/${b.dataset.deleteBirthday}`),null)});
   }
   window.openBirthdayModal=(id=null)=>{editingBirthdayId=id;const b=id?state.birthdays?.[id]:null;$("birthdayModalTitle").textContent=id?"Geburtstag bearbeiten":"Geburtstag hinzufügen";$("birthdayName").value=b?.name||"";$("birthdayDate").value=birthdayValueForInput(b?.date||"");openModal("birthdayModal")};
+  function mealWishDateOptions(){
+    const fmt=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
+    return Array.from({length:31},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+i);const iso=isoLocal(d);return `<option value="${iso}">${fmt.format(d)}</option>`}).join("");
+  }
+  async function scheduleMealWish(id,date){
+    const w=state.mealWishes?.[id];if(!w||!date)return;
+    await set(ref(db,`families/${familyId}/meals/${date}`),{name:w.name,updatedAt:Date.now()});await rememberMeal(w.name);await set(ref(db,`families/${familyId}/mealWishes/${id}`),null);
+  }
   function renderMealWishes(){
-    if(!$("mealWishList"))return;const rows=Object.entries(state.mealWishes||{});
-    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><button class="mini" data-delete-wish="${id}">Erledigt</button></div>`}).join(""):`<div class="muted">Aktuell keine Essenswünsche.</div>`;
+    if(!$("mealWishList"))return;const rows=Object.entries(state.mealWishes||{}),dateOpts=mealWishDateOptions();
+    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><div class="wish-plan"><select data-wish-date="${id}" aria-label="Kalendertag auswählen">${dateOpts}</select><button class="mini" data-plan-wish="${id}">Eintragen</button></div></div>`}).join(""):`<div class="muted">Aktuell keine Essenswünsche.</div>`;
     if($("mealModalWishes"))$("mealModalWishes").innerHTML=rows.map(([id,w])=>{const p=person(w.person);return `<button class="meal-wish-chip" data-use-wish="${id}"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(w.name)}</button>`}).join("")||`<span class="muted" style="font-size:12px">Keine Wünsche</span>`;
-    document.querySelectorAll("[data-delete-wish]").forEach(b=>b.onclick=async()=>set(ref(db,`families/${familyId}/mealWishes/${b.dataset.deleteWish}`),null));
-    document.querySelectorAll("[data-use-wish]").forEach(b=>b.onclick=()=>{const w=state.mealWishes?.[b.dataset.useWish];if(w)$("mealName").value=w.name});
+    document.querySelectorAll("[data-plan-wish]").forEach(b=>b.onclick=()=>{const sel=document.querySelector(`[data-wish-date="${b.dataset.planWish}"]`);scheduleMealWish(b.dataset.planWish,sel?.value)});
+    document.querySelectorAll("[data-use-wish]").forEach(b=>b.onclick=()=>{const w=state.mealWishes?.[b.dataset.useWish];if(w){$("mealName").value=w.name;$("mealModal").dataset.wishId=b.dataset.useWish}});
   }
   function renderFamily(){
     $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>`<div class="member-compact"><div class="member-compact-name"><span class="member-color" style="background:${p.color||'#666'}"></span><b>${escapeHtml(p.name)}</b></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`).join("");
@@ -834,13 +854,13 @@ Mittwoch | Gemüsepfanne"></textarea>
     closeModal("taskModal")
   };
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50));if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost});$("rewardName").value="";$("rewardCost").value="50";closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time:$("eventTime").value||"00:00"});await rememberEvent(name);$("eventName").value="";closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time:$("eventTime").value||"",durationHours:duration||null});await rememberEvent(name);$("eventName").value="";$("eventTime").value="";$("eventDuration").value="";closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
   function parseIcsDate(v){
     if(!v)return null;const x=v.replace(/Z$/,"");
-    if(/^\d{8}$/.test(x))return{date:`${x.slice(0,4)}-${x.slice(4,6)}-${x.slice(6,8)}`,time:"00:00"};
+    if(/^\d{8}$/.test(x))return{date:`${x.slice(0,4)}-${x.slice(4,6)}-${x.slice(6,8)}`,time:""};
     const m=x.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);if(!m)return null;return{date:`${m[1]}-${m[2]}-${m[3]}`,time:`${m[4]}:${m[5]}`}
   }
   function parseIcs(text){
@@ -879,7 +899,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     $("holidayName").value="";
     closeModal("holidayModal");
   };
-  $("saveMealBtn").onclick=async()=>{const name=$("mealName").value.trim(),date=$("mealDate").value;if(!name||!date)return;await set(ref(db,`families/${familyId}/meals/${date}`),{name,updatedAt:Date.now()});await rememberMeal(name);$("mealName").value="";closeModal("mealModal")};
+  $("saveMealBtn").onclick=async()=>{const name=$("mealName").value.trim(),date=$("mealDate").value;if(!name||!date)return;await set(ref(db,`families/${familyId}/meals/${date}`),{name,updatedAt:Date.now()});await rememberMeal(name);const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}$("mealName").value="";closeModal("mealModal")};
   $("mealImportBtn").onclick=async()=>{const lines=$("mealImportText").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),items=lines.map(parseMealImportLine).filter(Boolean);if(!items.length){$("mealImportStatus").textContent="Keine gültigen Zeilen erkannt.";return}const updates={};for(const it of items){updates[it.date]={name:it.name,updatedAt:Date.now()}}await update(ref(db,`families/${familyId}/meals`),updates);for(const it of items)await rememberMeal(it.name);$("mealImportStatus").textContent=`${items.length} Gerichte importiert.`;setTimeout(()=>{closeModal("mealImportModal");$("mealImportText").value="";$("mealImportStatus").textContent=""},700)};
   $("mealPrevBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()-1);renderMeals()};
   $("mealNextBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()+1);renderMeals()};
