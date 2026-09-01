@@ -151,6 +151,15 @@
     .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;background:#f4f7f5;border:1px solid var(--line);padding:12px;border-radius:11px;font-size:13px}
     .notice{padding:11px 12px;border-radius:11px;background:#fff8e9;color:#805c19;font-size:13px}
 
+    .mobile-sixweeks{display:grid;gap:10px}
+    .mobile-week-block{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+    .mobile-week-title{padding:7px 10px;background:#f3f7f5;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#526159}
+    .mobile-week-day{display:grid;grid-template-columns:55px minmax(0,1fr);align-items:start;min-height:34px;border-top:1px solid var(--line);padding:5px 8px}
+    .mobile-week-day.today{box-shadow:inset 3px 0 0 var(--accent);background:var(--accent-soft)}
+    .mobile-week-date{display:flex;gap:5px;align-items:center;font-size:11px;padding-top:2px}.mobile-week-date b{width:19px}
+    .mobile-week-content{min-width:0;font-size:11px}.mobile-week-event{display:flex;gap:5px;align-items:flex-start;padding:2px 0;line-height:1.3}.mobile-week-event .member-color{flex:0 0 9px;width:9px;height:9px;margin-top:2px}
+    .mobile-week-holiday{display:inline-block;margin:1px 4px 2px 0;padding:2px 5px;border-radius:6px;background:#fff3d6;color:#75520e;font-size:10px;font-weight:750}
+    .mobile-week-empty{color:#a0aaa5}
     .mobile-calendar-list{display:grid;gap:8px}
     .mobile-cal-day{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff}
     .mobile-cal-day.today{border:2px solid var(--accent);padding:9px}
@@ -809,8 +818,16 @@ Mittwoch | Gemüsepfanne"></textarea>
     }
     if(calendarMode==="month"){
       const start=new Date(),day=(start.getDay()+6)%7;start.setHours(0,0,0,0);start.setDate(start.getDate()-day);
-      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d}),heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
+      const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
+      if(window.matchMedia("(max-width: 780px)").matches){
+        const weeks=Array.from({length:6},(_,w)=>dates.slice(w*7,w*7+7));
+        const fmtRange=d=>new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"short"}).format(d).replace(".","");
+        const fmtDay=d=>new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(d).replace(".","").slice(0,2);
+        $("calendarGrid").innerHTML=`<div class="mobile-sixweeks">${weeks.map(week=>`<section class="mobile-week-block"><div class="mobile-week-title">${fmtRange(week[0])} – ${fmtRange(week[6])}</div>${week.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(new Date()),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso);return `<div class="mobile-week-day ${today?'today':''}"><div class="mobile-week-date"><b>${fmtDay(d)}</b><span>${String(d.getDate()).padStart(2,"0")}.</span></div><div class="mobile-week-content">${hols.map(x=>`<div class="mobile-week-holiday">${escapeHtml(x.name)}</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-week-event"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><span>${escapeHtml(eventTimeLabel(e))} · <b>${escapeHtml(e.name)}</b>${p.name?` · ${escapeHtml(p.name)}`:""}</span></div>`}).join(""):(!hols.length?'<span class="mobile-week-empty">—</span>':"")}</div></div>`}).join("")}</section>`).join("")}</div>`;
+        return;
+      }
+      const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
       $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
     }
     $("calendarGrid").style.display="grid";$("calendarGrid").style.minWidth="730px";
