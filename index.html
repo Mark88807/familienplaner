@@ -76,10 +76,15 @@
     .dash-task:last-child{border-bottom:0}
     .member-color{width:12px;height:12px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:6px}
     .reward-actions{display:flex;gap:7px;align-items:center}
-    .reward-person-card{display:grid;gap:12px}
+    .reward-person-card{display:grid;gap:9px;padding:14px}
+    .reward-person-card .bar{height:6px}
+    .reward-points{font-size:22px;font-weight:850;line-height:1}
+    .reward-person-meta{font-size:12px;margin-top:3px}
+    .reward-chip-list{display:grid;grid-template-columns:1fr;gap:6px}
+    .reward-chip{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:7px 8px;background:#fff}
+    .reward-chip .mini{white-space:nowrap;padding:6px 8px}
     .reward-person-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .reward-chip-list{display:flex;gap:8px;flex-wrap:wrap}
-    .reward-chip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:11px;padding:8px;background:#fff}
+    
     .holiday-band{padding:5px 7px;border-radius:8px;background:linear-gradient(135deg,#eaf2ff,#f5f9ff);color:#315f9e;font-size:11px;font-weight:800;border-left:3px solid #7fa9e8}
     .mini{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;font-size:12px;font-weight:700}
     .mini.primary-mini{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -99,9 +104,20 @@
     .progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center}
     .calendar-switch{display:flex;gap:6px}
     .calendar-switch button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-    .repeat-box{display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fafcfb}
-    .weekday-row{display:flex;gap:6px;flex-wrap:wrap}
-    .weekday-row label{display:flex;align-items:center;gap:4px;font-size:13px}
+    .repeat-box{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fbfdff,#f6f9fc)}
+    .repeat-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:750}
+    .repeat-toggle input{width:20px;height:20px;accent-color:var(--accent)}
+    .repeat-box select:disabled{opacity:.5}
+    .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+    .weekday-row label{position:relative;display:grid;place-items:center;min-height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:12px;font-weight:750;cursor:pointer}
+    .weekday-row input{position:absolute;opacity:0;pointer-events:none}
+    .weekday-row label:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff}
+    .dash-meals{grid-column:1/-1}
+    .week-meals{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+    .week-meal{min-width:0;padding:8px;border:1px solid var(--line);border-radius:11px;background:#fff}
+    .week-meal-day{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px}
+    .week-meal-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .task-filter-tabs button{cursor:pointer}
     .ideas-compact{display:none}
     .ideas-compact button{min-width:0;text-align:left}
     @media(max-width:780px){.ideas-compact{grid-template-columns:1fr}.sixweek-grid{grid-template-columns:repeat(7,minmax(42px,1fr));min-width:520px}.sixweek-day{min-height:76px;padding:5px}.dash-grid{grid-template-columns:1fr}}
@@ -127,6 +143,8 @@
       .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(6,1fr);bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
       .mobile-nav button{border:0;background:white;padding:9px 2px 7px;font-size:10px;color:#536159}.mobile-nav button.active{color:var(--accent);font-weight:800}
       .mobile-datetime{grid-template-columns:1fr}.top .desktop-actions{display:none}.meal-month{grid-template-columns:repeat(7,minmax(92px,1fr));min-width:720px}.meal-day{min-height:104px}
+      .week-meals{grid-template-columns:repeat(7,minmax(86px,1fr));min-width:650px}.dashboard-meals-wrap{overflow:auto;margin:0 -2px;padding:2px}
+      .reward-person-card{padding:12px}.reward-person-head{align-items:flex-start}.reward-chip{padding:7px}.weekday-row{gap:4px}.weekday-row label{min-height:40px}
     }
   </style>
 </head>
@@ -192,14 +210,18 @@
           <div class="title">Punkte & Bonus</div>
           <div id="dashboardProgress"></div>
         </div>
+        <div class="card dash-meals">
+          <div class="dash-card-head"><div class="title">Essen diese Woche</div><button class="mini" data-view="meals">Essenplan</button></div>
+          <div class="dashboard-meals-wrap"><div class="week-meals" id="dashboardMeals"></div></div>
+        </div>
       </div>
     </section>
 
     <section class="view" id="tasks">
       <div class="top"><div><h1>Aufgaben</h1><div class="sub">Schnell erledigen, Punkte sammeln.</div></div><button class="primary" onclick="openTaskModal()">+ Aufgabe</button></div>
-      <div class="tabs"><button class="active">Heute</button><button>Woche</button><button>Alle</button></div>
+      <div class="tabs task-filter-tabs"><button class="active" data-task-filter="open">Offen</button><button data-task-filter="recurring">Wiederkehrend</button><button data-task-filter="all">Alle</button></div>
       <div class="grid">
-        <div class="card"><div class="title">Heute</div><div class="list" id="taskList"></div></div>
+        <div class="card"><div class="title" id="taskListTitle">Offene Aufgaben</div><div class="list" id="taskList"></div></div>
         <div style="display:grid;gap:16px">
           <div class="card"><div class="title">Familienpunkte</div><div class="ring" id="familyRing" style="--p:0%"><div class="ring-content"><b id="familyPoints">0</b><div class="muted">Punkte</div></div></div><div class="muted" id="familyNext" style="text-align:center"></div></div>
           <div class="card"><div class="title">Vorschläge</div><div class="suggestions" id="taskMemorySide"></div></div>
@@ -268,7 +290,7 @@
   <select id="taskPerson"></select>
   <input id="taskPoints" type="number" min="1" value="10">
   <div class="repeat-box">
-    <label><input id="taskRecurring" type="checkbox"> Wiederkehrende Aufgabe</label>
+    <label class="repeat-toggle"><span>Wiederkehrende Aufgabe</span><input id="taskRecurring" type="checkbox" aria-label="Wiederkehrende Aufgabe"></label>
     <select id="taskRepeatType" disabled>
       <option value="daily">Täglich</option>
       <option value="weekly" selected>Wöchentlich</option>
@@ -303,8 +325,6 @@
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
-  <div class="form" style="margin-top:14px"><div class="actions"><button class="ghost" onclick="closeModal('voiceModal')">Abbrechen</button></div></div>
-</div></div>
 
 <div class="modal" id="importModal"><div class="box"><h2>Kalender importieren (.ics)</h2><p>Eine exportierte Kalenderdatei auswählen. Unterstützt einfache VEVENT-Termine.</p>
   <div class="form"><input id="icsFile" type="file" accept=".ics,text/calendar"><select id="icsDefaultPerson"></select><div id="icsStatus" class="muted"></div><div class="actions"><button class="ghost" onclick="closeModal('importModal')">Abbrechen</button><button class="primary" id="importIcsBtn">Importieren</button></div></div>
@@ -365,7 +385,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date();
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open";
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -395,9 +415,8 @@ Mittwoch | Gemüsepfanne"></textarea>
   window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)}renderEventSuggestions();openModal("eventModal")};
   window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
 
-  document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>{
-    const id=btn.dataset.view;document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id));
-  });
+  function switchView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id))}
+  document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
   document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
   $("taskRecurring").onchange=()=>{
@@ -407,6 +426,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   $("taskRepeatType").onchange=()=>{
     $("weekdayRow").classList.toggle("hidden",$("taskRepeatType").value!=="weekdays");
   };
+  document.querySelectorAll("[data-task-filter]").forEach(b=>b.onclick=()=>{taskFilter=b.dataset.taskFilter;document.querySelectorAll("[data-task-filter]").forEach(x=>x.classList.toggle("active",x===b));renderTasks()});
 
   async function createFamily(){
     $("gateMsg").textContent="Familie wird erstellt …";
@@ -555,12 +575,17 @@ Mittwoch | Gemüsepfanne"></textarea>
 
     $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
 
+    const now=new Date(),weekday=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-weekday);
+    const dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
+    $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);const iso=isoLocal(d),meal=state.meals?.[iso]?.name;return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${meal?'':'muted'}" title="${escapeHtml(meal||'Noch offen')}">${escapeHtml(meal||'–')}</div></div>`}).join("");
   }
 
 
   function renderTasks(){
-    const items=Object.entries(state.tasks||{});
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Noch keine Aufgaben.</div>`;
+    const allItems=Object.entries(state.tasks||{});
+    const items=allItems.filter(([id,t])=>taskFilter==="all"?true:taskFilter==="recurring"?!!t.recurring:!t.done);
+    $("taskListTitle").textContent=taskFilter==="all"?"Alle Aufgaben":taskFilter==="recurring"?"Wiederkehrende Aufgaben":"Offene Aufgaben";
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ ${Number(t.points)||10}</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
     document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
@@ -572,8 +597,8 @@ Mittwoch | Gemüsepfanne"></textarea>
       const rewards=Object.entries(state.rewards?.[pid]||{});
       return `<div class="card reward-person-card">
         <div class="reward-person-head">
-          <div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div class="muted">${pts} Punkte · noch ${nb.missing} bis ${nb.next}</div></div>
-          <div style="font-size:24px;font-weight:850">${pts}</div>
+          <div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b><div class="muted reward-person-meta">noch ${nb.missing} bis ${nb.next}</div></div>
+          <div class="reward-points">${pts} P</div>
         </div>
         <div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div>
         <div class="reward-chip-list">
