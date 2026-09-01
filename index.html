@@ -683,12 +683,28 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
 
 
+  function routineCanComplete(t,now=new Date()){
+    if(!t?.recurring)return true;
+    const last=Number(t.lastCompletedAt)||0;
+    if(!last){
+      if(t.repeatType==="weekdays"&&Array.isArray(t.weekdays)&&t.weekdays.length)return t.weekdays.includes(now.getDay());
+      return true;
+    }
+    const prev=new Date(last);
+    if(t.repeatType==="daily")return isoLocal(prev)!==isoLocal(now);
+    if(t.repeatType==="weekdays"){
+      if(Array.isArray(t.weekdays)&&t.weekdays.length&&!t.weekdays.includes(now.getDay()))return false;
+      return isoLocal(prev)!==isoLocal(now);
+    }
+    const weekStart=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return isoLocal(x)};
+    return weekStart(prev)!==weekStart(now);
+  }
   function renderTasks(){
     const allItems=Object.entries(state.tasks||{});
     const items=allItems.filter(([id,t])=>taskFilter==="recurring"?!!t.recurring:(!t.recurring&&!t.done));
     $("taskListTitle").textContent=taskFilter==="recurring"?"Routinen":"Offene Aufgaben";
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person);return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.recurring?'<br><small>↻ wiederkehrend</small>':''}</div><div class="points">★ 10</div><button class="check ${t.done?"done":""}" data-task="${id}">${t.done?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
-    document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'↻ Routine fällig':'✓ Routine für diesen Zeitraum erledigt'):'';return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10</div><button class="check ${!canDo&&t.recurring?"done":""}" data-task="${id}" ${!canDo&&t.recurring?'disabled aria-label="Routine bereits erledigt"':''}>${!canDo&&t.recurring?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
+    document.querySelectorAll("[data-task]:not([disabled])").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
   }
@@ -789,6 +805,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   async function toggleTask(id){
     const t=state.tasks[id],p=person(t.person),pts=10,current=Number(p.points)||0;
     if(t.recurring){
+      if(!routineCanComplete(t))return;
       await update(familyRef(),{
         [`people/${t.person}/points`]:current+pts,
         [`tasks/${id}/done`]:false,
