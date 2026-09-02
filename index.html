@@ -68,7 +68,7 @@
     .meal-empty{min-height:1px}
     .meal-date{font-size:11px;font-weight:850;color:#4b5563}.meal-stack{display:grid;gap:4px}.meal-entry{padding:5px 6px;border-radius:8px;background:linear-gradient(135deg,#edf5ff,#f8fbff);color:#1f4f8d;font-size:11px;font-weight:750;line-height:1.25;overflow-wrap:anywhere}.meal-entry-label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.03em;color:#64748b;margin-bottom:1px}.meal-line{font-size:12px;line-height:1.35;overflow-wrap:anywhere}.meal-line+.meal-line{margin-top:3px}.event-detail{display:grid;gap:9px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}
     .meal-day:not(:has(.meal-entry))::after{content:"+ Essen";margin-top:auto;color:var(--muted);font-size:10px;font-weight:700}
-    .meal-import-area{width:100%;min-height:170px;padding:12px;border:1px solid var(--line);border-radius:12px;resize:vertical;font:inherit;line-height:1.5}
+    .meal-import-area{width:100%;min-height:110px;padding:12px;border:1px solid var(--line);border-radius:12px;resize:vertical;font:inherit;line-height:1.5}
     .meal-memory{display:flex;gap:8px;flex-wrap:wrap;max-height:170px;overflow:auto}
 
     .suggestions{display:flex;gap:8px;flex-wrap:wrap}
@@ -429,15 +429,29 @@
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Essenswünsche · wird als warmes Essen übernommen</div><div class="meal-wishes" id="mealModalWishes"></div></div>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Essens-Gedächtnis</div><div class="meal-memory" id="mealModalMemory"></div></div>
   <input id="mealDate" type="date">
+  <div class="repeat-box">
+    <div class="muted" style="font-size:12px;font-weight:800">Frühstück wiederholen</div>
+    <select id="mealBreakfastRepeat">
+      <option value="none">Nur dieser Tag</option>
+      <option value="daily">Täglich</option>
+      <option value="weekdays">Mo–Fr</option>
+      <option value="weekly">Wöchentlich</option>
+    </select>
+    <div id="mealBreakfastRepeatUntilWrap" class="hidden"><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Bis</div><input id="mealBreakfastRepeatUntil" type="date"></div>
+    <div class="muted" style="font-size:11px">Nur das Frühstück wird wiederholt. Warmes Essen gilt nur für den gewählten Tag.</div>
+  </div>
   <div class="actions"><button class="danger" id="deleteMealBtn" type="button" style="display:none;margin-right:auto">Tag löschen</button><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p><b>Ohne Sonderzeichen:</b> Datum, Frühstück und warmes Essen können nur mit Leerzeichen eingegeben werden, z. B. <b>03.09 Müsli Spaghetti Bolognese</b>.<br>Hat das Frühstück mehrere Wörter, zwei Leerzeichen zwischen den Spalten verwenden: <b>03.09&nbsp;&nbsp;Brot mit Käse&nbsp;&nbsp;Lasagne</b>. Das bisherige <b>|</b>-Format funktioniert weiterhin.</p><div class="form">
-  <textarea class="meal-import-area" id="mealImportText" placeholder="03.09 Müsli Spaghetti Bolognese
-04.09  Brot mit Käse  Gemüsecurry
-Freitag Joghurt Pizza"></textarea>
+<div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p><b>Je Zeile:</b> Datum + Essen.<br><b>Beispiel:</b> 03.09 Porridge</p><div class="form">
+  <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Frühstück</div><textarea class="meal-import-area" id="mealImportBreakfast" placeholder="03.09 Porridge
+04.09 Brot mit Käse
+Freitag Joghurt"></textarea></div>
+  <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Warm · Mittag oder Abend</div><textarea class="meal-import-area" id="mealImportWarm" placeholder="03.09 Spaghetti Bolognese
+04.09 Gemüsecurry
+Freitag Pizza"></textarea></div>
   <div class="muted" id="mealImportStatus"></div>
-  <div class="actions"><button class="ghost" onclick="closeModal('mealImportModal')">Abbrechen</button><button class="primary" id="mealImportBtn">Importieren</button></div>
+  <div class="actions"><button class="ghost" onclick="closeModal('mealImportModal')">Abbrechen</button><button class="primary" id="mealImportBtn">Beide importieren</button></div>
 </div></div></div>
 
 <div class="modal" id="memberEditModal"><div class="box"><h2>Familienmitglied bearbeiten</h2><div class="form">
@@ -703,12 +717,18 @@ Freitag Joghurt Pizza"></textarea>
     if(date)$("mealDate").value=date;
     else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
     $("mealBreakfast").value=meal.breakfast;$("mealWarm").value=meal.warm;
+    $("mealBreakfastRepeat").value="none";
+    $("mealBreakfastRepeatUntilWrap").classList.add("hidden");
+    const startDate=$("mealDate").value?new Date($("mealDate").value+"T12:00:00"):new Date(),until=new Date(startDate);until.setMonth(until.getMonth()+1);
+    $("mealBreakfastRepeatUntil").value=isoLocal(until);
     $("deleteMealBtn").style.display=editingMealDate?"inline-flex":"none";
     mealInputTarget="warm";
     openModal("mealModal");
   };
   $("mealBreakfast").addEventListener("focus",()=>mealInputTarget="breakfast");
   $("mealWarm").addEventListener("focus",()=>mealInputTarget="warm");
+  $("mealBreakfastRepeat").onchange=()=>$("mealBreakfastRepeatUntilWrap").classList.toggle("hidden",$("mealBreakfastRepeat").value==="none");
+  $("mealDate").addEventListener("change",()=>{if($("mealBreakfastRepeat").value!=="none"&&$("mealDate").value&&(!$("mealBreakfastRepeatUntil").value||$("mealBreakfastRepeatUntil").value<$("mealDate").value)){const d=new Date($("mealDate").value+"T12:00:00");d.setMonth(d.getMonth()+1);$("mealBreakfastRepeatUntil").value=isoLocal(d)}});
   function renderMeals(){
     if(!$("mealMonthGrid"))return;
     mealCursor.setDate(1);
@@ -756,21 +776,25 @@ Freitag Joghurt Pizza"></textarea>
   function validMealDate(day,month,year){
     const d=new Date(year,month-1,day);return d.getFullYear()===year&&d.getMonth()===month-1&&d.getDate()===day?isoLocal(d):null;
   }
-  function parseMealImportLine(line){
+  function parseMealImportLine(line,type){
     const raw=String(line||"").trim();if(!raw)return null;
-    let parts;
-    if(/[|;\t]/.test(raw)) parts=raw.split(/\s*[|;\t]\s*/).map(x=>x.trim());
-    else if(/\s{2,}/.test(raw)) parts=raw.split(/\s{2,}/).map(x=>x.trim());
-    else parts=raw.split(/\s+/).map(x=>x.trim());
-    if(parts.length<2)return null;
-    const left=parts[0];let date=null,m=left.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?\.?$/);
+    const match=raw.match(/^(\S+)\s+(.+)$/);if(!match)return null;
+    const left=match[1],name=match[2].trim();if(!name)return null;
+    let date=null,m=left.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?\.?$/);
     if(m){let y=m[3]?Number(m[3]):mealCursor.getFullYear();if(y<100)y+=2000;date=validMealDate(Number(m[1]),Number(m[2]),y)}
     else{const wd=weekdayIndexGerman(left);if(wd!==null)date=dateForWeekdayInMealMonth(wd)}
     if(!date)return null;
-    if(parts.length===2){const warm=parts[1];return warm?{date,breakfast:null,warm}:null}
-    const breakfast=parts[1]||"",warm=parts.slice(2).join(" ").trim();
-    if(!breakfast&&!warm)return null;
-    return{date,breakfast,warm};
+    return type==="breakfast"?{date,breakfast:name,warm:null}:{date,breakfast:null,warm:name};
+  }
+  function breakfastRepeatDates(startIso,repeat,untilIso){
+    if(repeat==="none")return[startIso];
+    if(!startIso||!untilIso||untilIso<startIso)return[];
+    const start=new Date(startIso+"T12:00:00"),end=new Date(untilIso+"T12:00:00"),dates=[];
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+      const day=d.getDay(),matches=repeat==="daily"||(repeat==="weekdays"&&day>=1&&day<=5)||(repeat==="weekly"&&day===start.getDay());
+      if(matches)dates.push(isoLocal(d));
+    }
+    return dates;
   }
 
 
@@ -1057,9 +1081,33 @@ Freitag Joghurt Pizza"></textarea>
     $("holidayName").value="";
     closeModal("holidayModal");
   };
-  $("saveMealBtn").onclick=async()=>{const breakfast=$("mealBreakfast").value.trim(),warm=$("mealWarm").value.trim(),date=$("mealDate").value;if((!breakfast&&!warm)||!date)return;const changes={};if(editingMealDate&&editingMealDate!==date)changes[editingMealDate]=null;changes[date]={breakfast,warm,updatedAt:Date.now()};await update(ref(db,`families/${familyId}/meals`),changes);if(breakfast)await rememberMeal(breakfast);if(warm)await rememberMeal(warm);const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";closeModal("mealModal")};
+  $("saveMealBtn").onclick=async()=>{
+    const breakfast=$("mealBreakfast").value.trim(),warm=$("mealWarm").value.trim(),date=$("mealDate").value,repeat=$("mealBreakfastRepeat").value,until=$("mealBreakfastRepeatUntil").value;
+    if((!breakfast&&!warm)||!date)return;
+    if(repeat!=="none"&&!breakfast){alert("Für eine Frühstück-Wiederholung zuerst ein Frühstück eintragen.");return}
+    const repeatDates=breakfast?breakfastRepeatDates(date,repeat,until):[date];
+    if(repeat!=="none"&&!repeatDates.length){alert("Bitte ein gültiges Enddatum für die Frühstück-Wiederholung wählen.");return}
+    const changes={};if(editingMealDate&&editingMealDate!==date)changes[editingMealDate]=null;
+    if(repeat==="none")changes[date]={breakfast,warm,updatedAt:Date.now()};
+    else{
+      for(const repeatDate of repeatDates){const base=normalizedMeal(state.meals?.[repeatDate]);changes[repeatDate]={breakfast,warm:repeatDate===date?warm:base.warm,updatedAt:Date.now()}}
+      if(!repeatDates.includes(date)){const base=normalizedMeal(state.meals?.[date]);changes[date]={breakfast:base.breakfast,warm,updatedAt:Date.now()}}
+    }
+    await update(ref(db,`families/${familyId}/meals`),changes);if(breakfast)await rememberMeal(breakfast);if(warm)await rememberMeal(warm);
+    const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}
+    editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";closeModal("mealModal")
+  };
   $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";closeModal("mealModal")};
-  $("mealImportBtn").onclick=async()=>{const lines=$("mealImportText").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),parsed=lines.map((line,index)=>({line:index+1,item:parseMealImportLine(line)})),items=parsed.filter(x=>x.item).map(x=>x.item),invalid=parsed.filter(x=>!x.item).map(x=>x.line);if(!items.length){$("mealImportStatus").textContent=`Keine gültigen Zeilen erkannt.${invalid.length?` Prüfe Zeile ${invalid.join(", ")}.`:""}`;return}const merged={};for(const it of items){const base=merged[it.date]||normalizedMeal(state.meals?.[it.date]);merged[it.date]={breakfast:it.breakfast===null?base.breakfast:it.breakfast,warm:it.warm===null?base.warm:it.warm}}const updates={};Object.entries(merged).forEach(([date,m])=>updates[date]={...m,updatedAt:Date.now()});await update(ref(db,`families/${familyId}/meals`),updates);for(const it of items){if(it.breakfast)await rememberMeal(it.breakfast);if(it.warm)await rememberMeal(it.warm)}$("mealImportStatus").textContent=`${Object.keys(merged).length} Tage importiert.${invalid.length?` Nicht erkannt: Zeile ${invalid.join(", ")}.`:""}`;if(!invalid.length)setTimeout(()=>{closeModal("mealImportModal");$("mealImportText").value="";$("mealImportStatus").textContent=""},800)};
+  $("mealImportBtn").onclick=async()=>{
+    const groups=[{id:"mealImportBreakfast",type:"breakfast",label:"Frühstück"},{id:"mealImportWarm",type:"warm",label:"Warm"}],items=[],errors=[];
+    for(const group of groups){const lines=$(group.id).value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);lines.forEach((line,index)=>{const item=parseMealImportLine(line,group.type);if(item)items.push(item);else errors.push(`${group.label} Zeile ${index+1}`)})}
+    if(!items.length){$("mealImportStatus").textContent=`Keine gültigen Zeilen erkannt.${errors.length?` Prüfe ${errors.join(", ")}.`:""}`;return}
+    const merged={};for(const it of items){const base=merged[it.date]||normalizedMeal(state.meals?.[it.date]);merged[it.date]={breakfast:it.breakfast===null?base.breakfast:it.breakfast,warm:it.warm===null?base.warm:it.warm}}
+    const updates={};Object.entries(merged).forEach(([mealDate,m])=>updates[mealDate]={...m,updatedAt:Date.now()});await update(ref(db,`families/${familyId}/meals`),updates);
+    for(const it of items){if(it.breakfast)await rememberMeal(it.breakfast);if(it.warm)await rememberMeal(it.warm)}
+    $("mealImportStatus").textContent=`${Object.keys(merged).length} Tage importiert.${errors.length?` Nicht erkannt: ${errors.join(", ")}.`:""}`;
+    if(!errors.length)setTimeout(()=>{closeModal("mealImportModal");$("mealImportBreakfast").value="";$("mealImportWarm").value="";$("mealImportStatus").textContent=""},500)
+  };
   $("mealPrevBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()-1);renderMeals()};
   $("mealNextBtn").onclick=()=>{mealCursor.setMonth(mealCursor.getMonth()+1);renderMeals()};
   $("mealTodayBtn").onclick=()=>{mealCursor=new Date();renderMeals()};
