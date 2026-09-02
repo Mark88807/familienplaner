@@ -437,24 +437,23 @@
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Essens-Gedächtnis</div><div class="meal-memory" id="mealModalMemory"></div></div>
   <input id="mealDate" type="date">
   <div class="repeat-box">
-    <label class="repeat-enable-row"><input id="mealBreakfastRepeatEnabled" type="checkbox"> Frühstück wiederholen</label>
-    <div id="mealBreakfastRepeatOptions" class="repeat-options hidden">
-      <select id="mealBreakfastRepeat">
-        <option value="weekly">Wöchentlich</option>
-        <option value="weekdays">Bestimmte Wochentage</option>
-      </select>
-      <div class="weekday-row hidden" id="mealBreakfastWeekdayRow">
-        <label><input type="checkbox" value="1"> Mo</label>
-        <label><input type="checkbox" value="2"> Di</label>
-        <label><input type="checkbox" value="3"> Mi</label>
-        <label><input type="checkbox" value="4"> Do</label>
-        <label><input type="checkbox" value="5"> Fr</label>
-        <label><input type="checkbox" value="6"> Sa</label>
-        <label><input type="checkbox" value="0"> So</label>
-      </div>
-      <div id="mealBreakfastRepeatUntilWrap"><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Bis</div><input id="mealBreakfastRepeatUntil" type="date"></div>
-      <div class="muted" style="font-size:11px">Wöchentlich = immer am Wochentag des gewählten Datums. Bei „Bestimmte Wochentage“ Mo–So auswählen. Nur das Frühstück wird wiederholt.</div>
+    <div class="muted" style="font-size:12px;font-weight:800">Frühstück wiederholen</div>
+    <select id="mealBreakfastRepeat">
+      <option value="none">Keine Wiederholung</option>
+      <option value="weekly">Wöchentlich</option>
+      <option value="weekdays">Bestimmte Wochentage</option>
+    </select>
+    <div class="weekday-row hidden" id="mealBreakfastWeekdayRow">
+      <label><input type="checkbox" value="1"> Mo</label>
+      <label><input type="checkbox" value="2"> Di</label>
+      <label><input type="checkbox" value="3"> Mi</label>
+      <label><input type="checkbox" value="4"> Do</label>
+      <label><input type="checkbox" value="5"> Fr</label>
+      <label><input type="checkbox" value="6"> Sa</label>
+      <label><input type="checkbox" value="0"> So</label>
     </div>
+    <div id="mealBreakfastRepeatUntilWrap" class="hidden"><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Bis</div><input id="mealBreakfastRepeatUntil" type="date"></div>
+    <div id="mealBreakfastRepeatHint" class="muted hidden" style="font-size:11px">Nur das Frühstück wird wiederholt.</div>
   </div>
   <div class="actions"><button class="danger" id="deleteMealBtn" type="button" style="display:none;margin-right:auto">Tag löschen</button><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
 </div></div></div>
@@ -746,10 +745,10 @@
     if(date)$("mealDate").value=date;
     else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
     $("mealBreakfast").value=meal.breakfast;$("mealWarm").value=meal.warm;
-    $("mealBreakfastRepeatEnabled").checked=false;
-    $("mealBreakfastRepeat").value="weekly";
-    $("mealBreakfastRepeatOptions").classList.add("hidden");
+    $("mealBreakfastRepeat").value="none";
     $("mealBreakfastWeekdayRow").classList.add("hidden");
+    $("mealBreakfastRepeatUntilWrap").classList.add("hidden");
+    $("mealBreakfastRepeatHint").classList.add("hidden");
     $("mealBreakfastWeekdayRow").querySelectorAll("input").forEach(x=>x.checked=false);
     const startDate=$("mealDate").value?new Date($("mealDate").value+"T12:00:00"):new Date(),until=new Date(startDate);until.setMonth(until.getMonth()+1);
     $("mealBreakfastRepeatUntil").value=isoLocal(until);
@@ -760,18 +759,18 @@
   $("mealBreakfast").addEventListener("focus",()=>mealInputTarget="breakfast");
   $("mealWarm").addEventListener("focus",()=>mealInputTarget="warm");
   function updateMealBreakfastRepeatUi(){
-    const enabled=$("mealBreakfastRepeatEnabled").checked,repeat=$("mealBreakfastRepeat").value;
-    $("mealBreakfastRepeatOptions").classList.toggle("hidden",!enabled);
-    $("mealBreakfastWeekdayRow").classList.toggle("hidden",!enabled||repeat!=="weekdays");
-    if(enabled&&repeat==="weekdays"&&!$("mealBreakfastWeekdayRow").querySelector("input:checked")&&$("mealDate").value){
+    const repeat=$("mealBreakfastRepeat").value,active=repeat!=="none";
+    $("mealBreakfastWeekdayRow").classList.toggle("hidden",repeat!=="weekdays");
+    $("mealBreakfastRepeatUntilWrap").classList.toggle("hidden",!active);
+    $("mealBreakfastRepeatHint").classList.toggle("hidden",!active);
+    if(repeat==="weekdays"&&!$("mealBreakfastWeekdayRow").querySelector("input:checked")&&$("mealDate").value){
       const day=new Date($("mealDate").value+"T12:00:00").getDay();
       const box=$("mealBreakfastWeekdayRow").querySelector(`input[value="${day}"]`);
       if(box)box.checked=true;
     }
   }
-  $("mealBreakfastRepeatEnabled").onchange=updateMealBreakfastRepeatUi;
   $("mealBreakfastRepeat").onchange=updateMealBreakfastRepeatUi;
-  $("mealDate").addEventListener("change",()=>{if($("mealBreakfastRepeatEnabled").checked&&$("mealDate").value&&(!$("mealBreakfastRepeatUntil").value||$("mealBreakfastRepeatUntil").value<$("mealDate").value)){const d=new Date($("mealDate").value+"T12:00:00");d.setMonth(d.getMonth()+1);$("mealBreakfastRepeatUntil").value=isoLocal(d)};updateMealBreakfastRepeatUi()});
+  $("mealDate").addEventListener("change",()=>{if($("mealBreakfastRepeat").value!=="none"&&$("mealDate").value&&(!$("mealBreakfastRepeatUntil").value||$("mealBreakfastRepeatUntil").value<$("mealDate").value)){const d=new Date($("mealDate").value+"T12:00:00");d.setMonth(d.getMonth()+1);$("mealBreakfastRepeatUntil").value=isoLocal(d)};updateMealBreakfastRepeatUi()});
   function renderMeals(){
     if(!$("mealMonthGrid"))return;
     mealCursor.setDate(1);
@@ -1131,7 +1130,7 @@
     closeModal("holidayModal");
   };
   $("saveMealBtn").onclick=async()=>{
-    const breakfast=$("mealBreakfast").value.trim(),warm=$("mealWarm").value.trim(),date=$("mealDate").value,repeat=$("mealBreakfastRepeatEnabled").checked?$("mealBreakfastRepeat").value:"none",until=$("mealBreakfastRepeatUntil").value;
+    const breakfast=$("mealBreakfast").value.trim(),warm=$("mealWarm").value.trim(),date=$("mealDate").value,repeat=$("mealBreakfastRepeat").value,until=$("mealBreakfastRepeatUntil").value;
     const selectedWeekdays=Array.from($("mealBreakfastWeekdayRow").querySelectorAll("input:checked")).map(x=>Number(x.value));
     if((!breakfast&&!warm)||!date)return;
     if(repeat!=="none"&&!breakfast){alert("Für eine Frühstück-Wiederholung zuerst ein Frühstück eintragen.");return}
