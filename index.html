@@ -325,10 +325,6 @@
         <div class="settings-head"><div><div class="title">Geburtstage</div><div class="muted" style="font-size:12px">Familie, Freunde und weitere Personen. Geburtstage erscheinen nur im Dashboard, nicht im Kalender.</div></div><button class="mini" onclick="openBirthdayModal()">+ Geburtstag</button></div>
         <div class="card" id="birthdayList"></div>
       </div>
-      <div class="settings-section">
-        <div class="title" style="margin-bottom:10px">Gedächtnis</div>
-        <div class="card memory-overview" id="memoryOverview"></div>
-      </div>
     </section>
   </main>
 </div>
@@ -384,6 +380,13 @@
     <button type="button" data-reward-cost="100">100</button>
     <button type="button" data-reward-cost="150">150</button>
     <button type="button" data-reward-cost="200">200</button>
+  </div>
+  <div>
+    <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Einlösung</div>
+    <select id="rewardRepeat">
+      <option value="repeat" selected>Wiederholbar</option>
+      <option value="once">Einmalig</option>
+    </select>
   </div>
   <div class="actions"><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
 </div></div></div>
@@ -782,7 +785,7 @@
       let html="";
       for(let day=1;day<=daysInMonth;day++){
         const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),weekday=new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(d).replace(".","").toUpperCase(),summary=mealSummary(raw)||"Essen eintragen";
-        const lines=filled?`<div class="meal-line"><b>Frühstück:</b> ${escapeHtml(meal.breakfast||"–")}</div><div class="meal-line"><b>Warm:</b> ${escapeHtml(meal.warm||"–")}</div>`:'<span>+ Essen</span>';
+        const lines=filled?`${meal.breakfast?`<div class="meal-line">${escapeHtml(meal.breakfast)}</div>`:""}${meal.warm?`<div class="meal-line">${escapeHtml(meal.warm)}</div>`:""}`:'<span>+ Essen</span>';
         html+=`<div class="meal-mobile-row ${today?'today':''} ${filled?'filled':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${weekday} ${String(day).padStart(2,"0")}. ${escapeHtml(summary)}"><div class="meal-mobile-date"><b>${weekday}</b><span>${String(day).padStart(2,"0")}.</span></div><div class="meal-mobile-name">${lines}</div></div>`;
       }
       $("mealMonthGrid").innerHTML=html;
@@ -793,7 +796,7 @@
       html+=Array.from({length:offset},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
       for(let day=1;day<=daysInMonth;day++){
         const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Essen eintragen";
-        const entries=filled?`<div class="meal-stack"><div class="meal-entry"><span class="meal-entry-label">Frühstück</span>${escapeHtml(meal.breakfast||"–")}</div><div class="meal-entry"><span class="meal-entry-label">Warm</span>${escapeHtml(meal.warm||"–")}</div></div>`:"";
+        const entries=filled?`<div class="meal-stack">${meal.breakfast?`<div class="meal-entry">${escapeHtml(meal.breakfast)}</div>`:""}${meal.warm?`<div class="meal-entry">${escapeHtml(meal.warm)}</div>`:""}</div>`:"";
         html+=`<div class="meal-day ${today?'today':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${day}. ${escapeHtml(summary)}"><div class="meal-date">${day}.</div>${entries}</div>`;
       }
       const trailing=(7-((offset+daysInMonth)%7))%7;
@@ -935,7 +938,7 @@
           <div class="reward-points">${pts} Punkte</div>
         </div>
         <div class="reward-chip-list">
-          ${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10);return `<div class="reward-chip"><span class="reward-name">${escapeHtml(r.name)}</span><span class="reward-cost">${cost} P</span><button class="reward-redeem" data-redeem-person="${pid}" data-redeem-id="${rid}" ${pts<cost?'disabled':''}>Einlösen</button><button class="mini" data-delete-reward-person="${pid}" data-delete-reward-id="${rid}">Löschen</button></div>`}).join(""):`<span class="muted" style="padding:6px 0">Noch keine Belohnungen.</span>`}
+          ${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),repeatable=r.repeatable!==false;return `<div class="reward-chip"><span class="reward-name">${escapeHtml(r.name)}${repeatable?`<small class="muted" style="display:block;font-weight:650;margin-top:2px">wiederholbar</small>`:""}</span><span class="reward-cost">${cost} P</span><button class="reward-redeem" data-redeem-person="${pid}" data-redeem-id="${rid}" ${pts<cost?'disabled':''}>Einlösen</button><button class="mini" data-delete-reward-person="${pid}" data-delete-reward-id="${rid}">Löschen</button></div>`}).join(""):`<span class="muted" style="padding:6px 0">Noch keine Belohnungen.</span>`}
         </div>
       </div>`;
     }).join("");
@@ -948,21 +951,26 @@
   }
   async function redeemReward(personId,rewardId){
     const p=person(personId),r=state.rewards?.[personId]?.[rewardId];if(!r)return;
-    const pts=Number(p.points)||0,cost=Math.max(1,Number(r.cost)||10);if(pts<cost)return;
+    const pts=Number(p.points)||0,cost=Math.max(1,Number(r.cost)||10),repeatable=r.repeatable!==false;if(pts<cost)return;
     const logKey=push(ref(db,`families/${familyId}/rewardLog`)).key;
-    await update(familyRef(),{
+    const changes={
       [`people/${personId}/points`]:pts-cost,
-      [`rewardLog/${logKey}`]:{personId,rewardId,rewardName:r.name,cost,createdAt:Date.now(),undone:false}
-    });
+      [`rewardLog/${logKey}`]:{personId,rewardId,rewardName:r.name,cost,repeatable,createdAt:Date.now(),undone:false}
+    };
+    if(!repeatable)changes[`rewards/${personId}/${rewardId}`]=null;
+    await update(familyRef(),changes);
   }
   async function undoReward(logId){
     const entry=state.rewardLog?.[logId];if(!entry||entry.undone)return;
-    const p=person(entry.personId),current=Number(p.points)||0;
-    await update(familyRef(),{
+    const p=person(entry.personId),current=Number(p.points)||0,changes={
       [`people/${entry.personId}/points`]:current+Number(entry.cost||0),
       [`rewardLog/${logId}/undone`]:true,
       [`rewardLog/${logId}/undoneAt`]:Date.now()
-    });
+    };
+    if(entry.repeatable===false&&!state.rewards?.[entry.personId]?.[entry.rewardId]){
+      changes[`rewards/${entry.personId}/${entry.rewardId}`]={name:entry.rewardName,cost:Number(entry.cost)||50,repeatable:false};
+    }
+    await update(familyRef(),changes);
   }
   window.undoReward=undoReward;
   function renderRewardLog(){
@@ -1083,7 +1091,7 @@
     setTaskMode("task");
     closeModal("taskModal")
   };
-  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50));if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost});$("rewardName").value="";$("rewardCost").value="50";closeModal("rewardModal")};
+  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});$("rewardName").value="";$("rewardCost").value="50";$("rewardRepeat").value="repeat";closeModal("rewardModal")};
   $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null});await rememberEvent(name);await rememberEventPerson(eventPerson);$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventDateTime("","12:00");closeModal("eventModal")};
 
 
