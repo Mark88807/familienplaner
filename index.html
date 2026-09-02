@@ -57,6 +57,7 @@
     .calendar-wrap{overflow:auto}.calendar{display:grid;grid-template-columns:64px repeat(7,1fr);min-width:730px}
     .calendar>div{min-height:56px;padding:7px;border-right:1px solid #f1f3f2;border-bottom:1px solid var(--line);font-size:12px}
     .calendar .head{min-height:auto;text-align:center;font-weight:750}.event{padding:6px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-weight:700;margin-bottom:3px}
+    [data-event-id]{cursor:pointer}[data-event-id]:hover{filter:brightness(.97)}
     .settings{display:grid;gap:10px}.setting{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:13px}
     .meal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
     .meal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
@@ -372,10 +373,10 @@
     <input id="rewardCost" type="number" min="1" step="1" value="50" inputmode="numeric">
   </div>
   <div class="reward-quick" aria-label="Punkte Schnellwahl">
-    <button type="button" data-reward-cost="25">25</button>
     <button type="button" data-reward-cost="50">50</button>
-    <button type="button" data-reward-cost="75">75</button>
     <button type="button" data-reward-cost="100">100</button>
+    <button type="button" data-reward-cost="150">150</button>
+    <button type="button" data-reward-cost="200">200</button>
   </div>
   <div class="actions"><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
 </div></div></div>
@@ -384,7 +385,7 @@
   <input id="eventName" placeholder="Titel, z. B. Fußballtraining" list="eventDatalist">
   <datalist id="eventDatalist"></datalist>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Termin-Gedächtnis</div><div class="suggestions" id="eventModalSuggestions"></div></div>
-  <div class="mobile-datetime"><input id="eventDate" type="date"><input id="eventTime" type="time" aria-label="Uhrzeit optional"></div>
+  <div class="mobile-datetime"><input id="eventDateTime" type="datetime-local" aria-label="Datum und Uhrzeit"></div>
   <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="12:00">12:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
   <input id="eventDuration" type="hidden" value="">
   <div class="quick-row"><span class="muted" style="font-size:12px;align-self:center">Dauer:</span><button type="button" data-durationquick="2">2 h</button><button type="button" data-durationquick="4">4 h</button><button type="button" data-durationquick="6">6 h</button><button type="button" data-durationquick="10">10 h</button></div>
@@ -464,6 +465,7 @@ Mittwoch | Gemüsepfanne"></textarea>
   const COLORS=["#17845b","#2f6fce","#6d4acb","#b96800","#c43d3d","#007f83"];
   const ALL_COLOR="#475569";
   const DATA_RESET_VERSION=1;
+  const REWARD_SCALE_VERSION=1;
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
@@ -482,7 +484,12 @@ Mittwoch | Gemüsepfanne"></textarea>
     document.documentElement.style.setProperty("--accent-soft",hexToSoft(c));
   }
   function makeFamilyCode(){const b=new Uint8Array(18);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("")}
-  function nextBonus(points){const mod=points%10,missing=mod===0?10:10-mod;return{next:points+missing,missing}}
+  function rewardProgress(personId,points){
+    const costs=Object.values(state.rewards?.[personId]||{}).map(r=>Number(r.cost)).filter(c=>Number.isFinite(c)&&c>0);
+    if(!costs.length)return{target:null,missing:null,percent:0,available:false};
+    const target=Math.min(...costs),current=Math.max(0,Number(points)||0);
+    return{target,missing:Math.max(0,target-current),percent:Math.min(100,current/target*100),available:current>=target};
+  }
 
   function renderColorPickers(){
     ["gateColors","editColors"].forEach(id=>{
@@ -503,13 +510,14 @@ Mittwoch | Gemüsepfanne"></textarea>
     $("weekdayRow").classList.toggle("hidden",!routine || $("taskRepeatType").value!=="weekdays");
   }
   window.openTaskModal=()=>{setTaskMode("task");renderTaskSuggestions();openModal("taskModal")};
-  window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)}renderEventSuggestions();openModal("eventModal")};
+  function localDateTimeValue(d){return `${isoLocal(d)}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
+  window.openEventModal=()=>{if(!$("eventDateTime").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);$("eventDateTime").value=localDateTimeValue(d)}renderEventSuggestions();openModal("eventModal")};
   window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
 
   function switchView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id))}
   document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
-  document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
-  document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>$("eventTime").value=b.dataset.timequick);
+  document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const current=$("eventDateTime").value,time=current.slice(11,16)||"12:00",d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDateTime").value=`${isoLocal(d)}T${time}`});
+  document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>{const current=$("eventDateTime").value,date=current.slice(0,10)||isoLocal(new Date());$("eventDateTime").value=`${date}T${b.dataset.timequick}`});
   document.querySelectorAll("[data-durationquick]").forEach(b=>b.onclick=()=>$("eventDuration").value=b.dataset.durationquick);
   $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
   $("taskModeTask").onclick=()=>setTaskMode("task");
@@ -526,14 +534,14 @@ Mittwoch | Gemüsepfanne"></textarea>
       familyId=makeFamilyCode();
       const taskMemory={};PREFILL_TASKS.forEach((name,i)=>taskMemory["seed"+i]={name,uses:0,lastUsed:0,prefill:true});
       const starter={
-        name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),meta:{dataResetVersion:DATA_RESET_VERSION},
+        name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),meta:{dataResetVersion:DATA_RESET_VERSION,rewardScaleVersion:REWARD_SCALE_VERSION},
         people:{lisa:{name:"Lisa",points:0,color:"#e74f87"},max:{name:"Max",points:0,color:"#3974d8"},papa:{name:"Papa",points:0,color:"#8054d8"},mama:{name:"Mama",points:0,color:"#c43d3d"}},
         tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
         rewards:{
-          lisa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
-          max:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20},r30:{name:"Extra Freizeit",cost:30}},
-          papa:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}},
-          mama:{r10:{name:"Kleine Belohnung",cost:10},r20:{name:"Lieblingsaktivität",cost:20}}
+          lisa:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
+          max:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
+          papa:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100}},
+          mama:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100}}
         },events:{},holidays:{},birthdays:{},mealWishes:{}
       };
       await set(ref(db,`families/${familyId}`),starter);localStorage.setItem(LS_FAMILY,familyId);$("familyGate").classList.remove("open");startSync();setTimeout(showFamilyCode,250)
@@ -554,6 +562,16 @@ Mittwoch | Gemüsepfanne"></textarea>
     Object.keys(state.people||{}).forEach(id=>changes[`people/${id}/points`]=0);
     await update(familyRef(),changes);return true;
   }
+  async function migrateLegacyRewardScaleIfNeeded(){
+    if(Number(state.meta?.rewardScaleVersion||0)>=REWARD_SCALE_VERSION)return false;
+    const legacy={"Kleine Belohnung":{10:50},"Lieblingsaktivität":{20:100},"Extra Freizeit":{30:150}},changes={"meta/rewardScaleVersion":REWARD_SCALE_VERSION};
+    let changed=false;
+    Object.entries(state.rewards||{}).forEach(([personId,rewards])=>Object.entries(rewards||{}).forEach(([rewardId,r])=>{
+      const next=legacy[r?.name]?.[Number(r?.cost)];
+      if(next){changes[`rewards/${personId}/${rewardId}/cost`]=next;changed=true}
+    }));
+    await update(familyRef(),changes);return changed;
+  }
 
   function startSync(){
     if(unsubscribe)unsubscribe();
@@ -561,6 +579,7 @@ Mittwoch | Gemüsepfanne"></textarea>
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
       state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};
       if(await runOneTimeDataResetIfNeeded())return;
+      if(await migrateLegacyRewardScaleIfNeeded())return;
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
       if(mamaEntry&&["#e74f87","#e58a21"].includes(String(mamaEntry[1].color||"").toLowerCase())){state.people[mamaEntry[0]].color="#c43d3d";update(ref(db,`families/${familyId}/people/${mamaEntry[0]}`),{color:"#c43d3d"}).catch(()=>{});}
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
@@ -737,7 +756,11 @@ Mittwoch | Gemüsepfanne"></textarea>
     $("dashboardTasks").innerHTML=openItems.length?openItems.slice(0,6).map(([id,t])=>{const p=person(t.person);return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="muted" style="font-size:12px">10 Punkte${t.recurring?' · ↻ Routine':''}</div></div><button class="mini" data-dash-task="${id}">✓</button></div>`}).join(""):`<div class="muted">Alles erledigt.</div>`;
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
 
-    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{const pts=Number(p.points)||0,nb=nextBonus(pts);return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${(pts%10)/10*100}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">noch ${nb.missing} bis ${nb.next}</div></div>`}).join("");
+    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{
+      const pts=Number(p.points)||0,rp=rewardProgress(id,pts);
+      const status=rp.target==null?"Keine Belohnung angelegt":(rp.available?`Belohnung ab ${rp.target} Punkten verfügbar`:`noch ${rp.missing} bis ${rp.target}`);
+      return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${rp.percent}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">${status}</div></div>`
+    }).join("");
 
     const {start}=currentWeekRange(),dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
     $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),meal=state.meals?.[iso]?.name;return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${meal?'':'muted'}" title="${escapeHtml(meal||'Noch offen')}">${escapeHtml(meal||'–')}</div></div>`}).join("");
@@ -815,12 +838,12 @@ Mittwoch | Gemüsepfanne"></textarea>
   }
   function eventTimeLabel(e){const time=e.time&&e.time!=="00:00"?e.time:"ohne Uhrzeit",dur=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `${time}${dur}`}
   function renderCalendar(){
-    const events=Object.values(state.events||{});
+    const events=Object.entries(state.events||{}).map(([id,e])=>({id,...e}));
     if(window.matchMedia("(max-width: 780px)").matches&&calendarMode==="week"){
       const now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
       const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
-      $("calendarGrid").innerHTML=`<div class="mobile-calendar-list">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),label=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="mobile-cal-day ${today?'today':''}"><div class="mobile-cal-date">${label}</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-cal-event" style="border-left-color:${p.color||ALL_COLOR}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><div><b>${escapeHtml(e.name)}</b><div class="muted">${escapeHtml(p.name)} · ${escapeHtml(eventTimeLabel(e))}</div></div></div>`}).join(""):`<div class="mobile-cal-empty">Keine Termine</div>`}</div>`}).join("")}</div>`;
+      $("calendarGrid").innerHTML=`<div class="mobile-calendar-list">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),label=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="mobile-cal-day ${today?'today':''}"><div class="mobile-cal-date">${label}</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-cal-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin löschen" style="border-left-color:${p.color||ALL_COLOR}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><div><b>${escapeHtml(e.name)}</b><div class="muted">${escapeHtml(p.name)} · ${escapeHtml(eventTimeLabel(e))}</div></div></div>`}).join(""):`<div class="mobile-cal-empty">Keine Termine</div>`}</div>`}).join("")}</div>`;
       return;
     }
     if(calendarMode==="month"){
@@ -831,17 +854,20 @@ Mittwoch | Gemüsepfanne"></textarea>
         const weeks=Array.from({length:6},(_,w)=>dates.slice(w*7,w*7+7));
         const fmtRange=d=>new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"short"}).format(d).replace(".","");
         const fmtDay=d=>new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(d).replace(".","").slice(0,2);
-        $("calendarGrid").innerHTML=`<div class="mobile-sixweeks">${weeks.map(week=>`<section class="mobile-week-block"><div class="mobile-week-title">${fmtRange(week[0])} – ${fmtRange(week[6])}</div>${week.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(new Date()),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso);return `<div class="mobile-week-day ${today?'today':''}"><div class="mobile-week-date"><b>${fmtDay(d)}</b><span>${String(d.getDate()).padStart(2,"0")}.</span></div><div class="mobile-week-content">${hols.map(x=>`<div class="mobile-week-holiday">${escapeHtml(x.name)}</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-week-event"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><span>${escapeHtml(eventTimeLabel(e))} · <b>${escapeHtml(e.name)}</b>${p.name?` · ${escapeHtml(p.name)}`:""}</span></div>`}).join(""):(!hols.length?'<span class="mobile-week-empty">—</span>':"")}</div></div>`}).join("")}</section>`).join("")}</div>`;
+        $("calendarGrid").innerHTML=`<div class="mobile-sixweeks">${weeks.map(week=>`<section class="mobile-week-block"><div class="mobile-week-title">${fmtRange(week[0])} – ${fmtRange(week[6])}</div>${week.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(new Date()),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso);return `<div class="mobile-week-day ${today?'today':''}"><div class="mobile-week-date"><b>${fmtDay(d)}</b><span>${String(d.getDate()).padStart(2,"0")}.</span></div><div class="mobile-week-content">${hols.map(x=>`<div class="mobile-week-holiday">${escapeHtml(x.name)}</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-week-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin löschen"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><span>${escapeHtml(eventTimeLabel(e))} · <b>${escapeHtml(e.name)}</b>${p.name?` · ${escapeHtml(p.name)}`:""}</span></div>`}).join(""):(!hols.length?'<span class="mobile-week-empty">—</span>':"")}</div></div>`}).join("")}</section>`).join("")}</div>`;
         return;
       }
       const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
-      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
+      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin löschen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
     }
     $("calendarGrid").style.display="grid";$("calendarGrid").style.minWidth="730px";
     const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
-    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
+    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin löschen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
   }
+  async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;await set(ref(db,`families/${familyId}/events/${id}`),null)}
+  $("calendarGrid").addEventListener("click",e=>{const item=e.target.closest("[data-event-id]");if(item)deleteCalendarEvent(item.dataset.eventId)});
+  $("calendarGrid").addEventListener("keydown",e=>{const item=e.target.closest("[data-event-id]");if(item&&(e.key==="Enter"||e.key===" ")){e.preventDefault();deleteCalendarEvent(item.dataset.eventId)}});
   const calendarMedia=window.matchMedia("(max-width: 780px)");
   if(calendarMedia.addEventListener)calendarMedia.addEventListener("change",()=>{renderCalendar();renderMeals()});
   function renderBirthdays(){
@@ -914,7 +940,7 @@ Mittwoch | Gemüsepfanne"></textarea>
     closeModal("taskModal")
   };
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50));if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost});$("rewardName").value="";$("rewardCost").value="50";closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value;if(!name||!date)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time:$("eventTime").value||"",durationHours:duration||null});await rememberEvent(name);$("eventName").value="";$("eventTime").value="";$("eventDuration").value="";closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),dateTime=$("eventDateTime").value,date=dateTime.slice(0,10),time=dateTime.slice(11,16);if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null});await rememberEvent(name);$("eventName").value="";$("eventDateTime").value="";$("eventDuration").value="";closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
