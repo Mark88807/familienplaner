@@ -73,7 +73,7 @@
 
     .suggestions{display:flex;gap:8px;flex-wrap:wrap}
     .suggestion{border:1px solid var(--line);background:white;border-radius:999px;padding:8px 11px}
-    .suggestion:hover{border-color:var(--accent);color:var(--accent)}
+    .suggestion:hover{border-color:var(--accent);color:var(--accent)}.suggestion.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:850}
     .idea{padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}
     .dash-task{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
     .dash-task:last-child{border-bottom:0}
@@ -392,11 +392,12 @@
       <select id="eventMinute" aria-label="Minute"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
     </div>
   </div>
-  <div class="quick-row"><button type="button" data-datequick="tomorrow">Morgen</button><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="12:00">12:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
+  <div class="quick-row"><button type="button" data-timequick="08:00">08:00</button><button type="button" data-timequick="12:00">12:00</button><button type="button" data-timequick="15:00">15:00</button><button type="button" data-timequick="18:00">18:00</button></div>
   <input id="eventDuration" type="hidden" value="">
   <div class="quick-row"><span class="muted" style="font-size:12px;align-self:center">Dauer:</span><button type="button" data-durationquick="2">2 h</button><button type="button" data-durationquick="4">4 h</button><button type="button" data-durationquick="6">6 h</button><button type="button" data-durationquick="10">10 h</button></div>
-  <select id="eventPerson"></select>
-  <div class="muted" style="font-size:12px">Für gemeinsame Termine „Alle“ wählen. Bei „Ausflug“ wird das automatisch gesetzt.</div>
+  <input id="eventPerson" type="hidden" value="all">
+  <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Für wen?</div><div class="quick-row" id="eventPersonQuick"></div></div>
+  <div class="muted" style="font-size:12px">„Alle“ steht immer zuerst, danach die zuletzt verwendeten Personen. Bei „Ausflug“ wird automatisch „Alle“ gewählt.</div>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
@@ -431,10 +432,10 @@
   <div class="actions"><button class="danger" id="deleteMealBtn" type="button" style="display:none;margin-right:auto">Tag löschen</button><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p>Einfaches Format pro Tag: <b>Datum | Frühstück | Warmes Essen</b>.<br>Auch ein Wochentag statt Datum ist möglich. Eine alte Zweier-Zeile wie <b>03.09 | Lasagne</b> wird als warmes Essen übernommen.</p><div class="form">
-  <textarea class="meal-import-area" id="mealImportText" placeholder="03.09 | Müsli | Spaghetti Bolognese
-04.09 | Brot | Gemüsecurry
-Freitag | Joghurt | Pizza"></textarea>
+<div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p><b>Ohne Sonderzeichen:</b> Datum, Frühstück und warmes Essen können nur mit Leerzeichen eingegeben werden, z. B. <b>03.09 Müsli Spaghetti Bolognese</b>.<br>Hat das Frühstück mehrere Wörter, zwei Leerzeichen zwischen den Spalten verwenden: <b>03.09&nbsp;&nbsp;Brot mit Käse&nbsp;&nbsp;Lasagne</b>. Das bisherige <b>|</b>-Format funktioniert weiterhin.</p><div class="form">
+  <textarea class="meal-import-area" id="mealImportText" placeholder="03.09 Müsli Spaghetti Bolognese
+04.09  Brot mit Käse  Gemüsecurry
+Freitag Joghurt Pizza"></textarea>
   <div class="muted" id="mealImportStatus"></div>
   <div class="actions"><button class="ghost" onclick="closeModal('mealImportModal')">Abbrechen</button><button class="primary" id="mealImportBtn">Importieren</button></div>
 </div></div></div>
@@ -534,15 +535,14 @@ Freitag | Joghurt | Pizza"></textarea>
     $("eventMinute").value=["00","15","30","45"].includes(minute)?minute:"00";
   }
   fillEventTimeSelectors();
-  window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();openModal("eventModal")};
+  window.openEventModal=()=>{if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();renderEventPersonQuick();openModal("eventModal")};
   window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
 
   function switchView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id))}
   document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
-  document.querySelectorAll("[data-datequick]").forEach(b=>b.onclick=()=>{const d=new Date();if(b.dataset.datequick==="tomorrow")d.setDate(d.getDate()+1);$("eventDate").value=isoLocal(d)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>{const [h,m]=b.dataset.timequick.split(":");$("eventHour").value=h;$("eventMinute").value=m});
   document.querySelectorAll("[data-durationquick]").forEach(b=>b.onclick=()=>$("eventDuration").value=b.dataset.durationquick);
-  $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
+  $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")setEventPerson("all")});
   $("taskModeTask").onclick=()=>setTaskMode("task");
   $("taskModeRoutine").onclick=()=>setTaskMode("routine");
   $("taskRepeatType").onchange=()=>{
@@ -565,7 +565,7 @@ Freitag | Joghurt | Pizza"></textarea>
           max:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
           papa:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100}},
           mama:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100}}
-        },events:{},holidays:{},birthdays:{},mealWishes:{}
+        },events:{},holidays:{},birthdays:{},mealWishes:{},eventPersonRecent:{}
       };
       await set(ref(db,`families/${familyId}`),starter);localStorage.setItem(LS_FAMILY,familyId);$("familyGate").classList.remove("open");startSync();setTimeout(showFamilyCode,250)
     }catch(e){$("gateMsg").textContent="Fehler: "+e.message}
@@ -600,7 +600,7 @@ Freitag | Joghurt | Pizza"></textarea>
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),async snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
-      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};state.eventPersonRecent||={};
       if(await runOneTimeDataResetIfNeeded())return;
       if(await migrateLegacyRewardScaleIfNeeded())return;
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
@@ -618,7 +618,26 @@ Freitag | Joghurt | Pizza"></textarea>
   function fillPeople(){
     const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
     ["taskPerson","rewardPerson","icsDefaultPerson","mealWishPerson"].forEach(id=>{if($(id))$(id).innerHTML=opts});
-    if($("eventPerson")) $("eventPerson").innerHTML=`<option value="all">Alle</option>${opts}`
+    renderEventPersonQuick();
+  }
+  function eventPeopleByRecent(){
+    return Object.entries(state.people||{}).sort((a,b)=>Number(state.eventPersonRecent?.[b[0]]||0)-Number(state.eventPersonRecent?.[a[0]]||0));
+  }
+  function setEventPerson(id){
+    if(!$("eventPerson"))return;
+    $("eventPerson").value=id;
+    $("eventPersonQuick")?.querySelectorAll("[data-event-person]").forEach(b=>b.classList.toggle("active",b.dataset.eventPerson===id));
+  }
+  function renderEventPersonQuick(){
+    const box=$("eventPersonQuick");if(!box||!$("eventPerson"))return;
+    const current=$("eventPerson").value||"all",people=eventPeopleByRecent();
+    box.innerHTML=`<button type="button" class="suggestion" data-event-person="all">Alle</button>${people.map(([id,p])=>`<button type="button" class="suggestion" data-event-person="${id}">${escapeHtml(p.name)}</button>`).join("")}`;
+    box.querySelectorAll("[data-event-person]").forEach(b=>b.onclick=()=>setEventPerson(b.dataset.eventPerson));
+    setEventPerson(current==="all"||state.people?.[current]?current:"all");
+  }
+  async function rememberEventPerson(id){
+    if(!id||id==="all"||!state.people?.[id])return;
+    await set(ref(db,`families/${familyId}/eventPersonRecent/${id}`),Date.now());
   }
   function taskMemorySorted(){
     return Object.entries(state.taskMemory||{})
@@ -639,7 +658,7 @@ Freitag | Joghurt | Pizza"></textarea>
     const list=eventMemorySorted();
     $("eventModalSuggestions").innerHTML=list.slice(0,3).map(([id,m])=>`<button class="suggestion" data-event-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
     $("eventDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
-    $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{const name=state.eventMemory[b.dataset.eventMem].name;$("eventName").value=name;if(name.trim().toLowerCase()==="ausflug")$("eventPerson").value="all"});
+    $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{const name=state.eventMemory[b.dataset.eventMem].name;$("eventName").value=name;if(name.trim().toLowerCase()==="ausflug")setEventPerson("all")});
   }
   async function rememberEvent(name){
     const norm=name.trim().toLowerCase();
@@ -738,13 +757,18 @@ Freitag | Joghurt | Pizza"></textarea>
     const d=new Date(year,month-1,day);return d.getFullYear()===year&&d.getMonth()===month-1&&d.getDate()===day?isoLocal(d):null;
   }
   function parseMealImportLine(line){
-    const parts=line.split(/\s*[|;]\s*/).map(x=>x.trim());if(parts.length<2)return null;
+    const raw=String(line||"").trim();if(!raw)return null;
+    let parts;
+    if(/[|;\t]/.test(raw)) parts=raw.split(/\s*[|;\t]\s*/).map(x=>x.trim());
+    else if(/\s{2,}/.test(raw)) parts=raw.split(/\s{2,}/).map(x=>x.trim());
+    else parts=raw.split(/\s+/).map(x=>x.trim());
+    if(parts.length<2)return null;
     const left=parts[0];let date=null,m=left.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?\.?$/);
     if(m){let y=m[3]?Number(m[3]):mealCursor.getFullYear();if(y<100)y+=2000;date=validMealDate(Number(m[1]),Number(m[2]),y)}
     else{const wd=weekdayIndexGerman(left);if(wd!==null)date=dateForWeekdayInMealMonth(wd)}
     if(!date)return null;
     if(parts.length===2){const warm=parts[1];return warm?{date,breakfast:null,warm}:null}
-    const breakfast=parts[1]||"",warm=parts.slice(2).join(" | ").trim();
+    const breakfast=parts[1]||"",warm=parts.slice(2).join(" ").trim();
     if(!breakfast&&!warm)return null;
     return{date,breakfast,warm};
   }
@@ -988,7 +1012,7 @@ Freitag | Joghurt | Pizza"></textarea>
     closeModal("taskModal")
   };
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50));if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost});$("rewardName").value="";$("rewardCost").value="50";closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null});await rememberEvent(name);$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventDateTime("","12:00");closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null});await rememberEvent(name);await rememberEventPerson(eventPerson);$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventDateTime("","12:00");closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
