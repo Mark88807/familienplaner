@@ -909,20 +909,20 @@
   function renderDashboard(){
     const {startIso,endIso,start}=currentWeekRange();
     const todayBase=new Date();todayBase.setHours(0,0,0,0);
-    const fmtDate=(d)=>`${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`;
+    const fmtDate=d=>`${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`;
     const weekdayShort=["SO","MO","DI","MI","DO","FR","SA"];
     const relativeInfo=(dateObj,time="")=>{
       const x=new Date(dateObj);x.setHours(0,0,0,0);
       const diff=Math.round((x-todayBase)/86400000);
-      if(diff===0)return {key:`0-${isoLocal(x)}`,label:`HEUTE${time?` · ${time}`:""}`};
-      if(diff===1)return {key:`1-${isoLocal(x)}`,label:`MORGEN${time?` · ${time}`:""}`};
-      return {key:`2-${isoLocal(x)}`,label:`${weekdayShort[x.getDay()]}${time?` · ${time}`:""}`,date:fmtDate(x)};
+      if(diff===0)return {key:`0-${isoLocal(x)}-${time}`,label:`HEUTE${time?` · ${time}`:""}`};
+      if(diff===1)return {key:`1-${isoLocal(x)}-${time}`,label:`MORGEN${time?` · ${time}`:""}`};
+      return {key:`2-${isoLocal(x)}-${time}`,label:`${weekdayShort[x.getDay()]}${time?` · ${time}`:""}`,date:fmtDate(x)};
     };
-    const groupRows=(items, emptyText)=>{
+    const groupRows=(items,emptyText)=>{
       if(!items.length)return `<div class="muted">${emptyText}</div>`;
-      const map=new Map();
-      items.forEach(item=>{const key=item.group.key;if(!map.has(key))map.set(key,{group:item.group,rows:[]});map.get(key).rows.push(item.html)});
-      return Array.from(map.values()).map(({group,rows})=>`<div class="dash-group"><div class="dash-day-label">${group.label}${group.date?`<span class="dash-date-soft">${group.date}</span>`:""}</div>${rows.join("")}</div>`).join("");
+      const groups=[];
+      items.forEach(item=>{let g=groups.find(x=>x.key===item.group.key);if(!g){g={key:item.group.key,group:item.group,rows:[]};groups.push(g)}g.rows.push(item.html)});
+      return groups.map(({group,rows})=>`<div class="dash-group"><div class="dash-day-label">${group.label}${group.date?`<span class="dash-date-soft">${group.date}</span>`:""}</div>${rows.join("")}</div>`).join("");
     };
 
     const events=Object.values(state.events||{}).filter(e=>!eventIsExpired(e)&&e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
@@ -932,12 +932,13 @@
     $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${groupRows(eventItems,"Keine Termine diese Woche.")}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${groupRows(birthdayItems,"Heute keine Geburtstage.")}</div>`;
 
     const monday=new Date(start);monday.setHours(0,0,0,0);
-    const todayDay=new Date().getDay();
-    const weekdayOffset=(val)=>val===0?6:val-1;
+    const todayDay=todayBase.getDay();
+    const weekdayOffset=v=>v===0?6:v-1;
     const taskDateForWeek=t=>{
       if(t.recurring&&t.repeatType==="weekdays"&&Array.isArray(t.weekdays)&&t.weekdays.length){
-        const days=[...new Set(t.weekdays.map(Number).filter(v=>!Number.isNaN(v)))].sort((a,b)=>weekdayOffset(a)-weekdayOffset(b));
-        let chosen=days.find(v=>v===todayDay) ?? days.find(v=>weekdayOffset(v)>=weekdayOffset(todayDay));
+        const days=[...new Set(t.weekdays.map(Number).filter(v=>Number.isInteger(v)&&v>=0&&v<=6))].sort((a,b)=>weekdayOffset(a)-weekdayOffset(b));
+        let chosen=days.find(v=>v===todayDay);
+        if(chosen==null)chosen=days.find(v=>weekdayOffset(v)>weekdayOffset(todayDay));
         if(chosen==null)chosen=days[0];
         const d=new Date(monday);d.setDate(monday.getDate()+weekdayOffset(chosen));return d;
       }
@@ -945,9 +946,9 @@
     };
     const taskItems=Object.entries(state.tasks||{}).filter(([id,t])=>{
       if(t.done)return false;
-      if(t.recurring&&!routineCanComplete(t,new Date()))return false;
+      if(t.recurring&&!routineCanComplete(t,todayBase))return false;
       return true;
-    }).map(([id,t])=>{const p=person(t.person),due=taskDateForWeek(t);return {id,sort:due.getTime(),group:relativeInfo(due),html:`<div class="dash-task"><div class="task-open-edit dash-row-main" data-open-task="${id}"><div class="dash-row-title"><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="dash-row-meta">10 Punkte${t.recurring?' · wiederholend':''}</div></div><button class="mini" data-dash-task="${id}">✓ Erledigt</button></div>`}}).sort((a,b)=>a.sort-b.sort || a.html.localeCompare(b.html));
+    }).map(([id,t])=>{const p=person(t.person),due=taskDateForWeek(t);return {sort:due.getTime(),group:relativeInfo(due),html:`<div class="dash-task"><div class="task-open-edit dash-row-main" data-open-task="${id}"><div class="dash-row-title"><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="dash-row-meta">10 Punkte${t.recurring?' · wiederholend':''}</div></div><button class="mini" data-dash-task="${id}">✓ Erledigt</button></div>`}}).sort((a,b)=>a.sort-b.sort);
     $("dashboardTasks").innerHTML=groupRows(taskItems,"Heute keine offenen Aufgaben.");
     document.querySelectorAll("[data-dash-task]").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
     document.querySelectorAll("[data-open-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.openTask));
@@ -961,6 +962,23 @@
 
     const dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
     $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen";return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${filled?'':'muted'}" title="${escapeHtml(summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(meal.warm||'–')}</div></div></div>`}).join("");
+  }
+
+  function routineCanComplete(t,now=new Date()){
+    if(!t?.recurring)return true;
+    const last=Number(t.lastCompletedAt)||0;
+    if(!last){
+      if(t.repeatType==="weekdays"&&Array.isArray(t.weekdays)&&t.weekdays.length)return t.weekdays.includes(now.getDay());
+      return true;
+    }
+    const prev=new Date(last);
+    if(t.repeatType==="daily")return isoLocal(prev)!==isoLocal(now);
+    const weekStart=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return isoLocal(x)};
+    if(t.repeatType==="weekdays"){
+      if(Array.isArray(t.weekdays)&&t.weekdays.length&&!t.weekdays.includes(now.getDay()))return false;
+      return weekStart(prev)!==weekStart(now);
+    }
+    return weekStart(prev)!==weekStart(now);
   }
   function renderTasks(){
     const allItems=Object.entries(state.tasks||{}),open=allItems.filter(([id,t])=>!t.recurring&&!t.done),routines=allItems.filter(([id,t])=>!!t.recurring);
@@ -981,9 +999,12 @@
   function reuseTask(id){const t=state.tasks?.[id];if(!t)return;editingTaskId=null;$("taskModalTitle").textContent="Aufgabe wieder nutzen";$("taskName").value=t.name||"";$("taskPerson").value=t.person||$("taskPerson").value;setTaskRecurring(false);$("weekdayRow").querySelectorAll("input").forEach(x=>x.checked=false);$("deleteTaskBtn").style.display="none";openModal("taskModal")}
   async function deleteTask(id){if(!state.tasks?.[id])return;await set(ref(db,`families/${familyId}/tasks/${id}`),null)}
   function renderRewards(){
-    if(!$("allRewardsGrid")) return;
+    if(!$("allRewardsGrid"))return;
     const peopleRanked=Object.entries(state.people||{}).sort((a,b)=>{const ac=Object.keys(state.rewards?.[a[0]]||{}).length,bc=Object.keys(state.rewards?.[b[0]]||{}).length;return bc-ac||String(a[1].name||"").localeCompare(String(b[1].name||""),"de")});
-    $("allRewardsGrid").innerHTML=peopleRanked.map(([pid,p])=>{const pts=Number(p.points)||0,base=p.color||'#64748b',rewards=Object.entries(state.rewards?.[pid]||{}).sort((a,b)=>(Number(a[1].cost)||0)-(Number(b[1].cost)||0));return `<div class="card reward-person-card" style="border-color:color-mix(in srgb, ${base} 22%, #d7dde5)!important;background:color-mix(in srgb, ${base} 7%, white)!important"><div class="reward-person-head" style="background:color-mix(in srgb, ${base} 13%, white)!important"><div><b><span class="member-color" style="background:${base}"></span>${escapeHtml(p.name)}</b></div><div class="reward-points">${pts} Punkte</div></div><div class="reward-chip-list">${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}"><span class="reward-name"><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:10px;margin-top:4px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<span class="muted" style="padding:12px">Noch keine Belohnungen.</span>`}</div></div>`}).join("");
+    $("allRewardsGrid").innerHTML=peopleRanked.map(([pid,p])=>{
+      const pts=Number(p.points)||0,base=p.color||'#64748b',rewards=Object.entries(state.rewards?.[pid]||{}).sort((a,b)=>(Number(a[1].cost)||0)-(Number(b[1].cost)||0));
+      return `<div class="card reward-person-card" style="border-color:color-mix(in srgb, ${base} 22%, #d7dde5)!important;background:color-mix(in srgb, ${base} 7%, white)!important"><div class="reward-person-head" style="background:color-mix(in srgb, ${base} 13%, white)!important"><div><b><span class="member-color" style="background:${base}"></span>${escapeHtml(p.name)}</b></div><div class="reward-points">${pts} Punkte</div></div><div class="reward-chip-list">${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}"><span class="reward-name"><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:10px;margin-top:4px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<span class="muted" style="padding:12px">Noch keine Belohnungen.</span>`}</div></div>`;
+    }).join("");
     const activate=row=>{if(row?.getAttribute("aria-disabled")==="false")redeemReward(row.dataset.rewardRowPerson,row.dataset.rewardRowId)};
     document.querySelectorAll("[data-reward-row-person]").forEach(row=>{row.onclick=e=>{if(e.target.closest("[data-edit-reward-person]"))return;activate(row)};row.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("[data-edit-reward-person]")){e.preventDefault();activate(row)}}});
     document.querySelectorAll("[data-edit-reward-person]").forEach(b=>b.onclick=e=>{e.stopPropagation();openRewardEdit(b.dataset.editRewardPerson,b.dataset.editRewardId)});
