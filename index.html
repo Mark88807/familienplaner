@@ -378,9 +378,16 @@
 
     /* requested compact dashboard/reward alignment */
     #dashboard .dashboard-person-dot{color:#fff!important;background:var(--person-color,#64748b)}
-    #rewards .reward-chip,#rewards .reward-empty-card{height:92px;min-height:92px;max-height:92px}
-    #rewards .reward-chip{align-content:center}
-    #rewards .reward-empty-card{align-content:center}
+    .task-person-dot{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:12px;font-weight:900;vertical-align:middle;margin-right:8px;flex:0 0 28px;background:var(--person-color,#64748b)}
+    .task-open-edit b{display:flex;align-items:center;gap:0;min-width:0}
+    .task-open-edit b span:last-child{min-width:0}
+    .week-meal-intro{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important}
+    .week-meal-intro-title{font-size:12px!important;font-weight:900!important;line-height:1.2!important}
+    .week-meal-plan-link{margin-left:auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:var(--accent)!important;color:#fff!important;border:0!important;border-radius:10px!important;padding:8px 12px!important;font-size:11px!important;font-weight:850!important;white-space:nowrap!important;text-decoration:none!important;cursor:pointer!important}
+    .week-meal-plan-link:hover{filter:brightness(.96)!important;text-decoration:none!important}
+    #rewards .rewards-by-person{align-items:start}
+    #rewards .reward-chip,#rewards .reward-empty-card{height:92px!important;min-height:92px!important;max-height:92px!important}
+    #rewards .reward-chip,#rewards .reward-empty-card{align-content:center!important;box-sizing:border-box}
   </style>
 </head>
 <body>
@@ -1122,7 +1129,7 @@
     document.querySelectorAll("[data-go-rewards]").forEach(b=>b.onclick=()=>switchView("rewards"));
 
     const dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
-    $("dashboardMeals").innerHTML=`<div class="week-meal week-meal-intro"><div class="week-meal-intro-title">Essen diese Woche</div><button class="linklike week-meal-plan-link" data-view="meals">Essenplan →</button></div>`+Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen";return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${filled?'':'muted'}" title="${escapeHtml(summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(meal.warm||'–')}</div></div></div>`}).join("");
+    $("dashboardMeals").innerHTML=`<div class="week-meal week-meal-intro"><div class="week-meal-intro-title">Essen diese Woche</div><button class="week-meal-plan-link" type="button" data-view="meals">Essenplan</button></div>`+Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen";return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${filled?'':'muted'}" title="${escapeHtml(summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(meal.warm||'–')}</div></div></div>`}).join("");
   }
 
   function routineCanComplete(t,now=new Date()){
@@ -1150,7 +1157,7 @@
   function renderTasks(){
     const allItems=Object.entries(state.tasks||{}),open=allItems.filter(([id,t])=>!t.recurring&&!t.done),routines=allItems.filter(([id,t])=>!!t.recurring);
     $("taskListTitle").textContent="Aufgaben";
-    const taskRow=([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'Wiederholend · fällig':'Wiederholend · für diesen Zeitraum erledigt'):'';return `<div class="task"><div class="ico">${t.recurring?'↻':'✓'}</div><div class="task-open-edit" data-edit-task="${id}"><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10</div><button class="reward-edit-icon" data-edit-task="${id}" aria-label="Aufgabe bearbeiten" title="Bearbeiten">✎</button></div>`};
+    const taskRow=([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'Wiederholend · fällig':'Wiederholend · für diesen Zeitraum erledigt'):'',initial=escapeHtml((p.name||'?').trim().charAt(0).toUpperCase());return `<div class="task"><div class="ico">${t.recurring?'↻':'✓'}</div><div class="task-open-edit" data-edit-task="${id}"><b><span class="task-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10</div><button class="reward-edit-icon" data-edit-task="${id}" aria-label="Aufgabe bearbeiten" title="Bearbeiten">✎</button></div>`};
     $("taskList").innerHTML=`<div class="task-group"><div class="task-group-title">Offen</div>${open.length?open.map(taskRow).join(""):'<div class="muted">Keine offenen Aufgaben.</div>'}</div><div class="task-group"><div class="task-group-title">Wiederholend</div>${routines.length?routines.map(taskRow).join(""):'<div class="muted">Keine wiederholenden Aufgaben.</div>'}</div>`;
     $("taskList").querySelectorAll("[data-edit-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.editTask));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
