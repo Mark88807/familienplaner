@@ -459,7 +459,7 @@
 
 <div class="modal" id="rewardModal"><div class="box"><h2 id="rewardModalTitle">Belohnung</h2><div class="form">
   <select id="rewardPerson"></select>
-  <input id="rewardName" placeholder="z. B. Kino">
+  <input id="rewardName" placeholder="z. B. Kino" autocomplete="off"><div class="type-suggestion hidden" id="rewardInlineSuggestion"></div>
   <div>
     <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Kosten in Punkten</div>
     <input id="rewardCost" type="number" min="1" step="1" value="50" inputmode="numeric">
@@ -588,13 +588,13 @@
   const LS_FAMILY="familienplaner_family_id_v2";
   const COLORS=["#17845b","#2f6fce","#6d4acb","#b96800","#c43d3d","#007f83"];
   const ALL_COLOR="#475569";
-  const DATA_RESET_VERSION=1;
+  const DATA_RESET_VERSION=2;
   const REWARD_SCALE_VERSION=1;
   const PREFILL_TASKS=["Bad säubern","Müll rausbringen","Tisch decken","Spülmaschine ausräumen","Wäsche zusammenlegen","Zimmer aufräumen","Pflanzen gießen","Haustier füttern","Schulranzen packen","Hausaufgaben machen","Küche aufräumen"];
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, mealInputTarget="warm", editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, mealInputTarget="warm", editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -656,7 +656,7 @@
       const starter={
         name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),meta:{dataResetVersion:DATA_RESET_VERSION,rewardScaleVersion:REWARD_SCALE_VERSION},
         people:{lisa:{name:"Lisa",points:0,color:"#e74f87"},max:{name:"Max",points:0,color:"#3974d8"},papa:{name:"Papa",points:0,color:"#8054d8"},mama:{name:"Mama",points:0,color:"#c43d3d"}},
-        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
+        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardMemory:{},meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
         rewards:{
           lisa:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
           max:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
@@ -678,7 +678,8 @@
     const taskMemory=Object.fromEntries(PREFILL_TASKS.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const eventMemory=Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const mealMemory=Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
-    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
+    const rewardMemory={};
+    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,rewardMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
     Object.keys(state.people||{}).forEach(id=>changes[`people/${id}/points`]=0);
     await update(familyRef(),changes);return true;
   }
@@ -697,7 +698,7 @@
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),async snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
-      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};state.eventPersonRecent||={};
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.rewardMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};state.eventPersonRecent||={};
       if(await runOneTimeDataResetIfNeeded())return;
       if(await migrateLegacyRewardScaleIfNeeded())return;
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
@@ -764,6 +765,16 @@
     }
   }
 
+  function rewardMemorySorted(){
+    return Object.entries(state.rewardMemory||{}).sort((a,b)=>(b[1].uses||0)-(a[1].uses||0)||(b[1].lastUsed||0)-(a[1].lastUsed||0))
+  }
+  async function rememberReward(name){
+    const norm=String(name||"").trim().toLowerCase();if(!norm)return;
+    const existing=Object.entries(state.rewardMemory||{}).find(([id,m])=>(m.name||"").trim().toLowerCase()===norm);
+    if(existing){const [id,m]=existing;await update(ref(db,`families/${familyId}/rewardMemory/${id}`),{uses:(m.uses||0)+1,lastUsed:Date.now()})}
+    else{const key=push(ref(db,`families/${familyId}/rewardMemory`)).key;await set(ref(db,`families/${familyId}/rewardMemory/${key}`),{name:String(name).trim(),uses:1,lastUsed:Date.now(),prefill:false})}
+  }
+
   function mealMemorySorted(){
     return Object.entries(state.mealMemory||{}).sort((a,b)=>(b[1].uses||0)-(a[1].uses||0)||(b[1].lastUsed||0)-(a[1].lastUsed||0))
   }
@@ -786,6 +797,7 @@
   }
   bindInlineSuggestion("taskName","taskInlineSuggestion",()=>Object.entries(state.taskMemory||{}).sort((a,b)=>(b[1].uses||0)-(a[1].uses||0)||(b[1].lastUsed||0)-(a[1].lastUsed||0)));
   bindInlineSuggestion("eventName","eventInlineSuggestion",()=>eventMemorySorted());
+  bindInlineSuggestion("rewardName","rewardInlineSuggestion",()=>rewardMemorySorted());
   bindInlineSuggestion("mealBreakfast","mealBreakfastInlineSuggestion",()=>mealMemorySorted());
   bindInlineSuggestion("mealWarm","mealWarmInlineSuggestion",()=>mealMemorySorted());
 
@@ -797,7 +809,7 @@
   }
   function renderMemoryOverview(){
     const box=$("memoryOverview");if(!box)return;
-    const groups=[{label:"Aufgaben",data:memoryGroupData(state.taskMemory)},{label:"Termine",data:memoryGroupData(state.eventMemory)},{label:"Essen",data:memoryGroupData(state.mealMemory)}];
+    const groups=[{label:"Aufgaben",data:memoryGroupData(state.taskMemory)},{label:"Belohnungen",data:memoryGroupData(state.rewardMemory)},{label:"Termine",data:memoryGroupData(state.eventMemory)},{label:"Essen",data:memoryGroupData(state.mealMemory)}];
     const totalEntries=groups.reduce((n,g)=>n+g.data.entries.length,0),totalWords=groups.reduce((n,g)=>n+g.data.words,0);
     box.innerHTML=`<div class="memory-total">${totalEntries} Einträge · ${totalWords} Wörter</div><div class="memory-help">Gespeichert werden ganze Namen und Phrasen, nicht einzelne Wörter. Neue Einträge kommen beim Speichern oder Verwenden dazu. Häufig verwendete Einträge stehen in den Vorschlägen zuerst; bei gleicher Häufigkeit zählt die letzte Nutzung.</div>${groups.map(g=>`<details class="memory-group"><summary>${g.label} · ${g.data.entries.length} Einträge · ${g.data.words} Wörter</summary><div class="memory-meta">${g.data.learned} selbst gelernt · ${g.data.entries.length-g.data.learned} vorgegeben</div><div class="memory-chips">${g.data.entries.map(m=>`<span class="memory-chip">${escapeHtml(m.name)}</span>`).join("")||`<span class="muted">Leer</span>`}</div></details>`).join("")}`;
   }
@@ -949,16 +961,13 @@
     const weekdayShort=["SO","MO","DI","MI","DO","FR","SA"];
     const relativeInfo=(dateObj,time="")=>{
       const x=new Date(dateObj);x.setHours(0,0,0,0);
-      const diff=Math.round((x-todayBase)/86400000);
-      if(diff===0)return {key:`0-${isoLocal(x)}-${time}`,label:`HEUTE${time?` · ${time}`:""}`};
-      if(diff===1)return {key:`1-${isoLocal(x)}-${time}`,label:`MORGEN${time?` · ${time}`:""}`};
-      return {key:`2-${isoLocal(x)}-${time}`,label:`${weekdayShort[x.getDay()]}${time?` · ${time}`:""}`,date:fmtDate(x)};
+      return {key:`${isoLocal(x)}-${time}`,label:`${weekdayShort[x.getDay()]} ${fmtDate(x)}${time?` · ${time}`:""}`};
     };
     const groupRows=(items,emptyText)=>{
       if(!items.length)return `<div class="muted">${emptyText}</div>`;
       const groups=[];
       items.forEach(item=>{let g=groups.find(x=>x.key===item.group.key);if(!g){g={key:item.group.key,group:item.group,rows:[]};groups.push(g)}g.rows.push(item.html)});
-      return groups.map(({group,rows})=>`<div class="dash-group"><div class="dash-day-label">${group.label}${group.date?`<span class="dash-date-soft">${group.date}</span>`:""}</div>${rows.join("")}</div>`).join("");
+      return groups.map(({group,rows})=>`<div class="dash-group"><div class="dash-day-label">${group.label}</div>${rows.join("")}</div>`).join("");
     };
 
     const events=Object.values(state.events||{}).filter(e=>!eventIsExpired(e)&&e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
@@ -1040,7 +1049,7 @@
     $("allRewardsGrid").innerHTML=peopleRanked.map(([pid,p])=>{
       const pts=Number(p.points)||0,base=p.color||'#64748b',soft=`color-mix(in srgb, ${base} 10%, white)`,border=`color-mix(in srgb, ${base} 24%, #d7dde5)`,rewards=Object.entries(state.rewards?.[pid]||{}).sort((a,b)=>(Number(a[1].cost)||0)-(Number(b[1].cost)||0));
       const owner=(p.name||'?').trim(),initial=escapeHtml(owner.charAt(0).toUpperCase());
-      const rewardRows=rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}" style="--person-color:${base};border-color:${border};background:${soft}"><span class="reward-person-dot" style="background:${base}">${initial}</span><span class="reward-name"><div class="reward-owner">${escapeHtml(owner)}</div><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:11px;margin-top:5px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<div class="reward-empty-card" style="background:${soft};border-color:${border}"><span class="reward-person-dot" style="background:${base}">${initial}</span><div><div class="reward-owner">${escapeHtml(owner)}</div><div class="muted">Noch keine Belohnungen.</div></div></div>`;
+      const rewardRows=rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}" style="--person-color:${base};border-color:${base}45!important;background:${base}14!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><span class="reward-name"><div class="reward-owner">${escapeHtml(owner)}</div><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:11px;margin-top:5px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<div class="reward-empty-card" style="background:${base}14!important;border-color:${base}45!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><div><div class="reward-owner">${escapeHtml(owner)}</div><div class="muted">Noch keine Belohnungen.</div></div></div>`;
       return `<div class="reward-person-card">${rewardRows}</div>`;
     }).join("");
     const activate=row=>{if(row?.getAttribute("aria-disabled")==="false")redeemReward(row.dataset.rewardRowPerson,row.dataset.rewardRowId)};
@@ -1199,7 +1208,7 @@
     const id=editingTaskId||push(ref(db,`families/${familyId}/tasks`)).key,old=state.tasks?.[id]||{};await set(ref(db,`families/${familyId}/tasks/${id}`),{...old,name,person:$("taskPerson").value,points:10,done:editingTaskId?!!old.done:false,recurring,repeatType,weekdays:recurring?weekdays:[],lastCompletedAt:old.lastCompletedAt||0,completedAt:old.completedAt||null});await rememberTask(name);editingTaskId=null;$("taskName").value="";setTaskRecurring(false);$("weekdayRow").querySelectorAll("input").forEach(x=>x.checked=false);closeModal("taskModal")
   };
   $("deleteTaskBtn").onclick=async()=>{if(!editingTaskId)return;const id=editingTaskId;editingTaskId=null;await deleteTask(id);closeModal("taskModal")};
-  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=editingRewardPersonId||$("rewardPerson").value,key=editingRewardId||push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});editingRewardPersonId=null;editingRewardId=null;$("rewardName").value="";$("rewardCost").value="50";setRewardRecurring(false);$("deleteRewardBtn").style.display="none";closeModal("rewardModal")};
+  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=editingRewardPersonId||$("rewardPerson").value,key=editingRewardId||push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});await rememberReward(name);editingRewardPersonId=null;editingRewardId=null;$("rewardName").value="";$("rewardCost").value="50";setRewardRecurring(false);$("deleteRewardBtn").style.display="none";closeModal("rewardModal")};
   $("deleteRewardBtn").onclick=async()=>{if(!editingRewardPersonId||!editingRewardId)return;await deleteReward(editingRewardPersonId,editingRewardId);editingRewardPersonId=null;editingRewardId=null;closeModal("rewardModal")};
   $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null});await rememberEvent(name);await rememberEventPerson(eventPerson);$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventDateTime("","12:00");closeModal("eventModal")};
 
