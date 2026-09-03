@@ -347,6 +347,11 @@
     .view:not(#dashboard) .sub{display:none!important}
     main{width:min(1360px,100%)}
     @media(min-width:781px){.meal-workspace{grid-template-columns:minmax(0,1.7fr) minmax(340px,.8fr)!important}.recipe-panel{display:grid!important;position:sticky!important;top:18px!important}}
+
+    .meal-workspace{display:block!important}
+    .meal-recipe-link{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;font-weight:inherit;text-align:left;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
+    .meal-recipe-link:hover{color:var(--accent)}
+    .meal-recipe-link.longpress-active{opacity:.65}
   </style>
 </head>
 <body>
@@ -459,7 +464,6 @@
           <div class="meal-toolbar"><div class="title" id="mealMonthTitle" style="margin:0"></div><button class="ghost" onclick="openModal('mealImportModal')">Schnellimport Text</button></div>
           <div class="calendar-wrap"><div class="meal-month" id="mealMonthGrid"></div></div>
         </div>
-        <aside class="card recipe-panel empty" id="recipePanel"><div>Tag mit warmem Essen auswählen, um Rezeptdetails zu sehen.</div></aside>
       </div>
       <div id="mealSupportCompact">
         <div class="card">
@@ -583,11 +587,9 @@
 <div class="modal" id="mealModal"><div class="box"><h2>Essen eintragen</h2><div class="form">
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Frühstück</div><input id="mealBreakfast" placeholder="z. B. Müsli, Brot, Joghurt" autocomplete="off"><div class="type-suggestion hidden" id="mealBreakfastInlineSuggestion"></div></div>
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Warmes Essen · Mittag oder Abend</div><input id="mealWarm" placeholder="z. B. Kürbissuppe" autocomplete="off"><div class="type-suggestion hidden" id="mealWarmInlineSuggestion"></div></div>
-  <div class="recipe-import-box">
-    <div class="muted" style="font-size:12px;font-weight:850">Rezept-Link optional</div>
-    <div class="recipe-import-row"><input id="mealRecipeUrl" type="url" inputmode="url" placeholder="https://…" autocomplete="off"><button type="button" class="ghost" id="checkRecipeBtn">Rezept prüfen</button></div>
-    <div class="muted" id="recipeImportStatus" style="font-size:11px">Strukturierte Rezeptdaten werden nur übernommen, wenn sie eindeutig erkannt werden.</div>
-    <div class="recipe-import-preview hidden" id="recipeImportPreview"></div>
+  <div>
+    <div class="muted" style="font-size:12px;font-weight:850;margin-bottom:6px">Rezept-Link optional</div>
+    <input id="mealRecipeUrl" type="url" inputmode="url" placeholder="https://…" autocomplete="off">
   </div>
   <input id="mealDate" type="date">
   <div class="repeat-box">
@@ -894,46 +896,10 @@
   }
   function mealHasContent(entry){const m=normalizedMeal(entry);return !!(m.breakfast||m.warm)}
   function mealSummary(entry){const m=normalizedMeal(entry),parts=[];if(m.breakfast)parts.push(`Frühstück: ${m.breakfast}`);if(m.warm)parts.push(`Warm: ${m.warm}`);return parts.join(" · ")}
-  const RECIPE_IMPORT_ENDPOINT="/api/recipe-import";
-  function normalizeRecipeData(raw,url=""){
-    if(!raw||typeof raw!=="object")return null;
-    const name=String(raw.name||"").trim(),servings=Math.max(1,Number(raw.servings)||4),ingredients=Array.isArray(raw.ingredients)?raw.ingredients.map(x=>String(x||"").trim()).filter(Boolean):[],steps=Array.isArray(raw.steps)?raw.steps.map(x=>String(x||"").trim()).filter(Boolean):[];
-    if(!name||ingredients.length<2||!steps.length)return null;
-    return{name,originalUrl:String(raw.originalUrl||url||"").trim(),baseServings:servings,ingredients,steps,importedAt:Date.now()};
+  function safeRecipeUrl(value){
+    const raw=String(value||"").trim();if(!raw)return"";
+    try{const u=new URL(raw);return /^https?:$/.test(u.protocol)?u.href:""}catch{return""}
   }
-  function parseLeadingAmount(text){
-    const s=String(text||"").trim(),fractions={"½":.5,"¼":.25,"¾":.75,"⅓":1/3,"⅔":2/3,"⅛":.125,"⅜":.375,"⅝":.625,"⅞":.875};
-    const um=s.match(/^(\d+(?:[.,]\d+)?)\s*([½¼¾⅓⅔⅛⅜⅝⅞])\s+(.+)$/);if(um)return{amount:Number(um[1].replace(",","."))+(fractions[um[2]]||0),rest:um[3]};
-    const frac=s.match(/^(\d+)\s*\/\s*(\d+)\s+(.+)$/);if(frac&&Number(frac[2]))return{amount:Number(frac[1])/Number(frac[2]),rest:frac[3]};
-    const num=s.match(/^(\d+(?:[.,]\d+)?)\s+(.+)$/);if(num)return{amount:Number(num[1].replace(",",".")),rest:num[2]};
-    const uni=s.match(/^([½¼¾⅓⅔⅛⅜⅝⅞])\s+(.+)$/);if(uni)return{amount:fractions[uni[1]],rest:uni[2]};
-    return null;
-  }
-  function formatScaledAmount(n){
-    if(!Number.isFinite(n))return"";const rounded=Math.round(n*100)/100;if(Number.isInteger(rounded))return String(rounded);return String(rounded).replace(".",",");
-  }
-  function scaledIngredient(text,newServings,baseServings){const parsed=parseLeadingAmount(text);if(!parsed)return{text:String(text),scaled:false};const factor=Math.max(1,Number(newServings)||4)/Math.max(1,Number(baseServings)||4);return{text:`${formatScaledAmount(parsed.amount*factor)} ${parsed.rest}`,scaled:true}}
-  function recipeForMeal(entry){const m=entry||{};return m.recipe&&typeof m.recipe==="object"?m.recipe:null}
-  function recipeDateLabel(iso){if(!iso)return"";const d=new Date(iso+"T12:00:00");return new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(d)}
-  function renderRecipePanel(date=selectedMealDate){
-    const panel=$("recipePanel");if(!panel)return;selectedMealDate=date||selectedMealDate;
-    const entry=selectedMealDate?state.meals?.[selectedMealDate]:null,meal=normalizedMeal(entry),recipe=recipeForMeal(entry),url=String(entry?.recipeUrl||recipe?.originalUrl||"").trim();
-    if(!selectedMealDate||!meal.warm){panel.className="card recipe-panel empty";panel.innerHTML=`<div>Tag mit warmem Essen auswählen, um Rezeptdetails zu sehen.</div>`;return}
-    panel.className="card recipe-panel";
-    if(!recipe){panel.innerHTML=`<div class="recipe-panel-head"><div><div class="recipe-panel-date">${escapeHtml(recipeDateLabel(selectedMealDate))}</div><div class="recipe-title">${escapeHtml(meal.warm)}</div></div></div>${url?`<div class="recipe-fallback"><b>Rezept konnte nicht zuverlässig ausgelesen werden.</b><div class="recipe-source-note">Es wurden keine unvollständigen oder geratenen Rezeptdaten gespeichert.</div><a class="recipe-link-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Originalrezept öffnen ↗</a></div>`:`<div class="recipe-fallback"><div>Noch kein Rezept hinterlegt.</div><button class="ghost recipe-panel-edit" type="button" data-edit-selected-meal>Rezept-Link hinzufügen</button></div>`}<button class="ghost recipe-panel-edit" type="button" data-edit-selected-meal>Essen bearbeiten</button>`;panel.querySelectorAll("[data-edit-selected-meal]").forEach(b=>b.onclick=()=>openMealModal(selectedMealDate));return}
-    const base=Math.max(1,Number(recipe.baseServings)||4),current=Math.max(1,Number(panel.dataset.servings)||base);panel.dataset.servings=String(current);
-    const ingredients=recipe.ingredients.map(x=>scaledIngredient(x,current,base).text);
-    panel.innerHTML=`<div class="recipe-panel-head"><div><div class="recipe-panel-date">${escapeHtml(recipeDateLabel(selectedMealDate))}</div><div class="recipe-title">${escapeHtml(recipe.name||meal.warm)}</div></div>${url?`<a class="recipe-link-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Rezept öffnen ↗</a>`:""}</div><div class="recipe-servings"><div><b>Personen</b><div class="recipe-source-note">Zutatenmengen werden proportional angepasst.</div></div><div class="recipe-stepper"><button type="button" data-servings-minus aria-label="Eine Person weniger">−</button><span>${current}</span><button type="button" data-servings-plus aria-label="Eine Person mehr">+</button></div></div><section><div class="recipe-section-title">Zutaten für ${current} Personen</div><div class="recipe-ingredients">${ingredients.map(x=>`<div class="recipe-ingredient"><span>${escapeHtml(x)}</span></div>`).join("")}</div></section><section><div class="recipe-section-title">Zubereitung (${recipe.steps.length} Schritte)</div><div class="recipe-steps">${recipe.steps.map(x=>`<div class="recipe-step"><div>${escapeHtml(x)}</div></div>`).join("")}</div></section>${url?`<a class="recipe-link-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Originalrezept öffnen ↗</a>`:""}<button class="ghost recipe-panel-edit" type="button" data-edit-selected-meal>Essen bearbeiten</button>`;
-    panel.querySelector("[data-servings-minus]").onclick=()=>{panel.dataset.servings=String(Math.max(1,current-1));renderRecipePanel(selectedMealDate)};panel.querySelector("[data-servings-plus]").onclick=()=>{panel.dataset.servings=String(current+1);renderRecipePanel(selectedMealDate)};panel.querySelector("[data-edit-selected-meal]").onclick=()=>openMealModal(selectedMealDate);
-  }
-  async function checkRecipeImport(){
-    const url=$("mealRecipeUrl").value.trim(),status=$("recipeImportStatus"),preview=$("recipeImportPreview");pendingRecipeImport=null;preview.classList.add("hidden");preview.innerHTML="";if(!url){status.textContent="Rezept-Link eingeben.";return}
-    try{const u=new URL(url);if(!/^https?:$/.test(u.protocol))throw new Error("Nur http/https");}catch{status.textContent="Bitte einen gültigen http/https-Link eingeben.";return}
-    status.textContent="Rezept wird geprüft …";
-    try{const res=await fetch(RECIPE_IMPORT_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});if(!res.ok)throw new Error(`HTTP ${res.status}`);const data=await res.json();const recipe=data?.ok?normalizeRecipeData(data.recipe,url):null;if(!recipe){status.textContent="Rezept konnte nicht zuverlässig ausgelesen werden. Beim Speichern wird nur der Link hinterlegt.";return}pendingRecipeImport=recipe;status.textContent="Rezeptdaten sauber erkannt. Mit Speichern werden sie übernommen.";preview.innerHTML=`<b>${escapeHtml(recipe.name)}</b><div>${recipe.baseServings} Personen · ${recipe.ingredients.length} Zutaten · ${recipe.steps.length} Schritte</div><div><b>Zutaten:</b> ${recipe.ingredients.slice(0,4).map(escapeHtml).join(" · ")}${recipe.ingredients.length>4?" …":""}</div><div><b>Schritte:</b><ol>${recipe.steps.slice(0,3).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ol></div>`;preview.classList.remove("hidden")}
-    catch(e){status.textContent="Importdienst nicht erreichbar oder Import nicht eindeutig. Beim Speichern wird nur der Link hinterlegt."}
-  }
-  $("checkRecipeBtn").onclick=checkRecipeImport;
   window.openMealModal=(date=null)=>{
     renderMealMemory();
     const meal=normalizedMeal(date?state.meals?.[date]:null);
@@ -941,7 +907,7 @@
     if(date)$("mealDate").value=date;
     else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
     $("mealBreakfast").value=meal.breakfast;$("mealWarm").value=meal.warm;
-    const currentEntry=date?state.meals?.[date]:null;$("mealRecipeUrl").value=String(currentEntry?.recipeUrl||currentEntry?.recipe?.originalUrl||"");pendingRecipeImport=currentEntry?.recipe?normalizeRecipeData(currentEntry.recipe,$("mealRecipeUrl").value):null;$("recipeImportPreview").classList.add("hidden");$("recipeImportPreview").innerHTML="";$("recipeImportStatus").textContent="Strukturierte Rezeptdaten werden nur übernommen, wenn sie eindeutig erkannt werden.";
+    const currentEntry=date?state.meals?.[date]:null;$("mealRecipeUrl").value=String(currentEntry?.recipeUrl||currentEntry?.recipe?.originalUrl||"");
     setMealBreakfastRecurring(false);
     $("mealBreakfastWeekdayRow").querySelectorAll("input").forEach(x=>x.checked=false);
     const startDate=$("mealDate").value?new Date($("mealDate").value+"T12:00:00"):new Date(),until=new Date(startDate);until.setMonth(until.getMonth()+1);
@@ -964,12 +930,13 @@
     const year=mealCursor.getFullYear(),month=mealCursor.getMonth();
     $("mealMonthTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(mealCursor);
     const daysInMonth=new Date(year,month+1,0).getDate();
+    const warmHtml=(meal,raw,iso)=>{const url=safeRecipeUrl(raw?.recipeUrl||raw?.recipe?.originalUrl||"");if(!meal.warm)return"";return url?`<button type="button" class="meal-recipe-link" data-recipe-open="${escapeHtml(url)}" data-recipe-date="${iso}" title="Rezept öffnen · lang drücken zum Bearbeiten">${escapeHtml(meal.warm)}</button>`:escapeHtml(meal.warm)};
     if(window.matchMedia("(max-width: 780px)").matches){
       $("mealMonthGrid").classList.add("meal-mobile-list");
       let html="";
       for(let day=1;day<=daysInMonth;day++){
         const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),weekday=new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(d).replace(".","").toUpperCase(),summary=mealSummary(raw)||"Essen eintragen";
-        const lines=filled?`${meal.breakfast?`<div class="meal-line">${escapeHtml(meal.breakfast)}</div>`:""}${meal.warm?`<div class="meal-line">${escapeHtml(meal.warm)}</div>`:""}`:'';
+        const lines=filled?`${meal.breakfast?`<div class="meal-line">${escapeHtml(meal.breakfast)}</div>`:""}${meal.warm?`<div class="meal-line">${warmHtml(meal,raw,iso)}</div>`:""}`:'';
         html+=`<div class="meal-mobile-row ${today?'today':''} ${filled?'filled':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${weekday} ${String(day).padStart(2,"0")}. ${escapeHtml(summary)}"><div class="meal-mobile-date"><b>${weekday}</b><span>${String(day).padStart(2,"0")}.</span></div><div class="meal-mobile-name">${lines}</div></div>`;
       }
       $("mealMonthGrid").innerHTML=html;
@@ -980,17 +947,26 @@
       html+=Array.from({length:offset},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
       for(let day=1;day<=daysInMonth;day++){
         const d=new Date(year,month,day),iso=isoLocal(d),today=iso===isoLocal(new Date()),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Essen eintragen";
-        const entries=filled?`<div class="meal-stack">${meal.breakfast?`<div class="meal-entry">${escapeHtml(meal.breakfast)}</div>`:""}${meal.warm?`<div class="meal-entry">${escapeHtml(meal.warm)}</div>`:""}</div>`:"";
+        const entries=filled?`<div class="meal-stack">${meal.breakfast?`<div class="meal-entry">${escapeHtml(meal.breakfast)}</div>`:""}${meal.warm?`<div class="meal-entry">${warmHtml(meal,raw,iso)}</div>`:""}</div>`:"";
         html+=`<div class="meal-day ${today?'today':''}" data-meal-date="${iso}" role="button" tabindex="0" aria-label="${day}. ${escapeHtml(summary)}"><div class="meal-date">${day}.</div>${entries}</div>`;
       }
       const trailing=(7-((offset+daysInMonth)%7))%7;
       html+=Array.from({length:trailing},()=>`<div class="meal-empty" aria-hidden="true"></div>`).join("");
       $("mealMonthGrid").innerHTML=html;
     }
-    const openDay=el=>{const date=el.dataset.mealDate,entry=state.meals?.[date];if(mealHasContent(entry)){selectedMealDate=date;$("recipePanel").dataset.servings="";renderRecipePanel(date)}else openMealModal(date)};
-    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(el=>{el.onclick=()=>openDay(el);el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDay(el)}}});
-    if(!selectedMealDate){const firstFilled=Object.keys(state.meals||{}).filter(x=>x.startsWith(`${year}-${String(month+1).padStart(2,"0")}-`)&&mealHasContent(state.meals[x])).sort()[0];selectedMealDate=firstFilled||null}
-    renderRecipePanel(selectedMealDate);renderMealMemory();
+    const openDay=el=>openMealModal(el.dataset.mealDate);
+    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(el=>{el.onclick=e=>{if(e.target.closest("[data-recipe-open]"))return;openDay(el)};el.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("[data-recipe-open]")){e.preventDefault();openDay(el)}}});
+    $("mealMonthGrid").querySelectorAll("[data-recipe-open]").forEach(link=>{
+      let timer=null,longPressed=false;
+      const start=()=>{longPressed=false;link.classList.add("longpress-active");timer=setTimeout(()=>{longPressed=true;link.classList.remove("longpress-active");openMealModal(link.dataset.recipeDate)},550)};
+      const clear=()=>{if(timer){clearTimeout(timer);timer=null}link.classList.remove("longpress-active")};
+      link.addEventListener("pointerdown",e=>{e.stopPropagation();start()});
+      link.addEventListener("pointerup",e=>{e.stopPropagation();clear()});
+      link.addEventListener("pointercancel",clear);link.addEventListener("pointerleave",clear);
+      link.onclick=e=>{e.preventDefault();e.stopPropagation();if(longPressed){longPressed=false;return}const url=safeRecipeUrl(link.dataset.recipeOpen);if(url)window.open(url,"_blank","noopener,noreferrer")};
+      link.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();const url=safeRecipeUrl(link.dataset.recipeOpen);if(url)window.open(url,"_blank","noopener,noreferrer")}};
+    });
+    renderMealMemory();
   }
   function weekdayIndexGerman(text){
     const map={montag:1,mo:1,dienstag:2,di:2,mittwoch:3,mi:3,donnerstag:4,do:4,freitag:5,fr:5,samstag:6,sa:6,sonntag:0,so:0};
@@ -1383,7 +1359,7 @@
     if(recurring&&!selectedWeekdays.length){alert("Bitte mindestens einen Wochentag für das Frühstück auswählen.");return}
     const repeatDates=breakfast?breakfastRepeatDates(date,repeat,until,selectedWeekdays):[date];
     if(recurring&&!repeatDates.length){alert("Bitte ein gültiges Enddatum für die Frühstück-Wiederholung wählen.");return}
-    const recipeUrl=$("mealRecipeUrl").value.trim(),oldEntry=state.meals?.[editingMealDate||date]||{},recipe=(pendingRecipeImport&&recipeUrl)?pendingRecipeImport:(recipeUrl&&oldEntry.recipe&&String(oldEntry.recipe.originalUrl||"")===recipeUrl?oldEntry.recipe:null),recipeFields=recipeUrl?{recipeUrl,recipe:recipe||null}:{recipeUrl:null,recipe:null};
+    const recipeRaw=$("mealRecipeUrl").value.trim(),recipeUrl=safeRecipeUrl(recipeRaw);if(recipeRaw&&!recipeUrl){alert("Bitte einen gültigen http/https-Rezept-Link eingeben.");return}const recipeFields=recipeUrl?{recipeUrl,recipe:null}:{recipeUrl:null,recipe:null};
     const changes={};if(editingMealDate&&editingMealDate!==date)changes[editingMealDate]=null;
     if(!recurring)changes[date]={breakfast,warm,...recipeFields,updatedAt:Date.now()};
     else{
@@ -1392,9 +1368,9 @@
     }
     await update(ref(db,`families/${familyId}/meals`),changes);if(breakfast)await rememberMeal(breakfast);if(warm)await rememberMeal(warm);
     const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}
-    selectedMealDate=date;editingMealDate=null;pendingRecipeImport=null;$("mealBreakfast").value="";$("mealWarm").value="";$("mealRecipeUrl").value="";closeModal("mealModal");renderMeals()
+    editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";$("mealRecipeUrl").value="";closeModal("mealModal");renderMeals()
   };
-  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;const deleted=editingMealDate;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);if(selectedMealDate===deleted)selectedMealDate=null;editingMealDate=null;pendingRecipeImport=null;$("mealBreakfast").value="";$("mealWarm").value="";$("mealRecipeUrl").value="";closeModal("mealModal");renderMeals()};
+  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;const deleted=editingMealDate;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";$("mealRecipeUrl").value="";closeModal("mealModal");renderMeals()};
   $("mealImportBtn").onclick=async()=>{
     const groups=[{id:"mealImportBreakfast",type:"breakfast",label:"Frühstück"},{id:"mealImportWarm",type:"warm",label:"Warm"}],items=[],errors=[];
     for(const group of groups){const lines=$(group.id).value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);lines.forEach((line,index)=>{const item=parseMealImportLine(line,group.type);if(item)items.push(item);else errors.push(`${group.label} Zeile ${index+1}`)})}
