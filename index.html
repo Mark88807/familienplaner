@@ -1019,7 +1019,7 @@
     const year=mealCursor.getFullYear(),month=mealCursor.getMonth();
     $("mealMonthTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(mealCursor);
     const daysInMonth=new Date(year,month+1,0).getDate();
-    const warmHtml=(meal,raw,iso)=>{const url=safeRecipeUrl(raw?.recipeUrl||raw?.recipe?.originalUrl||"");if(!meal.warm)return"";return url?`<button type="button" class="meal-recipe-link" data-recipe-open="${escapeHtml(url)}" data-recipe-date="${iso}" title="Rezept öffnen · lang drücken zum Bearbeiten">${escapeHtml(meal.warm)}</button>`:escapeHtml(meal.warm)};
+    const warmHtml=(meal,raw,iso)=>{if(!meal.warm)return"";return escapeHtml(meal.warm)};
     if(window.matchMedia("(max-width: 780px)").matches){
       $("mealMonthGrid").classList.add("meal-mobile-list");
       let html="";
@@ -1044,17 +1044,7 @@
       $("mealMonthGrid").innerHTML=html;
     }
     const openDay=el=>openMealModal(el.dataset.mealDate);
-    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(el=>{el.onclick=e=>{if(e.target.closest("[data-recipe-open]"))return;openDay(el)};el.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("[data-recipe-open]")){e.preventDefault();openDay(el)}}});
-    $("mealMonthGrid").querySelectorAll("[data-recipe-open]").forEach(link=>{
-      let timer=null,longPressed=false;
-      const start=()=>{longPressed=false;link.classList.add("longpress-active");timer=setTimeout(()=>{longPressed=true;link.classList.remove("longpress-active");openMealModal(link.dataset.recipeDate)},550)};
-      const clear=()=>{if(timer){clearTimeout(timer);timer=null}link.classList.remove("longpress-active")};
-      link.addEventListener("pointerdown",e=>{e.stopPropagation();start()});
-      link.addEventListener("pointerup",e=>{e.stopPropagation();clear()});
-      link.addEventListener("pointercancel",clear);link.addEventListener("pointerleave",clear);
-      link.onclick=e=>{e.preventDefault();e.stopPropagation();if(longPressed){longPressed=false;return}const url=safeRecipeUrl(link.dataset.recipeOpen);if(url)window.open(url,"_blank","noopener,noreferrer")};
-      link.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();const url=safeRecipeUrl(link.dataset.recipeOpen);if(url)window.open(url,"_blank","noopener,noreferrer")}};
-    });
+    $("mealMonthGrid").querySelectorAll("[data-meal-date]").forEach(el=>{el.onclick=()=>openDay(el);el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDay(el)}}});
     renderMealMemory();
   }
   function weekdayIndexGerman(text){
