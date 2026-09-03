@@ -350,7 +350,7 @@
     @media(min-width:781px){.meal-workspace{grid-template-columns:minmax(0,1.7fr) minmax(340px,.8fr)!important}.recipe-panel{display:grid!important;position:sticky!important;top:18px!important}}
 
     .meal-workspace{display:block!important}
-    .meal-recipe-link{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;font-weight:inherit;text-align:left;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
+    .meal-recipe-link{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;font-weight:inherit;text-align:left;text-decoration:none;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
     .meal-recipe-link:hover{color:var(--accent)}
     .meal-recipe-link.longpress-active{opacity:.65}
 
@@ -422,6 +422,25 @@
     #rewards .reward-edit-icon{width:36px!important;height:36px!important;border-radius:10px!important;align-self:center!important}
     #rewards .reward-empty-card .muted{font-size:12px!important}
     @media(max-width:780px){.week-meal-detail{grid-template-columns:1fr;}.week-meal-detail-action{justify-self:start}#rewards .rewards-by-person{grid-template-columns:1fr!important}}
+
+    #rewards .rewards-by-person{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;align-items:start!important}
+    #rewards .reward-person-card{display:grid!important;gap:10px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+    #rewards .reward-chip-list{display:grid!important;gap:10px!important}
+    #rewards .reward-chip{grid-template-columns:42px minmax(0,1fr) 54px 44px!important;align-items:center!important;padding:9px 10px!important;border:1px solid rgba(100,116,139,.18)!important;border-radius:18px!important;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.86))!important;box-shadow:none!important;height:84px!important;min-height:84px!important;max-height:84px!important}
+    #rewards .reward-chip.available{border-color:rgba(22,101,52,.26)!important;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(245,251,246,.96))!important}
+    #rewards .reward-person-dot{width:34px!important;height:34px!important;border-radius:50%!important;display:grid!important;place-items:center!important;color:#fff!important;font-weight:900!important;font-size:16px!important;align-self:flex-start!important;margin-top:2px!important}
+    #rewards .reward-name{min-width:0!important}
+    #rewards .reward-owner{font-size:11px!important;font-weight:850!important;color:#475569!important;line-height:1.05!important;margin-bottom:1px!important}
+    #rewards .reward-name b{display:block!important;font-size:15px!important;line-height:1.12!important;margin:0!important;color:#0f172a!important}
+    #rewards .reward-cost{font-size:13px!important;font-weight:900!important;color:#0f172a!important;white-space:nowrap!important;align-self:flex-start!important;text-align:right!important;padding-top:2px!important}
+    #rewards .reward-status{height:6px!important;background:#d9e0e7!important;border-radius:999px!important;overflow:hidden!important;margin-top:5px!important}
+    #rewards .reward-status span{display:block!important;height:100%!important;background:var(--person-color,#64748b)!important;border-radius:999px!important}
+    #rewards .reward-available-label{font-size:10px!important;font-weight:900!important;color:#166534!important;margin-top:3px!important}
+    #rewards .reward-edit-icon{width:40px!important;height:40px!important;border:1px solid rgba(100,116,139,.18)!important;border-radius:12px!important;background:#fff!important;color:#334155!important;justify-self:end!important}
+    #rewards .reward-edit-icon:hover{background:#f8fafc!important;color:#0f172a!important;border-color:#94a3b8!important}
+    #rewards .reward-empty-card{display:grid!important;grid-template-columns:42px minmax(0,1fr)!important;gap:10px!important;align-items:center!important;padding:9px 10px!important;border:1px solid rgba(100,116,139,.16)!important;border-radius:18px!important;background:rgba(255,255,255,.72)!important;height:84px!important;min-height:84px!important;max-height:84px!important}
+    #rewards .reward-empty-card .muted{font-size:13px!important}
+    @media(max-width:780px){#rewards .rewards-by-person{grid-template-columns:1fr!important}}
   </style>
 </head>
 <body>
@@ -1218,12 +1237,12 @@
   async function deleteTask(id){if(!state.tasks?.[id])return;await set(ref(db,`families/${familyId}/tasks/${id}`),null)}
   function renderRewards(){
     if(!$("allRewardsGrid"))return;
-    const peopleList=Object.entries(state.people||{});
-    $("allRewardsGrid").innerHTML=peopleList.map(([pid,p])=>{
+    const peopleRanked=Object.entries(state.people||{}).sort((a,b)=>{const ac=Object.keys(state.rewards?.[a[0]]||{}).length,bc=Object.keys(state.rewards?.[b[0]]||{}).length;return bc-ac||String(a[1].name||"").localeCompare(String(b[1].name||""),"de")});
+    $("allRewardsGrid").innerHTML=peopleRanked.map(([pid,p])=>{
       const pts=Number(p.points)||0,base=p.color||'#64748b',rewards=Object.entries(state.rewards?.[pid]||{}).sort((a,b)=>(Number(a[1].cost)||0)-(Number(b[1].cost)||0));
       const owner=(p.name||'?').trim(),initial=escapeHtml(owner.charAt(0).toUpperCase());
-      const rewardRows=rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}" style="--person-color:${base}"><span class="reward-person-dot" style="background:${base}" title="${escapeHtml(owner)}">${initial}</span><span class="reward-name"><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:11px;margin-top:4px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<div class="reward-empty-card"><span class="reward-person-dot" style="background:${base}" title="${escapeHtml(owner)}">${initial}</span><div class="muted">Noch keine Belohnungen.</div></div>`;
-      return `<div class="reward-person-card" style="--person-color:${base}" aria-label="Belohnungen ${escapeHtml(owner)}"><div class="reward-person-card-head"><span class="reward-person-dot" style="background:${base}" title="${escapeHtml(owner)}">${initial}</span><span class="reward-points-mini">${pts} Punkte</span></div><div class="reward-chip-list">${rewardRows}</div></div>`;
+      const rewardRows=rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}" style="--person-color:${base};border-color:${base}45!important;background:${base}14!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><span class="reward-name"><div class="reward-owner">${escapeHtml(owner)}</div><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:11px;margin-top:4px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<div class="reward-empty-card" style="background:${base}14!important;border-color:${base}45!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><div><div class="reward-owner">${escapeHtml(owner)}</div><div class="muted">Noch keine Belohnungen.</div></div></div>`;
+      return `<div class="reward-person-card">${rewardRows}</div>`;
     }).join("");
     const activate=row=>{if(row?.getAttribute("aria-disabled")==="false")redeemReward(row.dataset.rewardRowPerson,row.dataset.rewardRowId)};
     document.querySelectorAll("[data-reward-row-person]").forEach(row=>{row.onclick=e=>{if(e.target.closest("[data-edit-reward-person]"))return;activate(row)};row.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("[data-edit-reward-person]")){e.preventDefault();activate(row)}}});
