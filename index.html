@@ -194,6 +194,11 @@
       .week-meals{grid-template-columns:1fr;min-width:0;gap:4px}.dashboard-meals-wrap{overflow:visible;margin:0;padding:0}.week-meal{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;padding:7px 9px}.week-meal-day{margin:0}.week-meal-name{white-space:normal;overflow:visible}
       .reward-person-card{padding:12px}.reward-person-head{align-items:flex-start}.reward-chip{padding:7px}.weekday-row{gap:4px}.weekday-row label{min-height:40px}
     }
+
+    .log-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .reward-chip.available{border-radius:10px;padding:9px 8px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line))}
+    .reward-progress{height:5px;background:#e8edf3;border-radius:999px;overflow:hidden;margin-top:5px}.reward-progress span{display:block;height:100%;background:var(--accent)}
+    .linklike{border:0;background:none;padding:0;color:inherit;font:inherit;font-weight:inherit;text-align:left;cursor:pointer}.linklike:hover{text-decoration:underline}
   </style>
 </head>
 <body>
@@ -274,12 +279,16 @@
           <div class="card"><div class="title">Vorschläge</div><div class="suggestions" id="taskMemorySide"></div></div>
         </div>
       </div>
+      <div class="card" style="margin-top:15px">
+        <div class="title">Aufgaben-Logbuch · letzte 10</div>
+        <div id="taskLog"></div>
+      </div>
     </section>
 
     <section class="view" id="rewards">
       <div class="top">
         <div><h1>Belohnungen</h1><div class="sub">Alle Familienmitglieder auf einen Blick. Kosten pro Belohnung frei festlegen.</div></div>
-        <button class="primary" onclick="openModal('rewardModal')">+ Belohnung</button>
+        <button class="primary" onclick="openRewardCreate()">+ Belohnung</button>
       </div>
       <div class="family-grid" id="allRewardsGrid"></div>
       <div class="card" style="margin-top:15px">
@@ -304,10 +313,10 @@
         <div class="calendar-wrap"><div class="meal-month" id="mealMonthGrid"></div></div>
       </div>
       <div class="card" style="margin-top:14px">
-        <div class="settings-head"><div class="title">Essenswünsche</div><button class="mini" onclick="openModal('mealWishModal')">+ Wunsch</button></div>
+        <div class="settings-head"><div class="title">Essenswünsche warm</div><button class="mini" onclick="openModal('mealWishModal')">+ Wunsch</button></div>
         <div id="mealWishList"></div>
       </div>
-      <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 15</div><div class="meal-memory" id="mealMemoryList"></div></div>
+      <div class="card" style="margin-top:14px"><div class="title">Essens-Gedächtnis · Top 10</div><div class="meal-memory" id="mealMemoryList"></div></div>
     </section>
 
     <section class="view" id="settings">
@@ -338,21 +347,16 @@
   <button data-view="settings">•••<br>Mehr</button>
 </div>
 
-<div class="modal" id="taskModal"><div class="box"><h2>Aufgabe</h2><div class="form">
-  <input id="taskName" placeholder="z. B. Bad säubern" list="taskDatalist"><datalist id="taskDatalist"></datalist>
-  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Gedächtnis</div><div class="suggestions" id="taskModalSuggestions"></div></div>
+<div class="modal" id="taskModal"><div class="box"><h2 id="taskModalTitle">Aufgabe</h2><div class="form">
+  <input id="taskName" placeholder="z. B. Bad säubern" list="taskDatalist" autocomplete="off"><datalist id="taskDatalist"></datalist>
   <select id="taskPerson"></select>
+  <input id="taskTag" placeholder="Tag optional, z. B. Schule">
   <div class="notice" style="padding:9px 11px">Aufgabe: <b>10 Punkte</b></div>
-  <div class="task-mode" aria-label="Aufgabentyp">
-    <button type="button" class="active" id="taskModeTask">Aufgabe</button>
-    <button type="button" id="taskModeRoutine">Routine</button>
-  </div>
-  <input id="taskRecurring" type="checkbox" class="hidden" aria-hidden="true">
-  <div class="repeat-box repeat-options hidden" id="routineOptions">
+  <div class="repeat-box">
     <div class="muted" style="font-size:12px;font-weight:800">Wiederholung</div>
     <select id="taskRepeatType">
-      <option value="daily">Täglich</option>
-      <option value="weekly" selected>Wöchentlich</option>
+      <option value="none" selected>Keine Wiederholung</option>
+      <option value="weekly">Wöchentlich</option>
       <option value="weekdays">Bestimmte Wochentage</option>
     </select>
     <div class="weekday-row hidden" id="weekdayRow">
@@ -362,13 +366,12 @@
       <label><input type="checkbox" value="4"> Do</label>
       <label><input type="checkbox" value="5"> Fr</label>
       <label><input type="checkbox" value="6"> Sa</label>
-      <label><input type="checkbox" value="0"> So</label>
     </div>
   </div>
-  <div class="actions"><button class="ghost" onclick="closeModal('taskModal')">Abbrechen</button><button class="primary" id="saveTaskBtn">Speichern</button></div>
+  <div class="actions"><button class="danger" id="deleteTaskBtn" type="button" style="display:none;margin-right:auto">Löschen</button><button class="ghost" onclick="closeModal('taskModal')">Abbrechen</button><button class="primary" id="saveTaskBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="rewardModal"><div class="box"><h2>Belohnung</h2><div class="form">
+<div class="modal" id="rewardModal"><div class="box"><h2 id="rewardModalTitle">Belohnung</h2><div class="form">
   <select id="rewardPerson"></select>
   <input id="rewardName" placeholder="z. B. Kino">
   <div>
@@ -384,17 +387,17 @@
   <div>
     <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Einlösung</div>
     <select id="rewardRepeat">
-      <option value="repeat" selected>Wiederholbar</option>
+      <option value="repeat" selected>Wiederholend</option>
       <option value="once">Einmalig</option>
     </select>
   </div>
-  <div class="actions"><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
+  <div class="actions"><button class="danger" id="deleteRewardBtn" type="button" style="display:none;margin-right:auto">Löschen</button><button class="ghost" onclick="closeModal('rewardModal')">Abbrechen</button><button class="primary" id="saveRewardBtn">Speichern</button></div>
 </div></div></div>
 
 <div class="modal" id="eventModal"><div class="box"><h2>Termin hinzufügen</h2><div class="form">
   <input id="eventName" placeholder="Titel, z. B. Fußballtraining" list="eventDatalist">
   <datalist id="eventDatalist"></datalist>
-  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Termin-Gedächtnis</div><div class="suggestions" id="eventModalSuggestions"></div></div>
+  <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Bild optional</div><input id="eventImage" type="file" accept="image/*"><div class="muted" style="font-size:11px;margin-top:4px">Wird für die Synchronisierung automatisch verkleinert.</div></div>
   <div class="mobile-datetime" aria-label="Datum und Uhrzeit">
     <input id="eventDate" type="date" aria-label="Datum">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -437,7 +440,6 @@
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Warmes Essen · Mittag oder Abend</div><input id="mealWarm" placeholder="z. B. Kürbissuppe" list="mealDatalist"></div>
   <datalist id="mealDatalist"></datalist>
   <div><div class="muted" style="font-size:13px;margin-bottom:7px">Essenswünsche · wird als warmes Essen übernommen</div><div class="meal-wishes" id="mealModalWishes"></div></div>
-  <div><div class="muted" style="font-size:13px;margin-bottom:7px">Aus Essens-Gedächtnis</div><div class="meal-memory" id="mealModalMemory"></div></div>
   <input id="mealDate" type="date">
   <div class="repeat-box">
     <div class="muted" style="font-size:12px;font-weight:800">Frühstück wiederholen</div>
@@ -484,7 +486,7 @@
   <div class="actions"><button class="ghost" onclick="closeModal('birthdayModal')">Abbrechen</button><button class="primary" id="saveBirthdayBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="mealWishModal"><div class="box"><h2>Essenswunsch</h2><div class="form">
+<div class="modal" id="mealWishModal"><div class="box"><h2>Essenswunsch warm</h2><div class="form">
   <select id="mealWishPerson"></select>
   <input id="mealWishName" placeholder="z. B. Lasagne">
   <div class="actions"><button class="ghost" onclick="closeModal('mealWishModal')">Abbrechen</button><button class="primary" id="saveMealWishBtn">Speichern</button></div>
@@ -516,7 +518,7 @@
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, mealInputTarget="warm";
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, mealInputTarget="warm", editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -547,15 +549,7 @@
 
   window.openModal=id=>$(id).classList.add("open");
   window.closeModal=id=>{if(id==="mealModal")delete $("mealModal").dataset.wishId;$(id).classList.remove("open")};
-  function setTaskMode(mode){
-    const routine=mode==="routine";
-    $("taskRecurring").checked=routine;
-    $("taskModeTask").classList.toggle("active",!routine);
-    $("taskModeRoutine").classList.toggle("active",routine);
-    $("routineOptions").classList.toggle("hidden",!routine);
-    $("weekdayRow").classList.toggle("hidden",!routine || $("taskRepeatType").value!=="weekdays");
-  }
-  window.openTaskModal=()=>{setTaskMode("task");renderTaskSuggestions();openModal("taskModal")};
+  window.openTaskModal=()=>{editingTaskId=null;$("taskModalTitle").textContent="Aufgabe hinzufügen";$("deleteTaskBtn").style.display="none";$("taskName").value="";$("taskTag").value="";$("taskRepeatType").value="none";$("weekdayRow").classList.add("hidden");$("weekdayRow").querySelectorAll("input").forEach(x=>x.checked=false);renderTaskSuggestions();openModal("taskModal")};
   function fillEventTimeSelectors(){
     $("eventHour").innerHTML=Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,"0")}">${String(h).padStart(2,"0")} Uhr</option>`).join("");
   }
@@ -575,11 +569,7 @@
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>{const [h,m]=b.dataset.timequick.split(":");$("eventHour").value=h;$("eventMinute").value=m});
   document.querySelectorAll("[data-durationquick]").forEach(b=>b.onclick=()=>$("eventDuration").value=b.dataset.durationquick);
   $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")setEventPerson("all")});
-  $("taskModeTask").onclick=()=>setTaskMode("task");
-  $("taskModeRoutine").onclick=()=>setTaskMode("routine");
-  $("taskRepeatType").onchange=()=>{
-    $("weekdayRow").classList.toggle("hidden",$("taskRepeatType").value!=="weekdays");
-  };
+  $("taskRepeatType").onchange=()=>{$("weekdayRow").classList.toggle("hidden",$("taskRepeatType").value!=="weekdays")};
   document.querySelectorAll("[data-reward-cost]").forEach(b=>b.onclick=()=>$("rewardCost").value=b.dataset.rewardCost);
   document.querySelectorAll("[data-task-filter]").forEach(b=>b.onclick=()=>{taskFilter=b.dataset.taskFilter;document.querySelectorAll("[data-task-filter]").forEach(x=>x.classList.toggle("active",x===b));renderTasks()});
 
@@ -643,7 +633,7 @@
   }
 
   function render(){
-    fillPeople();renderDashboard();renderTasks();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();
+    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();
     $("familyLabel").textContent=state.name||"Familie"; $("dashboardTitle").textContent=state.name||"Dashboard";
     $("dashboardDate").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date());
   }
@@ -678,19 +668,17 @@
       .slice(0,5)
   }
   function renderTaskSuggestions(){
-    const list=taskMemorySorted();const html=list.map(([id,m])=>`<button class="suggestion" data-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
-    ["taskMemorySide","taskModalSuggestions"].forEach(id=>{if($(id)){$(id).innerHTML=html;$(id).querySelectorAll("[data-mem]").forEach(b=>b.onclick=()=>{$("taskName").value=state.taskMemory[b.dataset.mem].name;if(id!=="taskModalSuggestions")openTaskModal()})}});
-    $("taskDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("")
+    const top=taskMemorySorted(),all=Object.entries(state.taskMemory||{}).sort((a,b)=>(b[1].uses||0)-(a[1].uses||0)||(b[1].lastUsed||0)-(a[1].lastUsed||0));
+    const html=top.map(([id,m])=>`<button class="suggestion" data-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    if($("taskMemorySide")){ $("taskMemorySide").innerHTML=html; $("taskMemorySide").querySelectorAll("[data-mem]").forEach(b=>b.onclick=()=>{openTaskModal();$("taskName").value=state.taskMemory[b.dataset.mem].name}) }
+    if($("taskDatalist"))$("taskDatalist").innerHTML=all.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("")
   }
   function eventMemorySorted(){
     return Object.entries(state.eventMemory||{}).sort((a,b)=>(b[1].uses||0)-(a[1].uses||0)||(b[1].lastUsed||0)-(a[1].lastUsed||0))
   }
   function renderEventSuggestions(){
-    if(!$("eventModalSuggestions")) return;
     const list=eventMemorySorted();
-    $("eventModalSuggestions").innerHTML=list.slice(0,3).map(([id,m])=>`<button class="suggestion" data-event-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
-    $("eventDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
-    $("eventModalSuggestions").querySelectorAll("[data-event-mem]").forEach(b=>b.onclick=()=>{const name=state.eventMemory[b.dataset.eventMem].name;$("eventName").value=name;if(name.trim().toLowerCase()==="ausflug")setEventPerson("all")});
+    if($("eventDatalist"))$("eventDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
   }
   async function rememberEvent(name){
     const norm=name.trim().toLowerCase();
@@ -709,12 +697,10 @@
   }
   function renderMealMemory(){
     const list=mealMemorySorted();
-    const html=list.slice(0,15).map(([id,m])=>`<button class="suggestion" data-meal-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
+    const html=list.slice(0,10).map(([id,m])=>`<button class="suggestion" data-meal-mem="${id}">${escapeHtml(m.name)}</button>`).join("");
     if($("mealMemoryList")) $("mealMemoryList").innerHTML=html;
-    if($("mealModalMemory")) $("mealModalMemory").innerHTML=list.slice(0,15).map(([id,m])=>`<button class="suggestion" data-meal-modal="${id}">${escapeHtml(m.name)}</button>`).join("");
     if($("mealDatalist")) $("mealDatalist").innerHTML=list.map(([id,m])=>`<option value="${escapeHtml(m.name)}"></option>`).join("");
     document.querySelectorAll("[data-meal-mem]").forEach(b=>b.onclick=()=>{const m=state.mealMemory[b.dataset.mealMem];if(m){mealInputTarget="warm";openMealModal();$("mealWarm").value=m.name}});
-    document.querySelectorAll("[data-meal-modal]").forEach(b=>b.onclick=()=>{const m=state.mealMemory[b.dataset.mealModal];if(m)$(mealInputTarget==="breakfast"?"mealBreakfast":"mealWarm").value=m.name});
   }
   function memoryGroupData(obj){
     const entries=Object.values(obj||{}).filter(m=>(m?.name||"").trim()).sort((a,b)=>(b.uses||0)-(a.uses||0)||(b.lastUsed||0)-(a.lastUsed||0));
@@ -881,7 +867,7 @@
   }
   function renderDashboard(){
     const {startIso,endIso}=currentWeekRange();
-    const events=Object.values(state.events||{}).filter(e=>e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+    const events=Object.values(state.events||{}).filter(e=>!eventIsExpired(e)&&e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     const eventHtml=events.length?events.map(e=>{const p=person(e.person),d=new Date(e.date+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),time=e.time&&e.time!=="00:00"?` · ${escapeHtml(e.time)}`:"",duration=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `<div class="dash-task"><div><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${day}${time}${duration} · ${escapeHtml(e.name)}</div></div></div>`}).join(""):`<div class="muted">Keine Termine diese Woche.</div>`;
     const birthdays=birthdaysToday();
     const birthdayHtml=birthdays.length?birthdays.map(b=>{const d=new Date(b.displayDate+"T12:00:00"),day=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d),age=b.age!=null?` · ${b.age} Jahre`:"";return `<div class="dash-task"><div><div><b>${escapeHtml(b.name)}</b> · ${day} · Geburtstag${age}</div></div></div>`}).join(""):`<div class="muted">Heute keine Geburtstage.</div>`;
@@ -894,8 +880,9 @@
     $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{
       const pts=Number(p.points)||0,rp=rewardProgress(id,pts);
       const status=rp.target==null?"Keine Belohnung angelegt":(rp.available?`Belohnung ab ${rp.target} Punkten verfügbar`:`noch ${rp.missing} bis ${rp.target}`);
-      return `<div class="progress-compact"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar"><span style="width:${rp.percent}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px">${status}</div></div>`
+      return `<div class="progress-compact ${rp.available?'reward-available':''}"><div class="progress-line"><button class="linklike" data-go-rewards="${id}"><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></button><b>${pts}</b></div><div class="bar"><span style="width:${rp.percent}%;background:${p.color||'var(--accent)'}"></span></div><button class="linklike muted" data-go-rewards="${id}" style="font-size:11px;color:${rp.available?(p.color||'var(--accent)'):'var(--muted)'}">${status}${rp.available?' · öffnen':''}</button></div>`
     }).join("");
+    document.querySelectorAll("[data-go-rewards]").forEach(b=>b.onclick=()=>switchView("rewards"));
 
     const {start}=currentWeekRange(),dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
     $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen";return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${filled?'':'muted'}" title="${escapeHtml(summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(meal.warm||'–')}</div></div></div>`}).join("");
@@ -922,29 +909,33 @@
     const allItems=Object.entries(state.tasks||{});
     const items=allItems.filter(([id,t])=>taskFilter==="recurring"?!!t.recurring:(!t.recurring&&!t.done));
     $("taskListTitle").textContent=taskFilter==="recurring"?"Routinen":"Offene Aufgaben";
-    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'↻ Routine fällig':'✓ Routine für diesen Zeitraum erledigt'):'';return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10</div><button class="check ${!canDo&&t.recurring?"done":""}" data-task="${id}" ${!canDo&&t.recurring?'disabled aria-label="Routine bereits erledigt"':''}>${!canDo&&t.recurring?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
+    $("taskList").innerHTML=items.length?items.map(([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'↻ Routine fällig':'✓ Routine für diesen Zeitraum erledigt'):'';return `<div class="task"><div class="ico">✓</div><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(t.name)}</b>${t.tag?`<br><small>#${escapeHtml(t.tag)}</small>`:''}${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10</div><button class="check ${!canDo&&t.recurring?"done":""}" data-task="${id}" ${!canDo&&t.recurring?'disabled aria-label="Routine bereits erledigt"':''}>${!canDo&&t.recurring?"✓":""}</button></div>`}).join(""):`<div class="muted">Keine passenden Aufgaben.</div>`;
     document.querySelectorAll("[data-task]:not([disabled])").forEach(b=>b.onclick=()=>toggleTask(b.dataset.task));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.`
   }
+  function renderTaskLog(){
+    if(!$("taskLog"))return;const rows=Object.entries(state.tasks||{}).filter(([id,t])=>!t.recurring&&t.done).sort((a,b)=>(b[1].completedAt||0)-(a[1].completedAt||0)).slice(0,10);
+    $("taskLog").innerHTML=rows.length?rows.map(([id,t])=>{const p=person(t.person),d=t.completedAt?new Date(t.completedAt).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):"erledigt";return `<div class="log-row"><div><b>${escapeHtml(t.name)}</b>${t.tag?`<div class="muted" style="font-size:11px">#${escapeHtml(t.tag)}</div>`:''}<div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${d}</div></div><div class="log-actions"><button class="mini" data-reuse-task="${id}">Wieder nutzen</button><button class="mini" data-edit-task="${id}">Bearbeiten</button><button class="mini" data-delete-task="${id}">Löschen</button></div></div>`}).join(""):`<div class="muted">Noch keine erledigten Aufgaben.</div>`;
+    document.querySelectorAll("[data-reuse-task]").forEach(b=>b.onclick=()=>reuseTask(b.dataset.reuseTask));document.querySelectorAll("[data-edit-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.editTask));document.querySelectorAll("[data-delete-task]").forEach(b=>b.onclick=()=>deleteTask(b.dataset.deleteTask));
+  }
+  function openTaskEdit(id){const t=state.tasks?.[id];if(!t)return;editingTaskId=id;$("taskModalTitle").textContent="Aufgabe bearbeiten";$("taskName").value=t.name||"";$("taskPerson").value=t.person||$("taskPerson").value;$("taskTag").value=t.tag||"";$("taskRepeatType").value=t.recurring?(t.repeatType||"weekly"):"none";$("weekdayRow").classList.toggle("hidden",$("taskRepeatType").value!=="weekdays");$("weekdayRow").querySelectorAll("input").forEach(x=>x.checked=Array.isArray(t.weekdays)&&t.weekdays.includes(Number(x.value)));$("deleteTaskBtn").style.display="inline-flex";openModal("taskModal")}
+  function reuseTask(id){const t=state.tasks?.[id];if(!t)return;editingTaskId=null;$("taskModalTitle").textContent="Aufgabe wieder nutzen";$("taskName").value=t.name||"";$("taskPerson").value=t.person||$("taskPerson").value;$("taskTag").value=t.tag||"";$("taskRepeatType").value="none";$("weekdayRow").classList.add("hidden");$("deleteTaskBtn").style.display="none";openModal("taskModal")}
+  async function deleteTask(id){if(!state.tasks?.[id])return;await set(ref(db,`families/${familyId}/tasks/${id}`),null)}
   function renderRewards(){
     if(!$("allRewardsGrid")) return;
     $("allRewardsGrid").innerHTML=Object.entries(state.people||{}).map(([pid,p])=>{
-      const pts=Number(p.points)||0;
-      const rewards=Object.entries(state.rewards?.[pid]||{});
+      const pts=Number(p.points)||0,rewards=Object.entries(state.rewards?.[pid]||{});
       return `<div class="card reward-person-card" style="--person-color:${p.color||'#667085'};--person-soft:${p.color||'#667085'}18">
-        <div class="reward-person-head">
-          <div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b></div>
-          <div class="reward-points">${pts} Punkte</div>
-        </div>
-        <div class="reward-chip-list">
-          ${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),repeatable=r.repeatable!==false;return `<div class="reward-chip"><span class="reward-name">${escapeHtml(r.name)}${repeatable?`<small class="muted" style="display:block;font-weight:650;margin-top:2px">wiederholbar</small>`:""}</span><span class="reward-cost">${cost} P</span><button class="reward-redeem" data-redeem-person="${pid}" data-redeem-id="${rid}" ${pts<cost?'disabled':''}>Einlösen</button><button class="mini" data-delete-reward-person="${pid}" data-delete-reward-id="${rid}">Löschen</button></div>`}).join(""):`<span class="muted" style="padding:6px 0">Noch keine Belohnungen.</span>`}
-        </div>
+        <div class="reward-person-head"><div><b><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)}</b></div><div class="reward-points">${pts} Punkte</div></div>
+        <div class="reward-chip-list">${rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),repeatable=r.repeatable!==false,available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}"><span class="reward-name">${escapeHtml(r.name)}<small class="muted" style="display:block;font-weight:650;margin-top:2px">${repeatable?'wiederholbar':'einmalig'}</small><div class="reward-progress"><span style="width:${pct}%"></span></div></span><span class="reward-cost">${cost} P</span><button class="mini" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}">Bearbeiten</button><button class="reward-redeem" data-redeem-person="${pid}" data-redeem-id="${rid}" ${available?'':'disabled'}>${available?'Einlösen':`${Math.max(0,cost-pts)} fehlen`}</button></div>`}).join(""):`<span class="muted" style="padding:6px 0">Noch keine Belohnungen.</span>`}</div>
       </div>`;
     }).join("");
     document.querySelectorAll("[data-redeem-person]").forEach(b=>b.onclick=()=>redeemReward(b.dataset.redeemPerson,b.dataset.redeemId));
-    document.querySelectorAll("[data-delete-reward-person]").forEach(b=>b.onclick=()=>deleteReward(b.dataset.deleteRewardPerson,b.dataset.deleteRewardId));
+    document.querySelectorAll("[data-edit-reward-person]").forEach(b=>b.onclick=()=>openRewardEdit(b.dataset.editRewardPerson,b.dataset.editRewardId));
   }
+  function openRewardEdit(personId,rewardId){const r=state.rewards?.[personId]?.[rewardId];if(!r)return;editingRewardPersonId=personId;editingRewardId=rewardId;$("rewardModalTitle").textContent="Belohnung bearbeiten";$("rewardPerson").value=personId;$("rewardName").value=r.name||"";$("rewardCost").value=Math.max(1,Number(r.cost)||50);$("rewardRepeat").value=r.repeatable===false?"once":"repeat";$("deleteRewardBtn").style.display="inline-flex";openModal("rewardModal")}
+  window.openRewardCreate=()=>{editingRewardPersonId=null;editingRewardId=null;$("rewardModalTitle").textContent="Belohnung hinzufügen";$("rewardName").value="";$("rewardCost").value="50";$("rewardRepeat").value="repeat";$("deleteRewardBtn").style.display="none";openModal("rewardModal")};
   async function deleteReward(personId,rewardId){
     if(!state.rewards?.[personId]?.[rewardId])return;
     await set(ref(db,`families/${familyId}/rewards/${personId}/${rewardId}`),null);
@@ -974,16 +965,25 @@
   }
   window.undoReward=undoReward;
   function renderRewardLog(){
-    if(!$("rewardLog"))return;
-    const rows=Object.entries(state.rewardLog||{}).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0)).slice(0,5);
-    $("rewardLog").innerHTML=rows.length?rows.map(([id,e])=>{const p=person(e.personId),d=e.createdAt?new Date(e.createdAt).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';return `<div class="log-row"><div><b>${escapeHtml(e.rewardName)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${e.cost} Punkte · ${d}${e.undone?' · zurückgenommen':''}</div></div>${e.undone?'':`<button class="mini" onclick="undoReward('${id}')">Rückgängig</button>`}</div>`}).join(""):`<div class="muted">Noch keine Einlösungen.</div>`;
+    if(!$("rewardLog"))return;const rows=Object.entries(state.rewardLog||{}).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0)).slice(0,5);
+    $("rewardLog").innerHTML=rows.length?rows.map(([id,e])=>{const p=person(e.personId),d=e.createdAt?new Date(e.createdAt).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';return `<div class="log-row"><div><b>${escapeHtml(e.rewardName)}</b><div class="muted" style="font-size:12px"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${e.cost} Punkte · ${d}${e.undone?' · zurückgenommen':''}</div></div><div class="log-actions"><button class="mini" data-reuse-reward-log="${id}">Wieder nutzen</button>${e.undone?'':`<button class="mini" onclick="undoReward('${id}')">Rückgängig</button>`}</div></div>`}).join(""):`<div class="muted">Noch keine Einlösungen.</div>`;
+    document.querySelectorAll("[data-reuse-reward-log]").forEach(b=>b.onclick=()=>reuseRewardLog(b.dataset.reuseRewardLog));
   }
+  function reuseRewardLog(logId){const e=state.rewardLog?.[logId];if(!e)return;editingRewardPersonId=null;editingRewardId=null;$("rewardModalTitle").textContent="Belohnung wieder nutzen";$("rewardPerson").value=state.people?.[e.personId]?e.personId:$("rewardPerson").value;$("rewardName").value=e.rewardName||"";$("rewardCost").value=Math.max(1,Number(e.cost)||50);$("rewardRepeat").value=e.repeatable===false?"once":"repeat";$("deleteRewardBtn").style.display="none";openModal("rewardModal")}
   function holidaysForDate(iso){
     return Object.values(state.holidays||{}).filter(h=>h.start<=iso && h.end>=iso);
   }
+  function eventEndDate(e){
+    if(!e?.date)return null;
+    const time=(e.time&&/^\d{2}:\d{2}$/.test(e.time))?e.time:"23:59";
+    const start=new Date(`${e.date}T${time}:00`);if(Number.isNaN(start.getTime()))return null;
+    const duration=Math.max(0,Number(e.durationHours)||0);
+    return new Date(start.getTime()+duration*3600000);
+  }
+  function eventIsExpired(e,now=new Date()){const end=eventEndDate(e);return !!end&&end<now}
   function eventTimeLabel(e){const time=e.time&&e.time!=="00:00"?e.time:"ohne Uhrzeit",dur=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `${time}${dur}`}
   function renderCalendar(){
-    const events=Object.entries(state.events||{}).map(([id,e])=>({id,...e}));
+    const events=Object.entries(state.events||{}).map(([id,e])=>({id,...e})).filter(e=>!eventIsExpired(e));
     if(window.matchMedia("(max-width: 780px)").matches&&calendarMode==="week"){
       const now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
       const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
@@ -1013,7 +1013,7 @@
   function openCalendarEvent(id){
     const e=state.events?.[id];if(!e)return;selectedEventId=id;const p=person(e.person),d=new Date(`${e.date}T12:00:00`),dateLabel=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}).format(d);
     $("eventDetailTitle").textContent=e.name||"Termin";
-    $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div>`;
+    $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div>${e.image?`<img src="${e.image}" alt="Bild zum Termin" style="width:100%;max-height:420px;object-fit:contain;border-radius:12px;border:1px solid var(--line)">`:""}`;
     openModal("eventDetailModal");
   }
   async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;await set(ref(db,`families/${familyId}/events/${id}`),null)}
@@ -1039,7 +1039,7 @@
   }
   function renderMealWishes(){
     if(!$("mealWishList"))return;const rows=Object.entries(state.mealWishes||{}),dateOpts=mealWishDateOptions();
-    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><div class="wish-plan"><select data-wish-date="${id}" aria-label="Kalendertag auswählen"><option value="" selected disabled>Datum wählen …</option>${dateOpts}</select></div></div>`}).join(""):`<div class="muted">Aktuell keine Essenswünsche.</div>`;
+    $("mealWishList").innerHTML=rows.length?rows.map(([id,w])=>{const p=person(w.person);return `<div class="wish-row"><div><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(w.name)}</div><div class="wish-plan"><select data-wish-date="${id}" aria-label="Kalendertag auswählen"><option value="" selected disabled>Datum wählen …</option>${dateOpts}</select></div></div>`}).join(""):`<div class="muted">Aktuell keine warmen Essenswünsche.</div>`;
     if($("mealModalWishes"))$("mealModalWishes").innerHTML=rows.map(([id,w])=>{const p=person(w.person);return `<button class="meal-wish-chip" data-use-wish="${id}"><span class="member-color" style="background:${p.color||'#999'}"></span>${escapeHtml(p.name)} · ${escapeHtml(w.name)}</button>`}).join("")||`<span class="muted" style="font-size:12px">Keine Wünsche</span>`;
     document.querySelectorAll("[data-wish-date]").forEach(sel=>sel.onchange=()=>{if(sel.value)scheduleMealWish(sel.dataset.wishDate,sel.value)});
     document.querySelectorAll("[data-use-wish]").forEach(b=>b.onclick=()=>{const w=state.mealWishes?.[b.dataset.useWish];if(w){mealInputTarget="warm";$("mealWarm").value=w.name;$("mealModal").dataset.wishId=b.dataset.useWish}});
@@ -1073,26 +1073,23 @@
       return;
     }
     const done=!t.done;
-    await update(familyRef(),{[`tasks/${id}/done`]:done,[`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))});
+    await update(familyRef(),{[`tasks/${id}/done`]:done,[`tasks/${id}/completedAt`]:done?Date.now():null,[`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))});
     if(done)await rememberTask(t.name)
   }
   $("saveTaskBtn").onclick=async()=>{
-    const name=$("taskName").value.trim();if(!name)return;
-    const recurring=$("taskRecurring").checked;
-    const repeatType=recurring?$("taskRepeatType").value:null;
-    const weekdays=repeatType==="weekdays"?Array.from($("weekdayRow").querySelectorAll('input:checked')).map(x=>Number(x.value)):[];
-    const key=push(ref(db,`families/${familyId}/tasks`)).key;
-    await set(ref(db,`families/${familyId}/tasks/${key}`),{
-      name,person:$("taskPerson").value,points:10,done:false,
-      recurring,repeatType,weekdays,lastCompletedAt:0
-    });
-    await rememberTask(name);
-    $("taskName").value="";
-    setTaskMode("task");
-    closeModal("taskModal")
+    const name=$("taskName").value.trim(),tag=$("taskTag").value.trim();if(!name)return;const repeatType=$("taskRepeatType").value,recurring=repeatType!=="none",weekdays=repeatType==="weekdays"?Array.from($("weekdayRow").querySelectorAll('input:checked')).map(x=>Number(x.value)):[];if(repeatType==="weekdays"&&!weekdays.length){alert("Bitte mindestens einen Wochentag auswählen.");return}
+    const id=editingTaskId||push(ref(db,`families/${familyId}/tasks`)).key,old=state.tasks?.[id]||{};await set(ref(db,`families/${familyId}/tasks/${id}`),{...old,name,tag,person:$("taskPerson").value,points:10,done:editingTaskId?!!old.done:false,recurring,repeatType:recurring?repeatType:null,weekdays,lastCompletedAt:old.lastCompletedAt||0,completedAt:old.completedAt||null});await rememberTask(name);editingTaskId=null;$("taskName").value="";$("taskTag").value="";$("taskRepeatType").value="none";$("weekdayRow").classList.add("hidden");closeModal("taskModal")
   };
-  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=$("rewardPerson").value,key=push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});$("rewardName").value="";$("rewardCost").value="50";$("rewardRepeat").value="repeat";closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0;const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null});await rememberEvent(name);await rememberEventPerson(eventPerson);$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventDateTime("","12:00");closeModal("eventModal")};
+  $("deleteTaskBtn").onclick=async()=>{if(!editingTaskId)return;const id=editingTaskId;editingTaskId=null;await deleteTask(id);closeModal("taskModal")};
+  $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=editingRewardPersonId||$("rewardPerson").value,key=editingRewardId||push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});editingRewardPersonId=null;editingRewardId=null;$("rewardName").value="";$("rewardCost").value="50";$("rewardRepeat").value="repeat";$("deleteRewardBtn").style.display="none";closeModal("rewardModal")};
+  $("deleteRewardBtn").onclick=async()=>{if(!editingRewardPersonId||!editingRewardId)return;await deleteReward(editingRewardPersonId,editingRewardId);editingRewardPersonId=null;editingRewardId=null;closeModal("rewardModal")};
+  async function compressedImageData(file){
+    if(!file)return "";if(!file.type.startsWith("image/")){alert("Bitte eine Bilddatei auswählen.");return ""}
+    const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+    const img=await new Promise((resolve,reject)=>{const x=new Image();x.onload=()=>resolve(x);x.onerror=reject;x.src=data});
+    const max=1200,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL("image/jpeg",.72);
+  }
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,duration=Number($("eventDuration").value)||0,image=await compressedImageData($("eventImage").files?.[0]);const key=push(ref(db,`families/${familyId}/events`)).key;await set(ref(db,`families/${familyId}/events/${key}`),{name,person:eventPerson,date,time,durationHours:duration||null,image:image||null});await rememberEvent(name);await rememberEventPerson(eventPerson);$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";$("eventImage").value="";setEventDateTime("","12:00");closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
