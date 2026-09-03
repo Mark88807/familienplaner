@@ -352,6 +352,28 @@
     .meal-recipe-link{border:0;background:none;padding:0;margin:0;color:inherit;font:inherit;font-weight:inherit;text-align:left;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
     .meal-recipe-link:hover{color:var(--accent)}
     .meal-recipe-link.longpress-active{opacity:.65}
+
+    .dashboard-person-dot{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:12px;font-weight:900;vertical-align:middle;margin-right:7px;flex:0 0 26px}
+    .dash-row-title{display:flex;align-items:center;gap:0}
+    .dash-row-title .dashboard-person-dot + span{min-width:0}
+    .dash-row-meta:empty{display:none}
+    #dashboard .top{margin-bottom:12px}
+    #dashboard .card{padding:13px}
+    #dashboard .dash-grid{gap:10px}
+    #dashboard .dash-task{padding:5px 0}
+    #dashboard .dash-group+.dash-group{margin-top:8px;padding-top:7px}
+    #dashboard .dash-day-label{font-size:12px;margin-bottom:3px}
+    #dashboard .dashboard-events-section+.dashboard-events-section{margin-top:8px;padding-top:7px}
+    #dashboard .week-meals{gap:4px}
+    #dashboard .week-meal{padding:5px 6px;min-height:0}
+    #dashboard .week-meal-day{font-size:10px;margin-bottom:2px}
+    #dashboard .week-meal-name,#dashboard .meal-line{font-size:11px;line-height:1.2}
+    @media(min-width:781px){
+      .rewards-by-person{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start}
+      .reward-person-card{min-width:0}
+      .dash-meals{grid-column:1/-1!important}
+    }
+    @media(max-width:780px){.rewards-by-person{grid-template-columns:1fr!important}}
   </style>
 </head>
 <body>
@@ -407,7 +429,7 @@
         </div>
 
         <div class="card">
-          <div class="dash-card-head"><div class="title">Diese Woche</div><button class="mini" onclick="openEventModal()">+ Termin</button></div>
+          <div class="dash-card-head"><div class="title">Termine</div><button class="mini" onclick="openEventModal()">+ Termin</button></div>
           <div id="dashboardEvents"></div>
         </div>
 
@@ -780,8 +802,9 @@
 
   function render(){
     fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();
-    $("familyLabel").textContent=state.name||"Familie"; $("dashboardTitle").textContent=state.name||"Dashboard";
-    $("dashboardDate").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date());
+    $("familyLabel").textContent=state.name||"Familie";
+    $("dashboardTitle").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long"}).format(new Date());
+    $("dashboardDate").textContent="";
   }
   function fillPeople(){
     const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
@@ -1057,7 +1080,7 @@
     };
 
     const events=Object.values(state.events||{}).filter(e=>!eventIsExpired(e)&&e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
-    const eventItems=events.map(e=>{const p=person(e.person),d=new Date(`${e.date}T12:00:00`),time=(e.time&&e.time!=="00:00")?e.time:"",duration=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return {group:relativeInfo(d,time),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(e.name)}</div><div class="dash-row-meta">Termin${duration}</div></div></div>`}});
+    const eventItems=events.map(e=>{const p=person(e.person),d=new Date(`${e.date}T12:00:00`),time=(e.time&&e.time!=="00:00")?e.time:"",duration=Number(e.durationHours)>0?`${Number(e.durationHours)} h`:"",initial=escapeHtml((p.name||"?").trim().charAt(0).toUpperCase());return {group:relativeInfo(d,time),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><span class="dashboard-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(e.name)}</span></div>${duration?`<div class="dash-row-meta">${duration}</div>`:""}</div></div>`}});
     const birthdays=birthdaysToday();
     const birthdayItems=birthdays.map(b=>{const d=new Date(`${b.displayDate}T12:00:00`),age=b.age!=null?` · ${b.age} Jahre`:"";return {group:relativeInfo(d),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><b>${escapeHtml(b.name)}</b> · Geburtstag</div><div class="dash-row-meta">Geburtstag${age}</div></div></div>`}});
     $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${groupRows(eventItems,"Keine Termine diese Woche.")}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${groupRows(birthdayItems,"Heute keine Geburtstage.")}</div>`;
@@ -1080,7 +1103,7 @@
       if(t.done)return false;
       if(t.recurring&&routineCompletedThisWeek(t,todayBase))return false;
       return true;
-    }).map(([id,t])=>{const p=person(t.person),due=taskDateForWeek(t),canDo=!t.recurring||routineCanComplete(t);return {sort:due.getTime(),group:relativeInfo(due),html:`<div class="dash-task"><div class="task-open-edit dash-row-main" data-open-task="${id}"><div class="dash-row-title"><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b> · ${escapeHtml(t.name)}</div><div class="dash-row-meta">10 Punkte${t.recurring?' · wiederholend':''}</div></div><button class="mini" data-dash-task="${id}" ${canDo?'':'disabled'}>${canDo?'✓ Erledigt':'Geplant'}</button></div>`}}).sort((a,b)=>a.sort-b.sort);
+    }).map(([id,t])=>{const p=person(t.person),due=taskDateForWeek(t),canDo=!t.recurring||routineCanComplete(t),initial=escapeHtml((p.name||"?").trim().charAt(0).toUpperCase());return {sort:due.getTime(),group:relativeInfo(due),html:`<div class="dash-task"><div class="task-open-edit dash-row-main" data-open-task="${id}"><div class="dash-row-title"><span class="dashboard-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></div>${t.recurring?'<div class="dash-row-meta">wiederholend</div>':''}</div><button class="mini" data-dash-task="${id}" ${canDo?'':'disabled'}>${canDo?'✓ Erledigt':'Geplant'}</button></div>`}}).sort((a,b)=>a.sort-b.sort);
     $("dashboardTasks").innerHTML=groupRows(taskItems,"Heute keine offenen Aufgaben.");
     document.querySelectorAll("[data-dash-task]:not([disabled])").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
     document.querySelectorAll("[data-open-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.openTask));
