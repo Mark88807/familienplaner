@@ -126,10 +126,11 @@
     .weekday-row input{position:absolute;opacity:0;pointer-events:none}
     .weekday-row label:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff}
     .dash-meals{grid-column:1/-1}
-    .week-meals{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+    .week-meals{display:grid;grid-template-columns:minmax(125px,.9fr) repeat(7,minmax(0,1fr));gap:6px}
     .week-meal{min-width:0;padding:8px;border:1px solid var(--line);border-radius:11px;background:#fff}
     .week-meal-day{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px}
     .week-meal-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .week-meal-intro{display:flex;flex-direction:column;justify-content:space-between;gap:8px;background:#f8fbff}.week-meal-intro-title{font-size:12px;font-weight:900;line-height:1.2}.week-meal-plan-link{font-size:11px;font-weight:850;color:var(--accent);width:max-content}
     .task-filter-tabs button{cursor:pointer}
     .dashboard-events-section+.dashboard-events-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
     .dashboard-section-label{font-size:11px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
@@ -438,7 +439,6 @@
           <div id="dashboardProgress"></div>
         </div>
         <div class="card dash-meals">
-          <div class="dash-card-head"><div class="title">Essen diese Woche</div><button class="mini" data-view="meals">Essenplan</button></div>
           <div class="dashboard-meals-wrap"><div class="week-meals" id="dashboardMeals"></div></div>
         </div>
       </div>
@@ -1116,7 +1116,7 @@
     document.querySelectorAll("[data-go-rewards]").forEach(b=>b.onclick=()=>switchView("rewards"));
 
     const dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
-    $("dashboardMeals").innerHTML=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen";return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${filled?'':'muted'}" title="${escapeHtml(summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(meal.warm||'–')}</div></div></div>`}).join("");
+    $("dashboardMeals").innerHTML=`<div class="week-meal week-meal-intro"><div class="week-meal-intro-title">Essen diese Woche</div><button class="linklike week-meal-plan-link" data-view="meals">Essenplan →</button></div>`+Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen";return `<div class="week-meal"><div class="week-meal-day">${dayNames[i]} ${d.getDate()}.</div><div class="week-meal-name ${filled?'':'muted'}" title="${escapeHtml(summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(meal.warm||'–')}</div></div></div>`}).join("");
   }
 
   function routineCanComplete(t,now=new Date()){
@@ -1165,7 +1165,7 @@
     $("allRewardsGrid").innerHTML=peopleRanked.map(([pid,p])=>{
       const pts=Number(p.points)||0,base=p.color||'#64748b',soft=`color-mix(in srgb, ${base} 10%, white)`,border=`color-mix(in srgb, ${base} 24%, #d7dde5)`,rewards=Object.entries(state.rewards?.[pid]||{}).sort((a,b)=>(Number(a[1].cost)||0)-(Number(b[1].cost)||0));
       const owner=(p.name||'?').trim(),initial=escapeHtml(owner.charAt(0).toUpperCase());
-      const rewardRows=rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}" style="--person-color:${base};border-color:${base}45!important;background:${base}14!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><span class="reward-name"><div class="reward-owner">${escapeHtml(owner)}</div><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:11px;margin-top:5px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<div class="reward-empty-card" style="background:${base}14!important;border-color:${base}45!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><div><div class="reward-owner">${escapeHtml(owner)}</div><div class="muted">Noch keine Belohnungen.</div></div></div>`;
+      const rewardRows=rewards.length?rewards.map(([rid,r])=>{const cost=Math.max(1,Number(r.cost)||10),available=pts>=cost,pct=Math.min(100,Math.round(pts/cost*100));return `<div class="reward-chip ${available?'available':''}" data-reward-row-person="${pid}" data-reward-row-id="${rid}" role="button" tabindex="0" aria-disabled="${available?'false':'true'}" style="--person-color:${base};border-color:${base}45!important;background:${base}14!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><span class="reward-name"><b>${escapeHtml(r.name)}</b><div class="reward-status"><span style="width:${pct}%"></span></div>${available?'<div class="reward-available-label">Einlösbar</div>':`<div class="muted" style="font-size:11px;margin-top:5px">Noch ${Math.max(0,cost-pts)} Punkte</div>`}</span><span class="reward-cost">${cost} P</span><button class="reward-edit-icon" data-edit-reward-person="${pid}" data-edit-reward-id="${rid}" aria-label="Belohnung bearbeiten" title="Bearbeiten">✎</button></div>`}).join(""):`<div class="reward-empty-card" style="background:${base}14!important;border-color:${base}45!important"><span class="reward-person-dot" style="background:${base}">${initial}</span><div class="muted">Noch keine Belohnungen.</div></div>`;
       return `<div class="reward-person-card">${rewardRows}</div>`;
     }).join("");
     const activate=row=>{if(row?.getAttribute("aria-disabled")==="false")redeemReward(row.dataset.rewardRowPerson,row.dataset.rewardRowId)};
