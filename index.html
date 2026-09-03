@@ -130,7 +130,7 @@
     .week-meal{min-width:0;padding:8px;border:1px solid var(--line);border-radius:11px;background:#fff}
     .week-meal-day{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px}
     .week-meal-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .week-meal-intro{display:flex;flex-direction:column;justify-content:space-between;gap:8px;background:#f8fbff}.week-meal-intro-title{font-size:12px;font-weight:900;line-height:1.2}.week-meal-plan-link{font-size:11px;font-weight:850;color:var(--accent);width:max-content}
+    .week-meal-intro{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:10px;background:#f8fbff}.week-meal-intro-title{font-size:12px;font-weight:900;line-height:1.2}.week-meal-plan-link{border:0;background:var(--accent);color:#fff;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:850;white-space:nowrap;margin-left:auto}.week-meal-plan-link:hover{filter:brightness(.96);text-decoration:none}
     .task-filter-tabs button{cursor:pointer}
     .dashboard-events-section+.dashboard-events-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
     .dashboard-section-label{font-size:11px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
@@ -375,6 +375,12 @@
       .dash-meals{grid-column:1/-1!important}
     }
     @media(max-width:780px){.rewards-by-person{grid-template-columns:1fr!important}}
+
+    /* requested compact dashboard/reward alignment */
+    #dashboard .dashboard-person-dot{color:#fff!important;background:var(--person-color,#64748b)}
+    #rewards .reward-chip,#rewards .reward-empty-card{height:92px;min-height:92px;max-height:92px}
+    #rewards .reward-chip{align-content:center}
+    #rewards .reward-empty-card{align-content:center}
   </style>
 </head>
 <body>
