@@ -441,6 +441,20 @@
     #rewards .reward-empty-card{display:grid!important;grid-template-columns:42px minmax(0,1fr)!important;gap:10px!important;align-items:center!important;padding:9px 10px!important;border:1px solid rgba(100,116,139,.16)!important;border-radius:18px!important;background:rgba(255,255,255,.72)!important;height:84px!important;min-height:84px!important;max-height:84px!important}
     #rewards .reward-empty-card .muted{font-size:13px!important}
     @media(max-width:780px){#rewards .rewards-by-person{grid-template-columns:1fr!important}}
+
+    /* Zentrale Rezepte: Brave-Bookmarklet + 5 Vorschaukarten */
+    .recipe-preview-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+    .recipe-preview-card{min-width:0;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;padding:0;text-align:left;color:var(--text);cursor:pointer}
+    .recipe-preview-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-soft)}
+    .recipe-preview-image{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#eef2f6}
+    .recipe-preview-placeholder{width:100%;aspect-ratio:4/3;display:grid;place-items:center;background:#eef2f6;color:var(--muted);font-size:24px}
+    .recipe-preview-body{padding:8px}
+    .recipe-preview-name{font-size:11px;font-weight:850;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .recipe-preview-source{font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .recipe-import-image{width:100%;max-height:260px;object-fit:cover;border-radius:12px;background:#eef2f6}
+    .recipe-import-source{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+    @media(max-width:780px){.recipe-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
   </style>
 </head>
 <body>
@@ -558,7 +572,10 @@
           <div class="settings-head"><div class="title">Essenswünsche warm</div><button class="mini" onclick="openModal('mealWishModal')">+ Wunsch</button></div>
           <div id="mealWishList"></div>
         </div>
-        <div class="card"><div class="title">Essens-Gedächtnis · Top 10</div><div class="meal-memory" id="mealMemoryList"></div></div>
+        <div class="card">
+          <div class="title">Rezepte · zuletzt gespeichert</div>
+          <div class="recipe-preview-grid" id="recipePreviewList"></div>
+        </div>
       </div>
     </section>
 
@@ -675,10 +692,6 @@
 <div class="modal" id="mealModal"><div class="box"><h2>Essen eintragen</h2><div class="form">
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Frühstück</div><input id="mealBreakfast" placeholder="z. B. Müsli, Brot, Joghurt" autocomplete="off"><div class="type-suggestion hidden" id="mealBreakfastInlineSuggestion"></div></div>
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Warmes Essen · Mittag oder Abend</div><input id="mealWarm" placeholder="z. B. Kürbissuppe" autocomplete="off"><div class="type-suggestion hidden" id="mealWarmInlineSuggestion"></div></div>
-  <div>
-    <div class="muted" style="font-size:12px;font-weight:850;margin-bottom:6px">Rezept-Link optional</div>
-    <input id="mealRecipeUrl" type="url" inputmode="url" placeholder="https://…" autocomplete="off">
-  </div>
   <input id="mealDate" type="date">
   <div class="repeat-box">
     <div class="muted" style="font-size:12px;font-weight:800">Frühstück · Wochentage</div>
@@ -695,6 +708,13 @@
     <button type="button" class="toggle-button" id="mealBreakfastRecurringBtn" aria-pressed="false">Wiederholend</button>
   </div>
   <div class="actions"><button class="danger" id="deleteMealBtn" type="button" style="display:none;margin-right:auto">Tag löschen</button><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
+</div></div></div>
+
+<div class="modal" id="recipeImportModal"><div class="box"><h2>Rezept speichern</h2><p>Aus Brave übernommen. Wenn kein Bild gefunden oder geladen wird, wird das Rezept ohne Bild gespeichert.</p><div class="form">
+  <img id="recipeImportImage" class="recipe-import-image hidden" alt="">
+  <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Rezeptname</div><input id="recipeImportTitle" autocomplete="off"></div>
+  <div class="recipe-import-source" id="recipeImportSource"></div>
+  <div class="actions"><button class="ghost" id="cancelRecipeImportBtn" type="button">Abbrechen</button><button class="primary" id="saveRecipeImportBtn" type="button">Rezept speichern</button></div>
 </div></div></div>
 
 <div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p><b>Je Zeile:</b> Datum Leerzeichen Essen<br><b>Beispiel:</b> 0909 Suppe</p><div class="form">
@@ -752,7 +772,7 @@
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, editingEventId=null, mealInputTarget="warm", selectedMealDate=null, pendingRecipeImport=null, editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},recipes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, editingEventId=null, mealInputTarget="warm", selectedMealDate=null, pendingRecipeImport=null, editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -814,7 +834,7 @@
       const starter={
         name:$("newFamilyName").value.trim()||"Meine Familie",color:selectedColor,createdAt:Date.now(),meta:{dataResetVersion:DATA_RESET_VERSION,rewardScaleVersion:REWARD_SCALE_VERSION},
         people:{lisa:{name:"Lisa",points:0,color:"#e74f87"},max:{name:"Max",points:0,color:"#3974d8"},papa:{name:"Papa",points:0,color:"#8054d8"},mama:{name:"Mama",points:0,color:"#c43d3d"}},
-        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardMemory:{},meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardLog:{},
+        tasks:{},taskMemory,eventMemory:Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),rewardMemory:{},meals:{},mealMemory:Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}])),recipes:{},rewardLog:{},
         rewards:{
           lisa:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
           max:{r50:{name:"Kleine Belohnung",cost:50},r100:{name:"Lieblingsaktivität",cost:100},r150:{name:"Extra Freizeit",cost:150}},
@@ -856,18 +876,18 @@
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),async snap=>{
       if(!snap.exists()){localStorage.removeItem(LS_FAMILY);familyId=null;$("familyGate").classList.add("open");return}
-      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.rewardMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.rewardLog||={};state.eventPersonRecent||={};
+      state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.rewardMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.recipes||={};state.rewardLog||={};state.eventPersonRecent||={};
       if(await runOneTimeDataResetIfNeeded())return;
       if(await migrateLegacyRewardScaleIfNeeded())return;
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
       if(mamaEntry&&["#e74f87","#e58a21"].includes(String(mamaEntry[1].color||"").toLowerCase())){state.people[mamaEntry[0]].color="#c43d3d";update(ref(db,`families/${familyId}/people/${mamaEntry[0]}`),{color:"#c43d3d"}).catch(()=>{});}
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
-      applyTheme();render();
+      applyTheme();render();if(recipeImportFromLocation())setTimeout(openPendingRecipeImport,0);
     },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
   }
 
   function render(){
-    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();
+    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();renderRecipePreviews();
     $("familyLabel").textContent=state.name||"Familie";
     $("dashboardTitle").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long"}).format(new Date());
     $("dashboardDate").textContent="";
@@ -989,6 +1009,98 @@
     const raw=String(value||"").trim();if(!raw)return"";
     try{const u=new URL(raw);return /^https?:$/.test(u.protocol)?u.href:""}catch{return""}
   }
+
+  function recipeImportFromLocation(){
+    const p=new URLSearchParams(location.search);
+    if(p.get("recipeImport")!=="1")return null;
+    const url=safeRecipeUrl(p.get("url"));if(!url)return null;
+    return{
+      title:String(p.get("title")||"Rezept").trim()||"Rezept",
+      url,
+      imageUrl:safeRecipeUrl(p.get("image"))
+    };
+  }
+  function clearRecipeImportUrl(){
+    const u=new URL(location.href);
+    ["recipeImport","title","url","image"].forEach(k=>u.searchParams.delete(k));
+    history.replaceState(null,"",u.pathname+u.search+u.hash);
+  }
+  function recipeSource(url){
+    try{return new URL(url).hostname.replace(/^www\./,"")}catch{return""}
+  }
+  function recipesSorted(){
+    return Object.entries(state.recipes||{})
+      .filter(([id,r])=>safeRecipeUrl(r?.url))
+      .sort((a,b)=>(b[1].lastUsed||b[1].createdAt||0)-(a[1].lastUsed||a[1].createdAt||0));
+  }
+  function findRecipeForMeal(name){
+    const norm=String(name||"").trim().toLowerCase();if(!norm)return null;
+    const found=recipesSorted().find(([id,r])=>String(r?.title||"").trim().toLowerCase()===norm);
+    return found?{id:found[0],...found[1]}:null;
+  }
+  function openPendingRecipeImport(){
+    if(!familyId||$("recipeImportModal")?.classList.contains("open"))return;
+    const data=recipeImportFromLocation();if(!data)return;
+    pendingRecipeImport=data;
+    $("recipeImportTitle").value=data.title;
+    $("recipeImportSource").textContent=data.url;
+    const img=$("recipeImportImage");
+    if(data.imageUrl){
+      img.src=data.imageUrl;
+      img.classList.remove("hidden");
+      img.onerror=()=>{
+        img.removeAttribute("src");
+        img.classList.add("hidden");
+        if(pendingRecipeImport)pendingRecipeImport.imageUrl="";
+      };
+    }else{
+      img.removeAttribute("src");
+      img.classList.add("hidden");
+    }
+    openModal("recipeImportModal");
+  }
+  async function savePendingRecipeImport(){
+    if(!familyId||!pendingRecipeImport)return;
+    const title=$("recipeImportTitle").value.trim()||pendingRecipeImport.title||"Rezept";
+    const existing=Object.entries(state.recipes||{}).find(([id,r])=>safeRecipeUrl(r?.url)===pendingRecipeImport.url);
+    const id=existing?.[0]||push(ref(db,`families/${familyId}/recipes`)).key;
+    await set(ref(db,`families/${familyId}/recipes/${id}`),{
+      title,
+      url:pendingRecipeImport.url,
+      imageUrl:pendingRecipeImport.imageUrl||"",
+      createdAt:existing?.[1]?.createdAt||Date.now(),
+      lastUsed:Date.now()
+    });
+    pendingRecipeImport=null;
+    clearRecipeImportUrl();
+    closeModal("recipeImportModal");
+  }
+  function renderRecipePreviews(){
+    const box=$("recipePreviewList");if(!box)return;
+    const items=recipesSorted().slice(0,5);
+    if(!items.length){
+      box.innerHTML='<div class="muted" style="grid-column:1/-1">Noch keine Rezepte gespeichert.</div>';
+      return;
+    }
+    box.innerHTML=items.map(([id,r])=>{
+      const image=safeRecipeUrl(r.imageUrl);
+      const media=image
+        ? `<img class="recipe-preview-image" src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden')"><div class="recipe-preview-placeholder hidden">🍽</div>`
+        : '<div class="recipe-preview-placeholder">🍽</div>';
+      return `<button class="recipe-preview-card" type="button" data-recipe-open="${id}">${media}<div class="recipe-preview-body"><div class="recipe-preview-name">${escapeHtml(r.title||"Rezept")}</div><div class="recipe-preview-source">${escapeHtml(recipeSource(r.url))}</div></div></button>`;
+    }).join("");
+    box.querySelectorAll("[data-recipe-open]").forEach(b=>b.onclick=()=>{
+      const id=b.dataset.recipeOpen,r=state.recipes?.[id],url=safeRecipeUrl(r?.url);if(!url)return;
+      update(ref(db,`families/${familyId}/recipes/${id}`),{lastUsed:Date.now()}).catch(()=>{});
+      window.open(url,"_blank","noopener,noreferrer");
+    });
+  }
+  $("saveRecipeImportBtn").onclick=savePendingRecipeImport;
+  $("cancelRecipeImportBtn").onclick=()=>{
+    pendingRecipeImport=null;
+    clearRecipeImportUrl();
+    closeModal("recipeImportModal");
+  };
   window.openMealModal=(date=null)=>{
     renderMealMemory();
     const meal=normalizedMeal(date?state.meals?.[date]:null);
@@ -996,7 +1108,6 @@
     if(date)$("mealDate").value=date;
     else if(!$("mealDate").value)$("mealDate").value=isoLocal(new Date());
     $("mealBreakfast").value=meal.breakfast;$("mealWarm").value=meal.warm;
-    const currentEntry=date?state.meals?.[date]:null;$("mealRecipeUrl").value=String(currentEntry?.recipeUrl||currentEntry?.recipe?.originalUrl||"");
     setMealBreakfastRecurring(false);
     $("mealBreakfastWeekdayRow").querySelectorAll("input").forEach(x=>x.checked=false);
     const startDate=$("mealDate").value?new Date($("mealDate").value+"T12:00:00"):new Date(),until=new Date(startDate);until.setMonth(until.getMonth()+1);
@@ -1172,14 +1283,14 @@
     document.querySelectorAll("[data-go-rewards]").forEach(b=>b.onclick=()=>switchView("rewards"));
 
     const dayNames=["Mo","Di","Mi","Do","Fr","Sa","So"];
-    const dashboardMealDays=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen",recipeUrl=safeRecipeUrl(raw?.recipeUrl||raw?.recipe?.originalUrl||"");return {dateObj:d,iso,raw,meal,filled,summary,recipeUrl,label:`${dayNames[i]} ${d.getDate()}.`}});
+    const dashboardMealDays=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=isoLocal(d),raw=state.meals?.[iso],meal=normalizedMeal(raw),filled=mealHasContent(raw),summary=mealSummary(raw)||"Noch offen",recipe=findRecipeForMeal(meal.warm||meal.breakfast);return {dateObj:d,iso,raw,meal,filled,summary,recipe,label:`${dayNames[i]} ${d.getDate()}.`}});
     const thisWeekIsos=dashboardMealDays.map(x=>x.iso);
     const todayIso=isoLocal(todayBase);
     if(!selectedMealDate||!thisWeekIsos.includes(selectedMealDate))selectedMealDate=(dashboardMealDays.find(x=>x.iso===todayIso)||dashboardMealDays.find(x=>x.filled)||dashboardMealDays[0]||{}).iso||null;
     const selectedMeal=dashboardMealDays.find(x=>x.iso===selectedMealDate)||dashboardMealDays[0]||null;
     const selectedText=selectedMeal?(selectedMeal.meal.warm||selectedMeal.meal.breakfast||"Noch offen"):"Noch offen";
     const selectedDateLabel=selectedMeal?`${String(selectedMeal.dateObj.getDate()).padStart(2,"0")}.${String(selectedMeal.dateObj.getMonth()+1).padStart(2,"0")}.`:"";
-    const detailButton=selectedMeal?.recipeUrl?`<button class="week-meal-detail-action" type="button" data-dashboard-recipe="${escapeHtml(selectedMeal.recipeUrl)}">Rezept öffnen</button>`:`<button class="week-meal-detail-action" type="button" disabled>Kein Rezept</button>`;
+    const detailButton=selectedMeal?.recipe?.url?`<button class="week-meal-detail-action" type="button" data-dashboard-recipe="${escapeHtml(selectedMeal.recipe.url)}">Rezept öffnen</button>`:`<button class="week-meal-detail-action" type="button" disabled>Kein Rezept</button>`;
     $("dashboardMeals").innerHTML=`<div class="week-meal-toolbar"><button class="week-meal-plan-link" type="button" data-view="meals">Essenplan</button></div>`+dashboardMealDays.map(day=>`<button type="button" class="week-meal selectable ${day.iso===selectedMealDate?'active':''}" data-dashboard-meal="${day.iso}"><div class="week-meal-day">${day.label}</div><div class="week-meal-name ${day.filled?'':'muted'}" title="${escapeHtml(day.summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(day.meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(day.meal.warm||'–')}</div></div></button>`).join("")+`<div class="week-meal-detail"><div class="week-meal-detail-main"><span class="week-meal-detail-icon">🍽</span><span class="week-meal-detail-text">${escapeHtml(selectedDateLabel)} · ${escapeHtml(selectedText)}</span></div>${detailButton}</div>`;
     document.querySelectorAll("[data-dashboard-meal]").forEach(b=>b.onclick=()=>{selectedMealDate=b.dataset.dashboardMeal;renderDashboard()});
     document.querySelectorAll("[data-dashboard-recipe]").forEach(b=>b.onclick=e=>{e.stopPropagation();const url=safeRecipeUrl(b.dataset.dashboardRecipe);if(url)window.open(url,"_blank","noopener,noreferrer")});
@@ -1448,18 +1559,17 @@
     if(recurring&&!selectedWeekdays.length){alert("Bitte mindestens einen Wochentag für das Frühstück auswählen.");return}
     const repeatDates=breakfast?breakfastRepeatDates(date,repeat,until,selectedWeekdays):[date];
     if(recurring&&!repeatDates.length){alert("Bitte ein gültiges Enddatum für die Frühstück-Wiederholung wählen.");return}
-    const recipeRaw=$("mealRecipeUrl").value.trim(),recipeUrl=safeRecipeUrl(recipeRaw);if(recipeRaw&&!recipeUrl){alert("Bitte einen gültigen http/https-Rezept-Link eingeben.");return}const recipeFields=recipeUrl?{recipeUrl,recipe:null}:{recipeUrl:null,recipe:null};
     const changes={};if(editingMealDate&&editingMealDate!==date)changes[editingMealDate]=null;
-    if(!recurring)changes[date]={breakfast,warm,...recipeFields,updatedAt:Date.now()};
+    if(!recurring)changes[date]={breakfast,warm,updatedAt:Date.now()};
     else{
-      for(const repeatDate of repeatDates){const existing=state.meals?.[repeatDate]||{},base=normalizedMeal(existing);changes[repeatDate]={...existing,breakfast,warm:repeatDate===date?warm:base.warm,...(repeatDate===date?recipeFields:{}),updatedAt:Date.now()}}
-      if(!repeatDates.includes(date)){const existing=state.meals?.[date]||{},base=normalizedMeal(existing);changes[date]={...existing,breakfast:base.breakfast,warm,...recipeFields,updatedAt:Date.now()}}
+      for(const repeatDate of repeatDates){const existing=state.meals?.[repeatDate]||{},base=normalizedMeal(existing);changes[repeatDate]={...existing,breakfast,warm:repeatDate===date?warm:base.warm,updatedAt:Date.now()}}
+      if(!repeatDates.includes(date)){const existing=state.meals?.[date]||{},base=normalizedMeal(existing);changes[date]={...existing,breakfast:base.breakfast,warm,updatedAt:Date.now()}}
     }
     await update(ref(db,`families/${familyId}/meals`),changes);if(breakfast)await rememberMeal(breakfast);if(warm)await rememberMeal(warm);
     const wishId=$("mealModal").dataset.wishId;if(wishId){await set(ref(db,`families/${familyId}/mealWishes/${wishId}`),null);delete $("mealModal").dataset.wishId}
-    editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";$("mealRecipeUrl").value="";closeModal("mealModal");renderMeals()
+    editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";closeModal("mealModal");renderMeals()
   };
-  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;const deleted=editingMealDate;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";$("mealRecipeUrl").value="";closeModal("mealModal");renderMeals()};
+  $("deleteMealBtn").onclick=async()=>{if(!editingMealDate)return;const deleted=editingMealDate;await set(ref(db,`families/${familyId}/meals/${editingMealDate}`),null);editingMealDate=null;$("mealBreakfast").value="";$("mealWarm").value="";closeModal("mealModal");renderMeals()};
   $("mealImportBtn").onclick=async()=>{
     const groups=[{id:"mealImportBreakfast",type:"breakfast",label:"Frühstück"},{id:"mealImportWarm",type:"warm",label:"Warm"}],items=[],errors=[];
     for(const group of groups){const lines=$(group.id).value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);lines.forEach((line,index)=>{const item=parseMealImportLine(line,group.type);if(item)items.push(item);else errors.push(`${group.label} Zeile ${index+1}`)})}
