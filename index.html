@@ -462,6 +462,49 @@
       #dashboard .week-meal.empty .empty-meal-mark{display:block!important}
     }
 
+
+    /* Mobile Dashboard Essenplan: 1 Zeile pro Tag, leere Tage extra kompakt */
+    @media(max-width:780px){
+      #dashboard .week-meals{
+        grid-template-columns:1fr!important;
+        gap:4px!important;
+      }
+      #dashboard .week-meal-toolbar{
+        grid-column:1!important;
+        padding-bottom:4px!important;
+      }
+      #dashboard .week-meal{
+        display:grid!important;
+        grid-template-columns:64px minmax(0,1fr)!important;
+        align-items:center!important;
+        min-height:46px!important;
+        padding:6px 8px!important;
+      }
+      #dashboard .week-meal.empty{
+        min-height:32px!important;
+        height:32px!important;
+        padding:3px 8px!important;
+      }
+      #dashboard .week-meal.empty .week-meal-day{
+        margin:0!important;
+        font-size:10px!important;
+        line-height:1!important;
+      }
+      #dashboard .week-meal.empty .week-meal-name{
+        margin:0!important;
+        font-size:11px!important;
+        line-height:1!important;
+      }
+      #dashboard .week-meal.empty .empty-meal-mark{
+        display:block!important;
+        line-height:1!important;
+      }
+      #dashboard .week-meal.filled{
+        height:auto!important;
+        min-height:48px!important;
+      }
+    }
+
   </style>
 </head>
 <body>
