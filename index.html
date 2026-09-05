@@ -447,6 +447,21 @@
     .recipe-import-source{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
     @media(max-width:780px){.recipe-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+
+    .recipe-preview-card{position:relative}
+    .recipe-delete-btn{position:absolute;top:5px;right:5px;width:26px;height:26px;border:1px solid rgba(100,116,139,.22);border-radius:50%;background:rgba(255,255,255,.94);color:#64748b;display:grid;place-items:center;padding:0;font-size:15px;font-weight:900;z-index:2}
+    .recipe-delete-btn:hover{color:#b42318;border-color:#e4a8a3;background:#fff}
+    .app-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:12px;max-width:min(92vw,460px);padding:11px 13px;border-radius:12px;background:#172133;color:#fff;box-shadow:0 12px 34px rgba(15,23,42,.24);font-size:13px}
+    .app-toast.hidden{display:none!important}
+    .app-toast button{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:8px;padding:6px 9px;font-weight:850}
+    @media(max-width:780px){
+      #dashboard .week-meal.empty{min-height:34px!important;padding:4px 8px!important;grid-template-columns:64px minmax(0,1fr)!important}
+      #dashboard .week-meal.empty .week-meal-day{font-size:10px!important}
+      #dashboard .week-meal.empty .week-meal-name{font-size:11px!important;line-height:1!important}
+      #dashboard .week-meal.empty .meal-line{display:none!important}
+      #dashboard .week-meal.empty .empty-meal-mark{display:block!important}
+    }
+
   </style>
 </head>
 <body>
@@ -470,6 +485,8 @@
     </div>
   </div>
 </div>
+
+<div id="appToast" class="app-toast hidden" role="status" aria-live="polite"><span id="appToastText"></span><button id="appToastUndo" type="button" class="hidden">Rückgängig</button></div>
 
 <div class="shell">
   <aside>
@@ -702,13 +719,6 @@
   <div class="actions"><button class="danger" id="deleteMealBtn" type="button" style="display:none;margin-right:auto">Tag löschen</button><button class="ghost" onclick="closeModal('mealModal')">Abbrechen</button><button class="primary" id="saveMealBtn">Speichern</button></div>
 </div></div></div>
 
-<div class="modal" id="recipeImportModal"><div class="box"><h2>Rezept speichern</h2><p>Aus Brave übernommen. Wenn kein Bild gefunden oder geladen wird, wird das Rezept ohne Bild gespeichert.</p><div class="form">
-  <img id="recipeImportImage" class="recipe-import-image hidden" alt="">
-  <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Rezeptname</div><input id="recipeImportTitle" autocomplete="off"></div>
-  <div class="recipe-import-source" id="recipeImportSource"></div>
-  <div class="actions"><button class="ghost" id="cancelRecipeImportBtn" type="button">Abbrechen</button><button class="primary" id="saveRecipeImportBtn" type="button">Rezept speichern</button></div>
-</div></div></div>
-
 <div class="modal" id="mealImportModal"><div class="box"><h2>Essenplan schnell importieren</h2><p><b>Je Zeile:</b> Datum Leerzeichen Essen<br><b>Beispiel:</b> 0909 Suppe</p><div class="form">
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Frühstück</div><textarea class="meal-import-area" id="mealImportBreakfast" placeholder="0909 Porridge
 1009 Brot mit Käse
@@ -764,7 +774,7 @@
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},recipes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, editingEventId=null, mealInputTarget="warm", selectedMealDate=null, pendingRecipeImport=null, editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},recipes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, editingEventId=null, mealInputTarget="warm", selectedMealDate=null, lastRecipeImportUndo=null, toastTimer=null, editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -874,7 +884,7 @@
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
       if(mamaEntry&&["#e74f87","#e58a21"].includes(String(mamaEntry[1].color||"").toLowerCase())){state.people[mamaEntry[0]].color="#c43d3d";update(ref(db,`families/${familyId}/people/${mamaEntry[0]}`),{color:"#c43d3d"}).catch(()=>{});}
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
-      applyTheme();render();if(recipeImportFromLocation())setTimeout(openPendingRecipeImport,0);
+      applyTheme();render();if(recipeImportFromLocation())setTimeout(autoImportRecipe,0);
     },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
   }
 
@@ -1030,42 +1040,57 @@
     const found=recipesSorted().find(([id,r])=>String(r?.title||"").trim().toLowerCase()===norm);
     return found?{id:found[0],...found[1]}:null;
   }
-  function openPendingRecipeImport(){
-    if(!familyId||$("recipeImportModal")?.classList.contains("open"))return;
-    const data=recipeImportFromLocation();if(!data)return;
-    pendingRecipeImport=data;
-    $("recipeImportTitle").value=data.title;
-    $("recipeImportSource").textContent=data.url;
-    const img=$("recipeImportImage");
-    if(data.imageUrl){
-      img.src=data.imageUrl;
-      img.classList.remove("hidden");
-      img.onerror=()=>{
-        img.removeAttribute("src");
-        img.classList.add("hidden");
-        if(pendingRecipeImport)pendingRecipeImport.imageUrl="";
+  function showToast(text,undoFn=null){
+    const toast=$("appToast"),label=$("appToastText"),undo=$("appToastUndo");
+    if(!toast||!label||!undo)return;
+    if(toastTimer)clearTimeout(toastTimer);
+    label.textContent=text;
+    toast.classList.remove("hidden");
+    if(undoFn){
+      undo.classList.remove("hidden");
+      undo.onclick=async()=>{
+        undo.disabled=true;
+        try{await undoFn()}finally{
+          undo.disabled=false;
+          toast.classList.add("hidden");
+        }
       };
     }else{
-      img.removeAttribute("src");
-      img.classList.add("hidden");
+      undo.classList.add("hidden");
+      undo.onclick=null;
     }
-    openModal("recipeImportModal");
+    toastTimer=setTimeout(()=>toast.classList.add("hidden"),5500);
   }
-  async function savePendingRecipeImport(){
-    if(!familyId||!pendingRecipeImport)return;
-    const title=$("recipeImportTitle").value.trim()||pendingRecipeImport.title||"Rezept";
-    const existing=Object.entries(state.recipes||{}).find(([id,r])=>safeRecipeUrl(r?.url)===pendingRecipeImport.url);
-    const id=existing?.[0]||push(ref(db,`families/${familyId}/recipes`)).key;
-    await set(ref(db,`families/${familyId}/recipes/${id}`),{
-      title,
-      url:pendingRecipeImport.url,
-      imageUrl:pendingRecipeImport.imageUrl||"",
-      createdAt:existing?.[1]?.createdAt||Date.now(),
-      lastUsed:Date.now()
-    });
-    pendingRecipeImport=null;
+  async function autoImportRecipe(){
+    if(!familyId)return;
+    const data=recipeImportFromLocation();if(!data)return;
     clearRecipeImportUrl();
-    closeModal("recipeImportModal");
+    const existing=Object.entries(state.recipes||{}).find(([id,r])=>safeRecipeUrl(r?.url)===data.url);
+    const id=existing?.[0]||push(ref(db,`families/${familyId}/recipes`)).key;
+    const previous=existing?.[1]?JSON.parse(JSON.stringify(existing[1])):null;
+    const next={
+      title:data.title||previous?.title||"Rezept",
+      url:data.url,
+      imageUrl:data.imageUrl||previous?.imageUrl||"",
+      createdAt:previous?.createdAt||Date.now(),
+      lastUsed:Date.now()
+    };
+    await set(ref(db,`families/${familyId}/recipes/${id}`),next);
+    lastRecipeImportUndo={id,previous};
+    showToast(`Rezept gespeichert: ${next.title}`,async()=>{
+      if(!lastRecipeImportUndo||lastRecipeImportUndo.id!==id)return;
+      if(previous)await set(ref(db,`families/${familyId}/recipes/${id}`),previous);
+      else await set(ref(db,`families/${familyId}/recipes/${id}`),null);
+      lastRecipeImportUndo=null;
+      showToast("Import rückgängig gemacht");
+    });
+  }
+  async function deleteRecipe(id){
+    const r=state.recipes?.[id];if(!r)return;
+    const name=r.title||"Rezept";
+    if(!confirm(`Rezept „${name}“ löschen?`))return;
+    await set(ref(db,`families/${familyId}/recipes/${id}`),null);
+    showToast(`Rezept gelöscht: ${name}`);
   }
   function renderRecipePreviews(){
     const box=$("recipePreviewList");if(!box)return;
@@ -1079,20 +1104,18 @@
       const media=image
         ? `<img class="recipe-preview-image" src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden')"><div class="recipe-preview-placeholder hidden">🍽</div>`
         : '<div class="recipe-preview-placeholder">🍽</div>';
-      return `<button class="recipe-preview-card" type="button" data-recipe-open="${id}">${media}<div class="recipe-preview-body"><div class="recipe-preview-name">${escapeHtml(r.title||"Rezept")}</div><div class="recipe-preview-source">${escapeHtml(recipeSource(r.url))}</div></div></button>`;
+      return `<div class="recipe-preview-card" data-recipe-card="${id}"><button class="recipe-delete-btn" type="button" data-recipe-delete="${id}" aria-label="Rezept löschen">×</button><button type="button" data-recipe-open="${id}" style="display:block;width:100%;padding:0;border:0;background:transparent;text-align:left;color:inherit">${media}<div class="recipe-preview-body"><div class="recipe-preview-name">${escapeHtml(r.title||"Rezept")}</div><div class="recipe-preview-source">${escapeHtml(recipeSource(r.url))}</div></div></button></div>`;
     }).join("");
     box.querySelectorAll("[data-recipe-open]").forEach(b=>b.onclick=()=>{
       const id=b.dataset.recipeOpen,r=state.recipes?.[id],url=safeRecipeUrl(r?.url);if(!url)return;
       update(ref(db,`families/${familyId}/recipes/${id}`),{lastUsed:Date.now()}).catch(()=>{});
       window.open(url,"_blank","noopener,noreferrer");
     });
+    box.querySelectorAll("[data-recipe-delete]").forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      deleteRecipe(b.dataset.recipeDelete);
+    });
   }
-  $("saveRecipeImportBtn").onclick=savePendingRecipeImport;
-  $("cancelRecipeImportBtn").onclick=()=>{
-    pendingRecipeImport=null;
-    clearRecipeImportUrl();
-    closeModal("recipeImportModal");
-  };
   window.openMealModal=(date=null)=>{
     renderMealMemory();
     const meal=normalizedMeal(date?state.meals?.[date]:null);
@@ -1279,7 +1302,7 @@
     const thisWeekIsos=dashboardMealDays.map(x=>x.iso);
     const todayIso=isoLocal(todayBase);
     if(!selectedMealDate||!thisWeekIsos.includes(selectedMealDate))selectedMealDate=(dashboardMealDays.find(x=>x.iso===todayIso)||dashboardMealDays.find(x=>x.filled)||dashboardMealDays[0]||{}).iso||null;
-    $("dashboardMeals").innerHTML=`<div class="week-meal-toolbar"><button class="week-meal-plan-link" type="button" data-view="meals">Essenplan</button></div>`+dashboardMealDays.map(day=>`<button type="button" class="week-meal selectable ${day.iso===selectedMealDate?'active':''}" data-dashboard-meal="${day.iso}"><div class="week-meal-day">${day.label}</div><div class="week-meal-name ${day.filled?'':'muted'}" title="${escapeHtml(day.summary)}"><div class="meal-line"><b>F:</b> ${escapeHtml(day.meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(day.meal.warm||'–')}</div></div></button>`).join("");
+    $("dashboardMeals").innerHTML=`<div class="week-meal-toolbar"><button class="week-meal-plan-link" type="button" data-view="meals">Essenplan</button></div>`+dashboardMealDays.map(day=>`<button type="button" class="week-meal selectable ${day.filled?'filled':'empty'} ${day.iso===selectedMealDate?'active':''}" data-dashboard-meal="${day.iso}"><div class="week-meal-day">${day.label}</div><div class="week-meal-name ${day.filled?'':'muted'}" title="${escapeHtml(day.summary)}">${day.filled?`<div class="meal-line"><b>F:</b> ${escapeHtml(day.meal.breakfast||'–')}</div><div class="meal-line"><b>W:</b> ${escapeHtml(day.meal.warm||'–')}</div>`:'<span class="empty-meal-mark">–</span>'}</div></button>`).join("");
     document.querySelectorAll("[data-dashboard-meal]").forEach(b=>b.onclick=()=>{selectedMealDate=b.dataset.dashboardMeal;renderDashboard()});
   }
 
