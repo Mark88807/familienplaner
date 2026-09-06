@@ -154,8 +154,8 @@ async function firebaseIdToken({ apiKey, email, password }) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email, password, returnSecureToken: true }),
   });
-  if (!response.ok) throw new Error(`Firebase-Anmeldung fehlgeschlagen (${response.status})`);
   const result = await response.json();
+  if (!response.ok) throw new Error(`Firebase-Anmeldung fehlgeschlagen: ${result?.error?.message || `HTTP ${response.status}`}`);
   if (!result.idToken) throw new Error("Firebase-Anmeldung liefert kein ID-Token");
   return result.idToken;
 }
