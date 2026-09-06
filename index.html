@@ -717,17 +717,11 @@
   <input id="eventPerson" type="hidden" value="all">
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Für wen?</div><div class="quick-row" id="eventPersonQuick"></div></div>
   <div class="muted" style="font-size:12px">„Alle“ steht immer zuerst, danach die zuletzt verwendeten Personen. Bei „Ausflug“ wird automatisch „Alle“ gewählt.</div>
-  <input id="eventReminderFor" type="hidden" value="none">
   <div>
     <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Erinnerung für?</div>
-    <div class="quick-row" id="eventReminderQuick">
-      <button type="button" data-reminder-for="none">Niemand</button>
-      <button type="button" data-reminder-for="parent1">Elternteil 1</button>
-      <button type="button" data-reminder-for="parent2">Elternteil 2</button>
-      <button type="button" data-reminder-for="both">Beide</button>
-    </div>
+    <div class="quick-row" id="eventReminderQuick"></div>
   </div>
-  <div class="muted" style="font-size:12px">Die Erinnerung wird später über den persönlichen Kalender-Feed zugestellt. Der Termin bleibt für alle im Familienplaner sichtbar.</div>
+  <div class="muted" style="font-size:12px">Mehrfachauswahl möglich. Der Termin bleibt unabhängig davon für alle im Familienplaner sichtbar.</div>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
@@ -871,14 +865,30 @@
     $("eventMinute").value=["00","15","30","45"].includes(minute)?minute:"00";
   }
   fillEventTimeSelectors();
-  function setEventReminderFor(value){
-    const allowed=["none","parent1","parent2","both"];
-    const selected=allowed.includes(value)?value:"none";
-    $("eventReminderFor").value=selected;
-    $("eventReminderQuick")?.querySelectorAll("[data-reminder-for]").forEach(b=>b.classList.toggle("active",b.dataset.reminderFor===selected));
+  let eventReminderFor=[];
+  function normalizeReminderFor(value){
+    if(Array.isArray(value)) return [...new Set(value.filter(id=>id&&id!=="all"))];
+    if(typeof value==="string"&&value&&value!=="none"&&value!=="all") return [value];
+    return [];
   }
-  $("eventReminderQuick")?.querySelectorAll("[data-reminder-for]").forEach(b=>b.onclick=()=>setEventReminderFor(b.dataset.reminderFor));
-  window.openEventModal=()=>{editingEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";setEventReminderFor("none");if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();renderEventPersonQuick();openModal("eventModal")};
+  function setEventReminderFor(value){
+    eventReminderFor=normalizeReminderFor(value);
+    renderEventReminderQuick();
+  }
+  function toggleEventReminderPerson(personId){
+    const next=new Set(eventReminderFor);
+    next.has(personId)?next.delete(personId):next.add(personId);
+    eventReminderFor=[...next];
+    renderEventReminderQuick();
+  }
+  function renderEventReminderQuick(){
+    const wrap=$("eventReminderQuick");if(!wrap)return;
+    const people=Object.entries(state.people||{});
+    if(!people.length){wrap.innerHTML=`<span class="muted" style="font-size:12px">Noch keine Personen angelegt.</span>`;return}
+    wrap.innerHTML=people.map(([id,p])=>`<button type="button" class="${eventReminderFor.includes(id)?"active":""}" data-reminder-person="${escapeHtml(id)}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name||"Person")}</button>`).join("");
+    wrap.querySelectorAll("[data-reminder-person]").forEach(b=>b.onclick=()=>toggleEventReminderPerson(b.dataset.reminderPerson));
+  }
+  window.openEventModal=()=>{editingEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";setEventReminderFor([]);if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();renderEventPersonQuick();renderEventReminderQuick();openModal("eventModal")};
   window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
 
   function switchView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id))}
@@ -1506,11 +1516,11 @@
   function openCalendarEvent(id){
     const e=state.events?.[id];if(!e)return;selectedEventId=id;const p=person(e.person),d=new Date(`${e.date}T12:00:00`),dateLabel=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}).format(d);
     $("eventDetailTitle").textContent=e.name||"Termin";
-    const reminderLabel={none:"Niemand",parent1:"Elternteil 1",parent2:"Elternteil 2",both:"Beide"}[e.reminderFor||"none"]||"Niemand";
-    $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div><div><b>Erinnerung</b><div>${escapeHtml(reminderLabel)}</div></div>`;
+    const reminderNames=normalizeReminderFor(e.reminderFor).map(id=>state.people?.[id]?.name||id);
+    $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div><div><b>Erinnerung</b><div>${escapeHtml(reminderNames.length?reminderNames.join(", "):"Niemand")}</div></div>`;
     openModal("eventDetailModal");
   }
-  function openEventEdit(id){const e=state.events?.[id];if(!e)return;editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");$("eventDuration").value=Number(e.durationHours)||"";renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||"none");closeModal("eventDetailModal");openModal("eventModal")}
+  function openEventEdit(id){const e=state.events?.[id];if(!e)return;editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");$("eventDuration").value=Number(e.durationHours)||"";renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
   $("editEventBtn").onclick=()=>{if(selectedEventId)openEventEdit(selectedEventId)};
   async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;await set(ref(db,`families/${familyId}/events/${id}`),null)}
   $("deleteEventBtn").onclick=async()=>{if(!selectedEventId)return;const id=selectedEventId;selectedEventId=null;await deleteCalendarEvent(id);closeModal("eventDetailModal")};
@@ -1578,7 +1588,7 @@
   $("deleteTaskBtn").onclick=async()=>{if(!editingTaskId)return;const id=editingTaskId;editingTaskId=null;await deleteTask(id);closeModal("taskModal")};
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=editingRewardPersonId||$("rewardPerson").value,key=editingRewardId||push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});await rememberReward(name);editingRewardPersonId=null;editingRewardId=null;$("rewardName").value="";$("rewardCost").value="50";setRewardRecurring(false);$("deleteRewardBtn").style.display="none";closeModal("rewardModal")};
   $("deleteRewardBtn").onclick=async()=>{if(!editingRewardPersonId||!editingRewardId)return;await deleteReward(editingRewardPersonId,editingRewardId);editingRewardPersonId=null;editingRewardId=null;closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,reminderFor=$("eventReminderFor").value||"none",duration=Number($("eventDuration").value)||0,key=editingEventId||push(ref(db,`families/${familyId}/events`)).key,old=state.events?.[key]||{},now=Date.now();await set(ref(db,`families/${familyId}/events/${key}`),{...old,name,person:eventPerson,date,time,durationHours:duration||null,reminderFor,createdAt:old.createdAt||now,updatedAt:now});await rememberEvent(name);await rememberEventPerson(eventPerson);editingEventId=null;selectedEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventReminderFor("none");setEventDateTime("","12:00");closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,reminderFor=[...eventReminderFor],duration=Number($("eventDuration").value)||0,key=editingEventId||push(ref(db,`families/${familyId}/events`)).key,old=state.events?.[key]||{},now=Date.now();await set(ref(db,`families/${familyId}/events/${key}`),{...old,name,person:eventPerson,date,time,durationHours:duration||null,reminderFor,createdAt:old.createdAt||now,updatedAt:now});await rememberEvent(name);await rememberEventPerson(eventPerson);editingEventId=null;selectedEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventReminderFor([]);setEventDateTime("","12:00");closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
@@ -1598,7 +1608,7 @@
     const f=$("icsFile").files[0];if(!f){$("icsStatus").textContent="Bitte zuerst eine .ics-Datei wählen.";return}
     const txt=await f.text(),items=parseIcs(txt);if(!items.length){$("icsStatus").textContent="Keine unterstützten Termine gefunden.";return}
     $("icsStatus").textContent=`Importiere ${items.length} Termine …`;const personId=$("icsDefaultPerson").value;
-    const updates={},now=Date.now();items.forEach(it=>{const key=push(ref(db,`families/${familyId}/events`)).key;updates[key]={...it,person:personId,source:"ics",reminderFor:"none",createdAt:now,updatedAt:now}});
+    const updates={},now=Date.now();items.forEach(it=>{const key=push(ref(db,`families/${familyId}/events`)).key;updates[key]={...it,person:personId,source:"ics",reminderFor:[],createdAt:now,updatedAt:now}});
     await update(ref(db,`families/${familyId}/events`),updates);for(const it of items.slice(0,25)) await rememberEvent(it.name);$("icsStatus").textContent=`${items.length} Termine importiert.`;setTimeout(()=>closeModal("importModal"),700)
   };
 
