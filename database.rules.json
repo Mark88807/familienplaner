@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "families": {
+      "$familyId": {
+        ".read": "auth != null && $familyId.matches(/^[a-f0-9]{36}$/)",
+        ".write": "auth != null && $familyId.matches(/^[a-f0-9]{36}$/) && auth.token.email != 'calendar-export@familienplaner.invalid'"
+      }
+    }
+  }
+}

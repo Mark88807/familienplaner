@@ -1,0 +1,78 @@
+name: Familienplaner und persönliche Kalender veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.change.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Letzten Kalenderstand laden
+        uses: actions/cache/restore@v4
+        with:
+          path: .calendar-state
+          key: calendar-state-${{ github.run_id }}
+          restore-keys: calendar-state-
+      - name: Öffentliche App und private Feed-Pfade bauen
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          FIREBASE_EXPORT_EMAIL: ${{ secrets.FIREBASE_EXPORT_EMAIL }}
+          FIREBASE_EXPORT_PASSWORD: ${{ secrets.FIREBASE_EXPORT_PASSWORD }}
+          FIREBASE_FAMILY_ID: ${{ secrets.FIREBASE_FAMILY_ID }}
+          CALENDAR_FEEDS_JSON: ${{ secrets.CALENDAR_FEEDS_JSON }}
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          node scripts/generate-calendars.mjs _site
+      - name: Änderungen ermitteln
+        id: change
+        shell: bash
+        run: |
+          NEW_HASH="$(find _site -type f -name '*.ics' -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)"
+          OLD_HASH="$(test -f .calendar-state/hash && cat .calendar-state/hash || true)"
+          mkdir -p .calendar-state
+          printf '%s' "$NEW_HASH" > .calendar-state/hash
+          if [[ "${{ github.event_name }}" == "push" || "$NEW_HASH" != "$OLD_HASH" ]]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Neuen Kalenderstand speichern
+        uses: actions/cache/save@v4
+        with:
+          path: .calendar-state
+          key: calendar-state-${{ github.run_id }}
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.change.outputs.deploy == 'true'
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: needs.build.outputs.deploy == 'true'
+    steps:
+      - name: GitHub Pages Artifact veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
