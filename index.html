@@ -1366,11 +1366,18 @@
       }
       return new Date(todayBase);
     };
+    const recurringTaskLabel=t=>{
+      const names=["So","Mo","Di","Mi","Do","Fr","Sa"];
+      const days=[...new Set((Array.isArray(t.weekdays)?t.weekdays:[]).map(Number).filter(v=>Number.isInteger(v)&&v>=0&&v<=6))].sort((a,b)=>weekdayOffset(a)-weekdayOffset(b));
+      if(days.length)return days.map(day=>names[day]).join(", ");
+      if(t.date&&/^\d{4}-\d{2}-\d{2}$/.test(t.date)){const date=new Date(`${t.date}T12:00:00`);if(!Number.isNaN(date.getTime()))return names[date.getDay()]}
+      return "Wöchentlich";
+    };
     const taskItems=Object.entries(state.tasks||{}).filter(([id,t])=>{
       if(t.done)return false;
       if(t.recurring&&routineCompletedThisWeek(t,todayBase))return false;
       return true;
-    }).map(([id,t])=>{const p=person(t.person),due=taskDateForWeek(t),canDo=!t.recurring||routineCanComplete(t),initial=escapeHtml((p.name||"?").trim().charAt(0).toUpperCase());return {sort:due.getTime(),group:relativeInfo(due),html:`<div class="dash-task"><div class="task-open-edit dash-row-main" data-open-task="${id}"><div class="dash-row-title"><span class="dashboard-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></div>${t.recurring?'<div class="dash-row-meta">wiederholend</div>':''}</div><button class="mini" data-dash-task="${id}" ${canDo?'':'disabled'}>${canDo?'✓ Erledigt':'Geplant'}</button></div>`}}).sort((a,b)=>a.sort-b.sort);
+    }).map(([id,t])=>{const p=person(t.person),due=taskDateForWeek(t),canDo=!t.recurring||routineCanComplete(t),initial=escapeHtml((p.name||"?").trim().charAt(0).toUpperCase());return {sort:due.getTime(),group:relativeInfo(due),html:`<div class="dash-task"><div class="task-open-edit dash-row-main" data-open-task="${id}"><div class="dash-row-title"><span class="dashboard-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></div>${t.recurring?`<div class="dash-row-meta">${escapeHtml(recurringTaskLabel(t))}</div>`:""}</div><button class="mini" data-dash-task="${id}" ${canDo?'':'disabled'}>${canDo?'✓ Erledigt':'Geplant'}</button></div>`}}).sort((a,b)=>a.sort-b.sort);
     $("dashboardTasks").innerHTML=groupRows(taskItems,"Heute keine offenen Aufgaben.");
     document.querySelectorAll("[data-dash-task]:not([disabled])").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
     document.querySelectorAll("[data-open-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.openTask));
