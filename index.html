@@ -949,6 +949,14 @@
     await update(familyRef(),changes);return changed;
   }
 
+  async function cleanupOldEvents(){
+    const cutoff=Date.now()-30*24*60*60*1000,deletions={};
+    Object.entries(state.events||{}).forEach(([eventId,event])=>{const end=eventEndDate(event);if(end&&end.getTime()<cutoff)deletions[eventId]=null});
+    if(!Object.keys(deletions).length)return false;
+    await update(ref(db,`families/${familyId}/events`),deletions);
+    return true;
+  }
+
   function startSync(){
     if(unsubscribe)unsubscribe();
     unsubscribe=onValue(familyRef(),async snap=>{
@@ -956,6 +964,7 @@
       state=snap.val();state.people||={};state.tasks||={};state.rewards||={};state.events||={};state.holidays||={};state.birthdays||={};state.taskMemory||={};state.eventMemory||={};state.rewardMemory||={};state.meals||={};state.mealMemory||={};state.mealWishes||={};state.recipes||={};state.rewardLog||={};state.eventPersonRecent||={};
       if(await runOneTimeDataResetIfNeeded())return;
       if(await migrateLegacyRewardScaleIfNeeded())return;
+      if(await cleanupOldEvents())return;
       const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
       if(mamaEntry&&["#e74f87","#e58a21"].includes(String(mamaEntry[1].color||"").toLowerCase())){state.people[mamaEntry[0]].color="#c43d3d";update(ref(db,`families/${familyId}/people/${mamaEntry[0]}`),{color:"#c43d3d"}).catch(()=>{});}
       if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
