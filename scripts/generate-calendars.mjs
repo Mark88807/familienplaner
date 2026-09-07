@@ -148,6 +148,29 @@ export function validateFeeds(value) {
   return feeds;
 }
 
+function normalizedPersonKey(value) {
+  return String(value || "").normalize("NFKD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export function resolveFeeds(feeds, people) {
+  const resolved = [];
+  const usedPersonIds = new Set();
+  for (const [feedKey, feedPath] of Object.entries(feeds)) {
+    let personId = people[feedKey] ? feedKey : null;
+    if (!personId) {
+      const wanted = normalizedPersonKey(feedKey);
+      const matches = Object.entries(people).filter(([, person]) => normalizedPersonKey(person?.name) === wanted);
+      if (matches.length > 1) throw new Error(`Mehrdeutiger Personenname in CALENDAR_FEEDS_JSON: ${feedKey}`);
+      personId = matches[0]?.[0] || null;
+    }
+    if (!personId) throw new Error(`Unbekannte Person in CALENDAR_FEEDS_JSON: ${feedKey}`);
+    if (usedPersonIds.has(personId)) throw new Error(`Mehrere Feed-Pfade verweisen auf dieselbe Person: ${feedKey}`);
+    usedPersonIds.add(personId);
+    resolved.push({ personId, feedPath });
+  }
+  return resolved;
+}
+
 async function firebaseIdToken({ apiKey, email, password }) {
   const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`, {
     method: "POST",
@@ -173,9 +196,11 @@ export async function fetchFamily({ databaseUrl, familyId, apiKey, email, passwo
 export async function generateAll({ databaseUrl, familyId, apiKey, email, password, feedsJson, outputDir }) {
   const feeds = validateFeeds(feedsJson);
   const family = await fetchFamily({ databaseUrl, familyId, apiKey, email, password });
-  const missingPeople = Object.keys(family.people || {}).filter((personId) => !feeds[personId]);
+  const resolvedFeeds = resolveFeeds(feeds, family.people || {});
+  const configuredPeople = new Set(resolvedFeeds.map(({ personId }) => personId));
+  const missingPeople = Object.keys(family.people || {}).filter((personId) => !configuredPeople.has(personId));
   if (missingPeople.length) throw new Error(`CALENDAR_FEEDS_JSON enthält keine Pfade für: ${missingPeople.join(", ")}`);
-  for (const [personId, feedPath] of Object.entries(feeds)) {
+  for (const { personId, feedPath } of resolvedFeeds) {
     const destination = path.join(outputDir, feedPath);
     await mkdir(path.dirname(destination), { recursive: true });
     await writeFile(destination, buildCalendar({ familyId, personId, family }), "utf8");

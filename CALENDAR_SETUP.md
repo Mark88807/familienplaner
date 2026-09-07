@@ -9,9 +9,9 @@ Der Workflow veröffentlicht die bestehende App zusammen mit den zur Laufzeit er
 - `FIREBASE_EXPORT_EMAIL`: E-Mail des technischen Firebase-Auth-Benutzers.
 - `FIREBASE_EXPORT_PASSWORD`: Passwort dieses Benutzers.
 - `FIREBASE_FAMILY_ID`: der geheime Familiencode beziehungsweise Firebase-Schlüssel unter `families/`.
-- `CALENDAR_FEEDS_JSON`: Zuordnung der Firebase-Personen-ID zu einem langen, zufälligen relativen ICS-Pfad.
+- `CALENDAR_FEEDS_JSON`: Zuordnung einer Firebase-Personen-ID oder des sichtbaren Personennamens zu einem langen, zufälligen relativen ICS-Pfad.
 
-Die Zuordnung muss jedes aktuell vorhandene Familienmitglied enthalten. Bei einer neu angelegten Person bricht der Export absichtlich ab, bis ein geheimer Pfad ergänzt wurde; dadurch entsteht kein versehentlich öffentlicher oder gemeinsam genutzter Ersatzpfad.
+Die Zuordnung muss jedes aktuell vorhandene Familienmitglied enthalten. Sichtbare Namen werden ohne Beachtung der Groß-/Kleinschreibung aufgelöst. Dadurch können beispielsweise `felix` und `til` verwendet werden, auch wenn ältere Firebase-Datensätze intern noch `lisa` und `max` heißen. Die internen IDs bleiben aus Kompatibilitätsgründen unverändert. Bei einer neu angelegten Person bricht der Export absichtlich ab, bis ein geheimer Pfad ergänzt wurde; dadurch entsteht kein versehentlich öffentlicher oder gemeinsam genutzter Ersatzpfad.
 
 Beispiel für `CALENDAR_FEEDS_JSON` (nur als Form, nicht mit diesen Werten verwenden):
 

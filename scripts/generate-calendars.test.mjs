@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildCalendar, escapeIcs, foldIcsLine, validateFeeds } from "./generate-calendars.mjs";
+import { buildCalendar, escapeIcs, foldIcsLine, resolveFeeds, validateFeeds } from "./generate-calendars.mjs";
 
 const family = {
   people: { kind2: { name: "Kind 2" }, mama: { name: "Mamá" } },
@@ -42,4 +42,17 @@ test("Feed-Pfade müssen lang, relativ, eindeutig und geheim sein", () => {
   assert.deepEqual(validateFeeds(good), { kind2: "calendar/0123456789abcdef0123456789abcdef/calendar.ics" });
   assert.throws(() => validateFeeds('{"kind2":"kind2.ics"}'));
   assert.throws(() => validateFeeds('{"kind2":"../0123456789abcdef0123456789abcdef.ics"}'));
+});
+
+test("Feed-Schlüssel dürfen sichtbare Personennamen statt interner IDs verwenden", () => {
+  const feeds = {
+    felix: "calendar/0123456789abcdef0123456789abcdef/calendar.ics",
+    til: "calendar/fedcba9876543210fedcba9876543210/calendar.ics",
+  };
+  const people = { lisa: { name: "Felix" }, max: { name: "Til" } };
+  assert.deepEqual(resolveFeeds(feeds, people), [
+    { personId: "lisa", feedPath: feeds.felix },
+    { personId: "max", feedPath: feeds.til },
+  ]);
+  assert.throws(() => resolveFeeds({ lisa: feeds.felix, felix: feeds.til }, people), /dieselbe Person/);
 });
