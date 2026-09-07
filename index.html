@@ -172,7 +172,7 @@
     .mobile-cal-event{display:flex;gap:7px;align-items:flex-start;border-left:3px solid;padding:7px 8px;margin-top:5px;background:#f8fafc;border-radius:8px;font-size:12px}
     .mobile-cal-event .member-color{margin-top:3px;flex:0 0 12px}
     .mobile-cal-empty{font-size:11px;color:var(--muted);padding:2px 0}
-    .mobile-nav{display:none}.quick-row{display:flex;gap:8px;flex-wrap:wrap}.quick-row button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px}
+    .mobile-nav{display:none}.quick-row{display:flex;gap:8px;flex-wrap:wrap}.quick-row button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px}.quick-row button.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:800}
     .color-picker{display:flex;gap:10px;flex-wrap:wrap}.color-choice{width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px var(--line)}
     .color-choice.active{box-shadow:0 0 0 3px #222}
     .voice-box{padding:18px;border:1px dashed #d6deda;border-radius:14px;text-align:center;background:#fafcfb}
@@ -603,7 +603,7 @@
     </section>
 
     <section class="view" id="calendar">
-      <div class="top"><div><h1>Kalender</h1><div class="sub">Woche, 6 Wochen, 3 Monate oder Jahr.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">6 Wochen</button><button class="ghost" id="quarterViewBtn">3 Monate</button><button class="ghost" id="yearViewBtn">Jahr</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openHolidayModal()">+ Ferien</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
+      <div class="top"><div><h1>Kalender</h1><div class="sub" id="calendarPeriodTitle"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">Monat</button><button class="ghost" id="yearViewBtn">Jahr</button></div><div class="calendar-switch"><button class="ghost" id="calendarPrevBtn" aria-label="Vorheriger Zeitraum">‹</button><button class="ghost" id="calendarTodayBtn">Heute</button><button class="ghost" id="calendarNextBtn" aria-label="Nächster Zeitraum">›</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openHolidayModal()">+ Ferien</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
     </section>
 
@@ -716,12 +716,11 @@
   <div class="quick-row"><span class="muted" style="font-size:12px;align-self:center">Dauer:</span><button type="button" data-durationquick="2">2 h</button><button type="button" data-durationquick="4">4 h</button><button type="button" data-durationquick="6">6 h</button><button type="button" data-durationquick="10">10 h</button></div>
   <input id="eventPerson" type="hidden" value="all">
   <div><div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Für wen?</div><div class="quick-row" id="eventPersonQuick"></div></div>
-  <div class="muted" style="font-size:12px">„Alle“ steht immer zuerst, danach die zuletzt verwendeten Personen. Bei „Ausflug“ wird automatisch „Alle“ gewählt.</div>
   <div>
     <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:6px">Erinnerung für?</div>
     <div class="quick-row" id="eventReminderQuick"></div>
   </div>
-  <div class="muted" style="font-size:12px">Mehrfachauswahl möglich. Der Termin bleibt unabhängig davon für alle im Familienplaner sichtbar.</div>
+  <div class="muted" style="font-size:12px">Mehrfachauswahl möglich.</div>
   <div class="actions"><button class="ghost" onclick="closeModal('eventModal')">Abbrechen</button><button class="primary" id="saveEventBtn">Speichern</button></div>
 </div></div></div>
 
@@ -822,7 +821,7 @@
   const MEAL_PREFILL=["Spaghetti Bolognese", "Kürbissuppe", "Gemüsecurry", "Pizza", "Kartoffelgratin", "Lasagne", "Chili con Carne", "Nudeln mit Tomatensoße", "Reis mit Gemüse", "Pfannkuchen", "Ofengemüse", "Fisch mit Kartoffeln", "Hähnchen mit Reis", "Linsensuppe", "Tomatensuppe", "Gemüseauflauf", "Wraps", "Burger", "Bratkartoffeln", "Käsespätzle", "Gulasch", "Couscous-Salat", "Risotto", "Maultaschen", "Schnitzel mit Kartoffeln", "Brokkoli-Nudel-Auflauf", "Kartoffelsuppe", "Flammkuchen", "Tacos", "Burritos", "Pasta Pesto", "Nudelauflauf", "Quiche", "Salat mit Hähnchen", "Gemüsepfanne", "Currywurst mit Pommes", "Fischstäbchen mit Kartoffelpüree", "Ratatouille", "Hackbällchen mit Reis", "Schupfnudeln", "Ravioli", "Chicken Nuggets mit Gemüse", "Zucchinisuppe", "Kürbisrisotto", "Lachs mit Gemüse", "Bauernomelett", "Milchreis", "Grießbrei", "Brotzeit", "Resteessen"];
   const EVENT_PREFILL=["Zahnarzt", "Arzttermin", "Fußballtraining", "Schwimmen", "Turnen", "Musikschule", "Elternabend", "Geburtstag", "Familienbesuch", "Oma & Opa besuchen", "Friseur", "Therapie", "Nachhilfe", "Schulfest", "Kita-Termin", "Elterngespräch", "Verein", "Training", "Spieltag", "Impftermin", "Ferienbeginn", "Ausflug", "Abendessen", "Kindergeburtstag", "Familienabend"];
   const DAILY_IDEAS=["Gemeinsam spazieren gehen","Küche zusammen aufräumen","Brettspiel-Abend","10 Minuten Aufräum-Challenge","Gemeinsam kochen","Zimmer-Quick-Cleanup","Familienrunde: Was war heute gut?"];
-  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},recipes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, editingEventId=null, mealInputTarget="warm", selectedMealDate=null, lastRecipeImportUndo=null, toastTimer=null, editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
+  let familyId=localStorage.getItem(LS_FAMILY), state={people:{},tasks:{},rewards:{},events:{},holidays:{},birthdays:{},taskMemory:{},eventMemory:{},rewardMemory:{},meals:{},mealMemory:{},mealWishes:{},recipes:{},rewardLog:{}}, selectedPerson=null, editingMemberId=null, memberSelectedColor=COLORS[0], unsubscribe=null, selectedColor=COLORS[0], calendarMode="week", calendarCursor=new Date(), mealCursor=new Date(), taskFilter="open", editingBirthdayId=null, editingMealDate=null, selectedEventId=null, editingEventId=null, mealInputTarget="warm", selectedMealDate=null, lastRecipeImportUndo=null, toastTimer=null, editingTaskId=null, editingRewardPersonId=null, editingRewardId=null;
   const $=id=>document.getElementById(id);
   const familyRef=()=>ref(db,`families/${familyId}`);
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
@@ -865,6 +864,11 @@
     $("eventMinute").value=["00","15","30","45"].includes(minute)?minute:"00";
   }
   fillEventTimeSelectors();
+  function setEventDuration(value){
+    const normalized=Number(value)>0?String(Number(value)):"";
+    $("eventDuration").value=normalized;
+    document.querySelectorAll("[data-durationquick]").forEach(b=>{const active=b.dataset.durationquick===normalized;b.classList.toggle("active",active);b.setAttribute("aria-pressed",active?"true":"false")});
+  }
   let eventReminderFor=[];
   function normalizeReminderFor(value){
     if(Array.isArray(value)) return [...new Set(value.filter(id=>id&&id!=="all"))];
@@ -888,13 +892,13 @@
     wrap.innerHTML=people.map(([id,p])=>`<button type="button" class="${eventReminderFor.includes(id)?"active":""}" data-reminder-person="${escapeHtml(id)}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name||"Person")}</button>`).join("");
     wrap.querySelectorAll("[data-reminder-person]").forEach(b=>b.onclick=()=>toggleEventReminderPerson(b.dataset.reminderPerson));
   }
-  window.openEventModal=()=>{editingEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";setEventReminderFor([]);if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();renderEventPersonQuick();renderEventReminderQuick();openModal("eventModal")};
+  window.openEventModal=()=>{editingEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";setEventDuration("");setEventReminderFor([]);if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();renderEventPersonQuick();renderEventReminderQuick();openModal("eventModal")};
   window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
 
   function switchView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id))}
   document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
   document.querySelectorAll("[data-timequick]").forEach(b=>b.onclick=()=>{const [h,m]=b.dataset.timequick.split(":");$("eventHour").value=h;$("eventMinute").value=m});
-  document.querySelectorAll("[data-durationquick]").forEach(b=>b.onclick=()=>$("eventDuration").value=b.dataset.durationquick);
+  document.querySelectorAll("[data-durationquick]").forEach(b=>b.onclick=()=>setEventDuration(b.dataset.durationquick));
   $("eventName").addEventListener("change",()=>{if($("eventName").value.trim().toLowerCase()==="ausflug")setEventPerson("all")});
   $("taskRecurringBtn").onclick=()=>setTaskRecurring($("taskRecurringBtn").getAttribute("aria-pressed")!=="true");
   document.querySelectorAll("[data-reward-cost]").forEach(b=>b.onclick=()=>$("rewardCost").value=b.dataset.rewardCost);
@@ -967,7 +971,8 @@
   }
   function fillPeople(){
     const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
-    ["taskPerson","rewardPerson","icsDefaultPerson","mealWishPerson"].forEach(id=>{if($(id))$(id).innerHTML=opts});
+    if($("taskPerson"))$("taskPerson").innerHTML=`<option value="all">Alle</option>${opts}`;
+    ["rewardPerson","icsDefaultPerson","mealWishPerson"].forEach(id=>{if($(id))$(id).innerHTML=opts});
     renderEventPersonQuick();
   }
   function eventPeopleByRecent(){
@@ -1402,7 +1407,7 @@
   function renderTasks(){
     const allItems=Object.entries(state.tasks||{}),open=allItems.filter(([id,t])=>!t.recurring&&!t.done),routines=allItems.filter(([id,t])=>!!t.recurring);
     $("taskListTitle").textContent="Aufgaben";
-    const taskRow=([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'Wiederholend · fällig':'Wiederholend · für diesen Zeitraum erledigt'):'',initial=escapeHtml((p.name||'?').trim().charAt(0).toUpperCase());return `<div class="task"><div class="ico">${t.recurring?'↻':'✓'}</div><div class="task-open-edit" data-edit-task="${id}"><b><span class="task-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10</div><button class="reward-edit-icon" data-edit-task="${id}" aria-label="Aufgabe bearbeiten" title="Bearbeiten">✎</button></div>`};
+    const taskRow=([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'Wiederholend · fällig':'Wiederholend · für diesen Zeitraum erledigt'):'',initial=escapeHtml((p.name||'?').trim().charAt(0).toUpperCase());return `<div class="task"><div class="ico">${t.recurring?'↻':'✓'}</div><div class="task-open-edit" data-edit-task="${id}"><b><span class="task-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10${t.person==="all"?' je Person':''}</div><button class="reward-edit-icon" data-edit-task="${id}" aria-label="Aufgabe bearbeiten" title="Bearbeiten">✎</button></div>`};
     $("taskList").innerHTML=`<div class="task-group"><div class="task-group-title">Offen</div>${open.length?open.map(taskRow).join(""):'<div class="muted">Keine offenen Aufgaben.</div>'}</div><div class="task-group"><div class="task-group-title">Wiederholend</div>${routines.length?routines.map(taskRow).join(""):'<div class="muted">Keine wiederholenden Aufgaben.</div>'}</div>`;
     $("taskList").querySelectorAll("[data-edit-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.editTask));
     const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
@@ -1481,16 +1486,17 @@
   function eventIsExpired(e,now=new Date()){const end=eventEndDate(e);return !!end&&end<now}
   function eventTimeLabel(e){const time=e.time&&e.time!=="00:00"?e.time:"ohne Uhrzeit",dur=Number(e.durationHours)>0?` · ${Number(e.durationHours)} h`:"";return `${time}${dur}`}
   function renderCalendar(){
-    const events=Object.entries(state.events||{}).map(([id,e])=>({id,...e})).filter(e=>!eventIsExpired(e));
+    const events=Object.entries(state.events||{}).map(([id,e])=>({id,...e}));
+    const cursor=new Date(calendarCursor);cursor.setHours(12,0,0,0);
     if(window.matchMedia("(max-width: 780px)").matches&&calendarMode==="week"){
-      const now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
+      const now=new Date(),day=(cursor.getDay()+6)%7,monday=new Date(cursor);monday.setHours(0,0,0,0);monday.setDate(cursor.getDate()-day);
       const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
       $("calendarGrid").innerHTML=`<div class="mobile-calendar-list">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),label=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="mobile-cal-day ${today?'today':''}"><div class="mobile-cal-date">${label}</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-cal-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="border-left-color:${p.color||ALL_COLOR};background:${p.color||ALL_COLOR}18;color:${p.color||ALL_COLOR}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><div><b>${escapeHtml(e.name)}</b><div class="muted">${escapeHtml(p.name)} · ${escapeHtml(eventTimeLabel(e))}</div></div></div>`}).join(""):`<div class="mobile-cal-empty">Keine Termine</div>`}</div>`}).join("")}</div>`;
       return;
     }
     if(calendarMode==="month"){
-      const start=new Date(),day=(start.getDay()+6)%7;start.setHours(0,0,0,0);start.setDate(start.getDate()-day);
+      const start=new Date(cursor.getFullYear(),cursor.getMonth(),1,12),day=(start.getDay()+6)%7;start.setDate(start.getDate()-day);
       const dates=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
       if(window.matchMedia("(max-width: 780px)").matches){
@@ -1503,13 +1509,13 @@
       const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
       $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.${d.getMonth()+1}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
     }
-    if(calendarMode==="quarter"||calendarMode==="year"){
-      const now=new Date(),monthCount=calendarMode==="quarter"?3:12,startMonth=calendarMode==="quarter"?now.getMonth():0,startYear=now.getFullYear(),heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
+    if(calendarMode==="year"){
+      const now=new Date(),monthCount=12,startMonth=0,startYear=cursor.getFullYear(),heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
       const monthHtml=Array.from({length:monthCount},(_,idx)=>{const first=new Date(startYear,startMonth+idx,1,12),year=first.getFullYear(),month=first.getMonth(),gridStart=new Date(year,month,1,12),offset=(gridStart.getDay()+6)%7;gridStart.setDate(gridStart.getDate()-offset);const dates=Array.from({length:42},(_,i)=>{const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d}),title=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(first);return `<section class="period-month"><div class="period-month-title">${escapeHtml(title)}</div><div class="period-month-grid">${heads.map(h=>`<div class="period-head">${h}</div>`).join("")}${dates.map(d=>{const iso=isoLocal(d),outside=d.getMonth()!==month,today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),shown=evs.slice(0,calendarMode==="year"?1:2);return `<div class="period-day ${outside?'outside':''} ${today?'today':''}"><div class="period-date">${d.getDate()}</div>${hols.length?`<div class="holiday-band" style="margin-top:2px;padding:2px 4px;font-size:9px">Ferien</div>`:''}${shown.map(e=>`<button class="period-event" data-event-id="${e.id}" title="${escapeHtml(e.name)} · ${escapeHtml(eventTimeLabel(e))}" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}</button>`).join("")}${evs.length>shown.length?`<div class="period-more">+${evs.length-shown.length}</div>`:''}</div>`}).join("")}</div></section>`}).join("");
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";$("calendarGrid").innerHTML=`<div class="calendar-periods ${calendarMode==="year"?'year':''}">${monthHtml}</div>`;return;
     }
     $("calendarGrid").style.display="grid";$("calendarGrid").style.minWidth="730px";
-    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-day);
+    const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(cursor.getDay()+6)%7,monday=new Date(cursor);monday.setHours(0,0,0,0);monday.setDate(cursor.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
     hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
   }
@@ -1520,7 +1526,7 @@
     $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div><div><b>Erinnerung</b><div>${escapeHtml(reminderNames.length?reminderNames.join(", "):"Niemand")}</div></div>`;
     openModal("eventDetailModal");
   }
-  function openEventEdit(id){const e=state.events?.[id];if(!e)return;editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");$("eventDuration").value=Number(e.durationHours)||"";renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
+  function openEventEdit(id){const e=state.events?.[id];if(!e)return;editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
   $("editEventBtn").onclick=()=>{if(selectedEventId)openEventEdit(selectedEventId)};
   async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;await set(ref(db,`families/${familyId}/events/${id}`),null)}
   $("deleteEventBtn").onclick=async()=>{if(!selectedEventId)return;const id=selectedEventId;selectedEventId=null;await deleteCalendarEvent(id);closeModal("eventDetailModal")};
@@ -1566,10 +1572,11 @@
   }
   async function toggleTask(id){
     const t=state.tasks[id],p=person(t.person),pts=10,current=Number(p.points)||0;
+    const pointChanges=(delta)=>Object.fromEntries(Object.entries(state.people||{}).map(([personId,entry])=>[`people/${personId}/points`,Math.max(0,(Number(entry.points)||0)+delta)]));
     if(t.recurring){
       if(!routineCanComplete(t))return;
       await update(familyRef(),{
-        [`people/${t.person}/points`]:current+pts,
+        ...(t.person==="all"?pointChanges(pts):{[`people/${t.person}/points`]:current+pts}),
         [`tasks/${id}/done`]:false,
         [`tasks/${id}/lastCompletedAt`]:Date.now()
       });
@@ -1577,7 +1584,7 @@
       return;
     }
     const done=!t.done;
-    await update(familyRef(),{[`tasks/${id}/done`]:done,[`tasks/${id}/completedAt`]:done?Date.now():null,[`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))});
+    await update(familyRef(),{[`tasks/${id}/done`]:done,[`tasks/${id}/completedAt`]:done?Date.now():null,...(t.person==="all"?pointChanges(done?pts:-pts):{[`people/${t.person}/points`]:Math.max(0,current+(done?pts:-pts))})});
     if(done)await rememberTask(t.name)
   }
   $("saveTaskBtn").onclick=async()=>{
@@ -1588,7 +1595,7 @@
   $("deleteTaskBtn").onclick=async()=>{if(!editingTaskId)return;const id=editingTaskId;editingTaskId=null;await deleteTask(id);closeModal("taskModal")};
   $("saveRewardBtn").onclick=async()=>{const name=$("rewardName").value.trim(),cost=Math.max(1,Math.round(Number($("rewardCost").value)||50)),repeatable=$("rewardRepeat").value!=="once";if(!name)return;const who=editingRewardPersonId||$("rewardPerson").value,key=editingRewardId||push(ref(db,`families/${familyId}/rewards/${who}`)).key;await set(ref(db,`families/${familyId}/rewards/${who}/${key}`),{name,cost,repeatable});await rememberReward(name);editingRewardPersonId=null;editingRewardId=null;$("rewardName").value="";$("rewardCost").value="50";setRewardRecurring(false);$("deleteRewardBtn").style.display="none";closeModal("rewardModal")};
   $("deleteRewardBtn").onclick=async()=>{if(!editingRewardPersonId||!editingRewardId)return;await deleteReward(editingRewardPersonId,editingRewardId);editingRewardPersonId=null;editingRewardId=null;closeModal("rewardModal")};
-  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,reminderFor=[...eventReminderFor],duration=Number($("eventDuration").value)||0,key=editingEventId||push(ref(db,`families/${familyId}/events`)).key,old=state.events?.[key]||{},now=Date.now();await set(ref(db,`families/${familyId}/events/${key}`),{...old,name,person:eventPerson,date,time,durationHours:duration||null,reminderFor,createdAt:old.createdAt||now,updatedAt:now});await rememberEvent(name);await rememberEventPerson(eventPerson);editingEventId=null;selectedEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";$("eventName").value="";$("eventDate").value="";$("eventDuration").value="";setEventReminderFor([]);setEventDateTime("","12:00");closeModal("eventModal")};
+  $("saveEventBtn").onclick=async()=>{const name=$("eventName").value.trim(),date=$("eventDate").value,time=`${$("eventHour").value}:${$("eventMinute").value}`;if(!name||!date||!time)return;const eventPerson=name.toLowerCase()==="ausflug"?"all":$("eventPerson").value,reminderFor=[...eventReminderFor],duration=Number($("eventDuration").value)||0,key=editingEventId||push(ref(db,`families/${familyId}/events`)).key,old=state.events?.[key]||{},now=Date.now();await set(ref(db,`families/${familyId}/events/${key}`),{...old,name,person:eventPerson,date,time,durationHours:duration||null,reminderFor,createdAt:old.createdAt||now,updatedAt:now});await rememberEvent(name);await rememberEventPerson(eventPerson);editingEventId=null;selectedEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";$("eventName").value="";$("eventDate").value="";setEventDuration("");setEventReminderFor([]);setEventDateTime("","12:00");closeModal("eventModal")};
 
 
   function unfoldIcs(s){return s.replace(/\r?\n[ \t]/g,"")}
@@ -1617,8 +1624,10 @@
   $("editFamilyBtn").onclick=()=>{selectedColor=state.color||COLORS[0];$("familyNameEdit").value=state.name||"";renderColorPickers();openModal("familyEditModal")};
   $("saveFamilyEditBtn").onclick=async()=>{await update(familyRef(),{name:$("familyNameEdit").value.trim()||"Meine Familie",color:selectedColor});closeModal("familyEditModal")};
   $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
-  function setCalendarMode(mode){calendarMode=mode;[["weekViewBtn","week"],["monthViewBtn","month"],["quarterViewBtn","quarter"],["yearViewBtn","year"]].forEach(([id,m])=>$(id).classList.toggle("active",m===mode));renderCalendar()}
-  $("weekViewBtn").onclick=()=>setCalendarMode("week");$("monthViewBtn").onclick=()=>setCalendarMode("month");$("quarterViewBtn").onclick=()=>setCalendarMode("quarter");$("yearViewBtn").onclick=()=>setCalendarMode("year");
+  function renderCalendarPeriodTitle(){if(!$("calendarPeriodTitle"))return;const c=new Date(calendarCursor);if(calendarMode==="week"){const day=(c.getDay()+6)%7,start=new Date(c),end=new Date(c);start.setDate(c.getDate()-day);end.setDate(start.getDate()+6);$("calendarPeriodTitle").textContent=`${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit"}).format(start)} – ${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}).format(end)}`}else if(calendarMode==="month")$("calendarPeriodTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(c);else $("calendarPeriodTitle").textContent=String(c.getFullYear())}
+  function setCalendarMode(mode){calendarMode=mode;[["weekViewBtn","week"],["monthViewBtn","month"],["yearViewBtn","year"]].forEach(([id,m])=>$(id).classList.toggle("active",m===mode));renderCalendarPeriodTitle();renderCalendar()}
+  function moveCalendar(direction){if(calendarMode==="week")calendarCursor.setDate(calendarCursor.getDate()+direction*7);else if(calendarMode==="month")calendarCursor.setMonth(calendarCursor.getMonth()+direction);else calendarCursor.setFullYear(calendarCursor.getFullYear()+direction);renderCalendarPeriodTitle();renderCalendar()}
+  $("weekViewBtn").onclick=()=>setCalendarMode("week");$("monthViewBtn").onclick=()=>setCalendarMode("month");$("yearViewBtn").onclick=()=>setCalendarMode("year");$("calendarPrevBtn").onclick=()=>moveCalendar(-1);$("calendarNextBtn").onclick=()=>moveCalendar(1);$("calendarTodayBtn").onclick=()=>{calendarCursor=new Date();renderCalendarPeriodTitle();renderCalendar()};renderCalendarPeriodTitle();
 
 
   $("saveBirthdayBtn").onclick=async()=>{const name=$("birthdayName").value.trim(),date=birthdayStorageValue($("birthdayDate").value);if(!name||!date){alert("Bitte vollständiges Geburtsdatum als TT.MM.JJJJ eingeben, z. B. 14.03.1985.");return}const id=editingBirthdayId||push(ref(db,`families/${familyId}/birthdays`)).key;await set(ref(db,`families/${familyId}/birthdays/${id}`),{name,date,recurringYearly:true,updatedAt:Date.now()});editingBirthdayId=null;closeModal("birthdayModal")};
