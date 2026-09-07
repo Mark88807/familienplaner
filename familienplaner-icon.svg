@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Familienplaner</title>
+  <desc id="description">Abgerundetes F mit zwei verbundenen Punkten</desc>
+  <defs>
+    <linearGradient id="background" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#397EE5"/>
+      <stop offset="1" stop-color="#215EBF"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#background)"/>
+  <path d="M170 376V140H342M170 254H302" fill="none" stroke="#FFFFFF" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M302 363C326 363 340 335 370 314" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity=".92"/>
+  <circle cx="302" cy="363" r="25" fill="#FFD166" stroke="#FFFFFF" stroke-width="9"/>
+  <circle cx="374" cy="310" r="25" fill="#FF7B8B" stroke="#FFFFFF" stroke-width="9"/>
+</svg>

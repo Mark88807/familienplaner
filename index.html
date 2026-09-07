@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <title>Familienplaner</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="familienplaner-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="familienplaner-icon-180.png">
   <style>
     :root{
       --accent:#2f73d9;--accent-soft:#edf5ff;--bg:#f5f9fd;--card:#fff;--text:#172133;
@@ -16,7 +19,6 @@
     button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
     .shell{min-height:100vh;display:grid;grid-template-columns:208px 1fr}
     aside{position:sticky;top:0;height:100vh;padding:20px 14px;background:linear-gradient(180deg,#ffffff 0%,#f3f8ff 100%);border-right:1px solid var(--line);display:flex;flex-direction:column}
-    .brand{font-weight:850;font-size:18px;padding:8px 10px 20px}
     nav{display:grid;gap:6px}
     nav button{border:0;background:transparent;color:#344139;padding:11px 12px;text-align:left;border-radius:12px}
     nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:750}
@@ -533,7 +535,6 @@
 
 <div class="shell">
   <aside>
-    <div class="brand">⌂ Familienplaner</div>
     <nav>
       <button class="active" data-view="dashboard">⌂ Dashboard</button>
       <button data-view="tasks">✓ Aufgaben</button>
