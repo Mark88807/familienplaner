@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -17,6 +17,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  patch-source:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Gewünschte UI-Anpassungen anwenden
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          s = path.read_text(encoding='utf-8')
+
+          button = '<button class="ghost" id="calendarTodayBtn">Heute</button>'
+          if button not in s:
+              raise SystemExit('Heute-Button nicht gefunden')
+          s = s.replace(button, '', 1)
+
+          old_handler = '$("calendarTodayBtn").onclick=()=>{calendarCursor=new Date();renderCalendarPeriodTitle();renderCalendar()};'
+          if old_handler not in s:
+              raise SystemExit('Heute-Handler nicht gefunden')
+          s = s.replace(old_handler, '', 1)
+
+          old_dash = '<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${groupRows(eventItems,"Keine Termine diese Woche.")}</div>'
+          new_dash = '<div class="dashboard-events-section">${groupRows(eventItems,"Keine Termine diese Woche.")}</div>'
+          if old_dash not in s:
+              raise SystemExit('Doppelte Termine-Zeile nicht gefunden')
+          s = s.replace(old_dash, new_dash, 1)
+
+          pattern = r'  function renderCalendarPeriodTitle\(\)\{.*?\}\n  function setCalendarMode'
+          replacement = '''  function isoWeekNumber(date){const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil((((d-yearStart)/86400000)+1)/7)}
+  function renderCalendarPeriodTitle(){if(!$("calendarPeriodTitle"))return;const c=new Date(calendarCursor);if(calendarMode==="week"){const day=(c.getDay()+6)%7,start=new Date(c),end=new Date(c);start.setDate(c.getDate()-day);end.setDate(start.getDate()+6);const week=isoWeekNumber(start),monthFmt=new Intl.DateTimeFormat("de-DE",{month:"long"}),startMonth=monthFmt.format(start),endMonth=monthFmt.format(end),monthLabel=startMonth===endMonth?`${startMonth} ${end.getFullYear()}`:`${startMonth}/${endMonth} ${end.getFullYear()}`;$("calendarPeriodTitle").textContent=`KW ${week} · ${monthLabel} · ${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit"}).format(start)} – ${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}).format(end)}`}else if(calendarMode==="month")$("calendarPeriodTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(c);else $("calendarPeriodTitle").textContent=String(c.getFullYear())}
+  function setCalendarMode'''
+          s, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit(f'Kalender-Titel konnte nicht ersetzt werden: {count}')
+
+          path.write_text(s, encoding='utf-8')
+          PY
+
+          grep -q 'function isoWeekNumber' index.html
+          grep -q 'KW ${week}' index.html
+          ! grep -q 'id="calendarTodayBtn"' index.html
+          ! grep -q 'dashboard-section-label">Termine' index.html
+
+          git show HEAD^:.github/workflows/pages.yml > .github/workflows/pages.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/pages.yml
+          git commit -m "Update calendar labels and dashboard appointments"
+          git push origin HEAD:main
+
   build:
     runs-on: ubuntu-latest
     outputs:
