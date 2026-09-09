@@ -1705,7 +1705,7 @@
   $("yearViewBtn").onclick=()=>setCalendarMode("year");
   $("calendarPrevBtn").onclick=()=>moveCalendar(-1);
   $("calendarNextBtn").onclick=()=>moveCalendar(1);
-  renderCalendarPeriodTitle();renderCalendar()};renderCalendarPeriodTitle();
+  renderCalendarPeriodTitle();
 
 
   $("saveBirthdayBtn").onclick=async()=>{const name=$("birthdayName").value.trim(),date=birthdayStorageValue($("birthdayDate").value);if(!name||!date){alert("Bitte vollständiges Geburtsdatum als TT.MM.JJJJ eingeben, z. B. 14.03.1985.");return}const id=editingBirthdayId||push(ref(db,`families/${familyId}/birthdays`)).key;await set(ref(db,`families/${familyId}/birthdays/${id}`),{name,date,recurringYearly:true,updatedAt:Date.now()});editingBirthdayId=null;closeModal("birthdayModal")};
