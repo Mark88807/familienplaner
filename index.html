@@ -604,7 +604,7 @@
     </section>
 
     <section class="view" id="calendar">
-      <div class="top"><div><h1>Kalender</h1><div class="sub" id="calendarPeriodTitle"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">Monat</button><button class="ghost" id="yearViewBtn">Jahr</button></div><div class="calendar-switch"><button class="ghost" id="calendarPrevBtn" aria-label="Vorheriger Zeitraum">‹</button><button class="ghost" id="calendarTodayBtn">Heute</button><button class="ghost" id="calendarNextBtn" aria-label="Nächster Zeitraum">›</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openHolidayModal()">+ Ferien</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
+      <div class="top"><div><h1>Kalender</h1><div class="sub" id="calendarPeriodTitle"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">Monat</button><button class="ghost" id="yearViewBtn">Jahr</button></div><div class="calendar-switch"><button class="ghost" id="calendarPrevBtn" aria-label="Vorheriger Zeitraum">‹</button><button class="ghost" id="calendarNextBtn" aria-label="Nächster Zeitraum">›</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openHolidayModal()">+ Ferien</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
     </section>
 
@@ -1351,7 +1351,7 @@
     const eventItems=events.map(e=>{const p=person(e.person),d=new Date(`${e.date}T12:00:00`),time=(e.time&&e.time!=="00:00")?e.time:"",duration=Number(e.durationHours)>0?`${Number(e.durationHours)} h`:"",initial=escapeHtml((p.name||"?").trim().charAt(0).toUpperCase());return {group:relativeInfo(d,time),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><span class="dashboard-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(e.name)}</span></div>${duration?`<div class="dash-row-meta">${duration}</div>`:""}</div></div>`}});
     const birthdays=birthdaysToday();
     const birthdayItems=birthdays.map(b=>{const d=new Date(`${b.displayDate}T12:00:00`),age=b.age!=null?` · ${b.age} Jahre`:"";return {group:relativeInfo(d),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><b>${escapeHtml(b.name)}</b> · Geburtstag</div><div class="dash-row-meta">Geburtstag${age}</div></div></div>`}});
-    $("dashboardEvents").innerHTML=`<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${groupRows(eventItems,"Keine Termine diese Woche.")}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${groupRows(birthdayItems,"Heute keine Geburtstage.")}</div>`;
+    $("dashboardEvents").innerHTML=`<div class="dashboard-events-section">${groupRows(eventItems,"Keine Termine diese Woche.")}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${groupRows(birthdayItems,"Heute keine Geburtstage.")}</div>`;
 
     const monday=new Date(start);monday.setHours(0,0,0,0);
     const todayDay=todayBase.getDay();
@@ -1640,10 +1640,72 @@
   $("editFamilyBtn").onclick=()=>{selectedColor=state.color||COLORS[0];$("familyNameEdit").value=state.name||"";renderColorPickers();openModal("familyEditModal")};
   $("saveFamilyEditBtn").onclick=async()=>{await update(familyRef(),{name:$("familyNameEdit").value.trim()||"Meine Familie",color:selectedColor});closeModal("familyEditModal")};
   $("leaveFamilyBtn").onclick=()=>{if(confirm("Dieses Gerät von der Familie trennen? Die Firebase-Daten bleiben erhalten.")){localStorage.removeItem(LS_FAMILY);location.reload()}};
-  function renderCalendarPeriodTitle(){if(!$("calendarPeriodTitle"))return;const c=new Date(calendarCursor);if(calendarMode==="week"){const day=(c.getDay()+6)%7,start=new Date(c),end=new Date(c);start.setDate(c.getDate()-day);end.setDate(start.getDate()+6);$("calendarPeriodTitle").textContent=`${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit"}).format(start)} – ${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}).format(end)}`}else if(calendarMode==="month")$("calendarPeriodTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(c);else $("calendarPeriodTitle").textContent=String(c.getFullYear())}
-  function setCalendarMode(mode){calendarMode=mode;[["weekViewBtn","week"],["monthViewBtn","month"],["yearViewBtn","year"]].forEach(([id,m])=>$(id).classList.toggle("active",m===mode));renderCalendarPeriodTitle();renderCalendar()}
-  function moveCalendar(direction){if(calendarMode==="week")calendarCursor.setDate(calendarCursor.getDate()+direction*7);else if(calendarMode==="month")calendarCursor.setMonth(calendarCursor.getMonth()+direction);else calendarCursor.setFullYear(calendarCursor.getFullYear()+direction);renderCalendarPeriodTitle();renderCalendar()}
-  $("weekViewBtn").onclick=()=>setCalendarMode("week");$("monthViewBtn").onclick=()=>setCalendarMode("month");$("yearViewBtn").onclick=()=>setCalendarMode("year");$("calendarPrevBtn").onclick=()=>moveCalendar(-1);$("calendarNextBtn").onclick=()=>moveCalendar(1);$("calendarTodayBtn").onclick=()=>{calendarCursor=new Date();renderCalendarPeriodTitle();renderCalendar()};renderCalendarPeriodTitle();
+  function isoWeekNumber(date){
+    const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+    const day=d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-day);
+    const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d-yearStart)/86400000)+1)/7);
+  }
+
+  function renderCalendarPeriodTitle(){
+    if(!$("calendarPeriodTitle"))return;
+    const c=new Date(calendarCursor);
+
+    if(calendarMode==="week"){
+      const day=(c.getDay()+6)%7;
+      const start=new Date(c);
+      const end=new Date(c);
+
+      start.setDate(c.getDate()-day);
+      end.setDate(start.getDate()+6);
+
+      const kw=isoWeekNumber(start);
+      const monthFormatter=new Intl.DateTimeFormat("de-DE",{month:"long"});
+      const startMonth=monthFormatter.format(start);
+      const endMonth=monthFormatter.format(end);
+
+      let monthLabel;
+      if(start.getMonth()===end.getMonth() && start.getFullYear()===end.getFullYear()){
+        monthLabel=`${startMonth} ${start.getFullYear()}`;
+      }else if(start.getFullYear()===end.getFullYear()){
+        monthLabel=`${startMonth} / ${endMonth} ${end.getFullYear()}`;
+      }else{
+        monthLabel=`${startMonth} ${start.getFullYear()} / ${endMonth} ${end.getFullYear()}`;
+      }
+
+      const startLabel=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit"}).format(start);
+      const endLabel=new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}).format(end);
+
+      $("calendarPeriodTitle").textContent=`KW ${kw} · ${monthLabel} · ${startLabel} – ${endLabel}`;
+    }else if(calendarMode==="month"){
+      $("calendarPeriodTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(c);
+    }else{
+      $("calendarPeriodTitle").textContent=String(c.getFullYear());
+    }
+  }
+
+  function setCalendarMode(mode){
+    calendarMode=mode;
+    [["weekViewBtn","week"],["monthViewBtn","month"],["yearViewBtn","year"]].forEach(([id,m])=>$(id).classList.toggle("active",m===mode));
+    renderCalendarPeriodTitle();
+    renderCalendar();
+  }
+
+  function moveCalendar(direction){
+    if(calendarMode==="week")calendarCursor.setDate(calendarCursor.getDate()+direction*7);
+    else if(calendarMode==="month")calendarCursor.setMonth(calendarCursor.getMonth()+direction);
+    else calendarCursor.setFullYear(calendarCursor.getFullYear()+direction);
+    renderCalendarPeriodTitle();
+    renderCalendar();
+  }
+
+  $("weekViewBtn").onclick=()=>setCalendarMode("week");
+  $("monthViewBtn").onclick=()=>setCalendarMode("month");
+  $("yearViewBtn").onclick=()=>setCalendarMode("year");
+  $("calendarPrevBtn").onclick=()=>moveCalendar(-1);
+  $("calendarNextBtn").onclick=()=>moveCalendar(1);
+  renderCalendarPeriodTitle();renderCalendar()};renderCalendarPeriodTitle();
 
 
   $("saveBirthdayBtn").onclick=async()=>{const name=$("birthdayName").value.trim(),date=birthdayStorageValue($("birthdayDate").value);if(!name||!date){alert("Bitte vollständiges Geburtsdatum als TT.MM.JJJJ eingeben, z. B. 14.03.1985.");return}const id=editingBirthdayId||push(ref(db,`families/${familyId}/birthdays`)).key;await set(ref(db,`families/${familyId}/birthdays/${id}`),{name,date,recurringYearly:true,updatedAt:Date.now()});editingBirthdayId=null;closeModal("birthdayModal")};
