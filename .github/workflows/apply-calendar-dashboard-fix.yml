@@ -1,0 +1,77 @@
+name: Apply calendar dashboard fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-calendar-dashboard-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch index.html
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          s = path.read_text(encoding='utf-8')
+          original = s
+
+          # 1) Remove the Heute button from calendar navigation.
+          old = '<button class="ghost" id="calendarTodayBtn">Heute</button>'
+          if old not in s:
+              raise SystemExit('calendarTodayBtn button not found')
+          s = s.replace(old, '', 1)
+
+          # 2) Calendar period title: add ISO week number and month in week view.
+          pattern = r'  function renderCalendarPeriodTitle\(\)\{.*?\}\n  function setCalendarMode'
+          replacement = '''  function isoWeekNumber(date){const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil((((d-yearStart)/86400000)+1)/7)}
+  function renderCalendarPeriodTitle(){if(!$("calendarPeriodTitle"))return;const c=new Date(calendarCursor);if(calendarMode==="week"){const day=(c.getDay()+6)%7,start=new Date(c),end=new Date(c);start.setDate(c.getDate()-day);end.setDate(start.getDate()+6);const week=isoWeekNumber(start),monthFmt=new Intl.DateTimeFormat("de-DE",{month:"long"}),startMonth=monthFmt.format(start),endMonth=monthFmt.format(end),monthLabel=startMonth===endMonth?`${startMonth} ${end.getFullYear()}`:`${startMonth}/${endMonth} ${end.getFullYear()}`;$("calendarPeriodTitle").textContent=`KW ${week} · ${monthLabel} · ${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit"}).format(start)} – ${new Intl.DateTimeFormat("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}).format(end)}`}else if(calendarMode==="month")$("calendarPeriodTitle").textContent=new Intl.DateTimeFormat("de-DE",{month:"long",year:"numeric"}).format(c);else $("calendarPeriodTitle").textContent=String(c.getFullYear())}
+  function setCalendarMode'''
+          s, n = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit(f'renderCalendarPeriodTitle replacement count: {n}')
+
+          # 3) Remove obsolete Heute button handler.
+          today_handler = '$("calendarTodayBtn").onclick=()=>{calendarCursor=new Date();renderCalendarPeriodTitle();renderCalendar()};'
+          if today_handler not in s:
+              raise SystemExit('calendarTodayBtn handler not found')
+          s = s.replace(today_handler, '', 1)
+
+          # 4) Dashboard Termine: keep card heading, remove duplicated inner Termine label.
+          duplicated = '<div class="dashboard-events-section"><div class="dashboard-section-label">Termine</div>${groupRows(eventItems,"Keine Termine diese Woche.")}</div>'
+          cleaned = '<div class="dashboard-events-section">${groupRows(eventItems,"Keine Termine diese Woche.")}</div>'
+          if duplicated not in s:
+              raise SystemExit('duplicated dashboard Termine label not found')
+          s = s.replace(duplicated, cleaned, 1)
+
+          if s == original:
+              raise SystemExit('No changes made')
+          path.write_text(s, encoding='utf-8')
+          PY
+      - name: Verify patch
+        shell: bash
+        run: |
+          grep -q 'function isoWeekNumber' index.html
+          grep -q 'KW ${week}' index.html
+          ! grep -q 'id="calendarTodayBtn"' index.html
+          ! grep -q 'dashboard-section-label">Termine' index.html
+      - name: Commit index change and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-calendar-dashboard-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/apply-calendar-dashboard-fix.yml
+          git commit -m "Update calendar period labels and dashboard appointments"
+          git push origin HEAD:main
