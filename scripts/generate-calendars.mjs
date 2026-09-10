@@ -198,7 +198,7 @@ export async function generateAll({ databaseUrl, familyId, apiKey, email, passwo
   const family = await fetchFamily({ databaseUrl, familyId, apiKey, email, password });
   const resolvedFeeds = resolveFeeds(feeds, family.people || {});
   const configuredPeople = new Set(resolvedFeeds.map(({ personId }) => personId));
-  const missingPeople = Object.keys(family.people || {}).filter((personId) => !configuredPeople.has(personId));
+  const missingPeople = Object.keys(family.people || {}).filter((personId) => personId !== "all" && !configuredPeople.has(personId));
   if (missingPeople.length) throw new Error(`CALENDAR_FEEDS_JSON enthält keine Pfade für: ${missingPeople.join(", ")}`);
   for (const { personId, feedPath } of resolvedFeeds) {
     const destination = path.join(outputDir, feedPath);
