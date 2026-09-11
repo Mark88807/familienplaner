@@ -828,7 +828,7 @@
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
   const escapeHtml=(s="")=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const person=id=>id==="all"?{name:"Alle",points:0,color:ALL_COLOR}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});
-  const realPeopleEntries=()=>Object.entries(state.people||{}).filter(([id])=>id!=="all");
+  const realPeopleEntries=()=>Object.entries(state.people||{}).filter(([id,p])=>id!=="all"&&String(p?.name||"").trim().toLowerCase()!=="alle");
   const isoLocal=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
   function hexToSoft(hex){ return hex+"18"; }
   function applyTheme(){
