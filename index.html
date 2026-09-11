@@ -828,6 +828,7 @@
   const cleanCode=v=>v.trim().replace(/\s+/g,"");
   const escapeHtml=(s="")=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   const person=id=>id==="all"?{name:"Alle",points:0,color:ALL_COLOR}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});
+  const realPeopleEntries=()=>Object.entries(state.people||{}).filter(([id])=>id!=="all");
   const isoLocal=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
   function hexToSoft(hex){ return hex+"18"; }
   function applyTheme(){
@@ -888,7 +889,7 @@
   }
   function renderEventReminderQuick(){
     const wrap=$("eventReminderQuick");if(!wrap)return;
-    const people=Object.entries(state.people||{});
+    const people=realPeopleEntries();
     if(!people.length){wrap.innerHTML=`<span class="muted" style="font-size:12px">Noch keine Personen angelegt.</span>`;return}
     wrap.innerHTML=people.map(([id,p])=>`<button type="button" class="${eventReminderFor.includes(id)?"active":""}" data-reminder-person="${escapeHtml(id)}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name||"Person")}</button>`).join("");
     wrap.querySelectorAll("[data-reminder-person]").forEach(b=>b.onclick=()=>toggleEventReminderPerson(b.dataset.reminderPerson));
@@ -936,7 +937,7 @@
     const mealMemory=Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const rewardMemory={};
     const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,rewardMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
-    Object.keys(state.people||{}).forEach(id=>changes[`people/${id}/points`]=0);
+    realPeopleEntries().forEach(([id])=>changes[`people/${id}/points`]=0);
     await update(familyRef(),changes);return true;
   }
   async function migrateLegacyRewardScaleIfNeeded(){
@@ -966,9 +967,9 @@
       if(await runOneTimeDataResetIfNeeded())return;
       if(await migrateLegacyRewardScaleIfNeeded())return;
       if(await cleanupOldEvents())return;
-      const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
+      const mamaEntry=realPeopleEntries().find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");
       if(mamaEntry&&["#e74f87","#e58a21"].includes(String(mamaEntry[1].color||"").toLowerCase())){state.people[mamaEntry[0]].color="#c43d3d";update(ref(db,`families/${familyId}/people/${mamaEntry[0]}`),{color:"#c43d3d"}).catch(()=>{});}
-      if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;
+      if(!selectedPerson||selectedPerson==="all"||!state.people[selectedPerson])selectedPerson=realPeopleEntries()[0]?.[0]||null;
       applyTheme();render();if(recipeImportFromLocation())setTimeout(autoImportRecipe,0);
     },err=>alert("Firebase-Zugriff fehlgeschlagen: "+err.message))
   }
@@ -980,13 +981,13 @@
     $("dashboardDate").textContent="";
   }
   function fillPeople(){
-    const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
+    const entries=realPeopleEntries(),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
     if($("taskPerson"))$("taskPerson").innerHTML=`<option value="all">Alle</option>${opts}`;
     ["rewardPerson","icsDefaultPerson","mealWishPerson"].forEach(id=>{if($(id))$(id).innerHTML=opts});
     renderEventPersonQuick();
   }
   function eventPeopleByRecent(){
-    return Object.entries(state.people||{}).sort((a,b)=>Number(state.eventPersonRecent?.[b[0]]||0)-Number(state.eventPersonRecent?.[a[0]]||0));
+    return realPeopleEntries().sort((a,b)=>Number(state.eventPersonRecent?.[b[0]]||0)-Number(state.eventPersonRecent?.[a[0]]||0));
   }
   function setEventPerson(id){
     if(!$("eventPerson"))return;
@@ -1383,7 +1384,7 @@
     document.querySelectorAll("[data-dash-task]:not([disabled])").forEach(b=>b.onclick=()=>toggleTask(b.dataset.dashTask));
     document.querySelectorAll("[data-open-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.openTask));
 
-    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{
+    $("dashboardProgress").innerHTML=realPeopleEntries().map(([id,p])=>{
       const pts=Number(p.points)||0,rp=rewardProgress(id,pts);
       const status=rp.target==null?"Keine Belohnung angelegt":(rp.available?`Belohnung möglich · ab ${rp.target} Punkten`:`Noch ${rp.missing} bis ${rp.target}`);
       return `<button class="dashboard-reward-field ${rp.available?'available':''}" data-go-rewards="${id}" type="button"><div class="progress-line"><span><span class="member-color" style="background:${p.color||'#999'}"></span><b>${escapeHtml(p.name)}</b></span><b>${pts}</b></div><div class="bar" style="margin:7px 0 5px"><span style="width:${rp.percent}%;background:${p.color||'var(--accent)'}"></span></div><div class="muted" style="font-size:11px;color:${rp.available?(p.color||'var(--accent)'):'var(--muted)'}">${status}</div></button>`
@@ -1427,7 +1428,7 @@
     const taskRow=([id,t])=>{const p=person(t.person),canDo=routineCanComplete(t),routineText=t.recurring?(canDo?'Wiederholend · fällig':'Wiederholend · für diesen Zeitraum erledigt'):'',initial=escapeHtml((p.name||'?').trim().charAt(0).toUpperCase());return `<div class="task"><div class="ico">${t.recurring?'↻':'✓'}</div><div class="task-open-edit" data-edit-task="${id}"><b><span class="task-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(t.name)}</span></b>${routineText?`<br><small>${routineText}</small>`:''}</div><div class="points">★ 10${t.person==="all"?' je Person':''}</div><button class="reward-edit-icon" data-edit-task="${id}" aria-label="Aufgabe bearbeiten" title="Bearbeiten">✎</button></div>`};
     $("taskList").innerHTML=`<div class="task-group"><div class="task-group-title">Offen</div>${open.length?open.map(taskRow).join(""):'<div class="muted">Keine offenen Aufgaben.</div>'}</div><div class="task-group"><div class="task-group-title">Wiederholend</div>${routines.length?routines.map(taskRow).join(""):'<div class="muted">Keine wiederholenden Aufgaben.</div>'}</div>`;
     $("taskList").querySelectorAll("[data-edit-task]").forEach(b=>b.onclick=()=>openTaskEdit(b.dataset.editTask));
-    const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
+    const total=realPeopleEntries().reduce((n,[id,p])=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;
     if($("familyPoints")&&$("familyRing")&&$("familyNext")){ $("familyPoints").textContent=total;$("familyRing").style.setProperty("--p",`${mod/50*100}%`);$("familyNext").textContent=`Noch ${remain} Punkte bis zum nächsten Familien-Meilenstein.` }
   }
   function renderTaskLog(){
@@ -1441,7 +1442,7 @@
   async function deleteTask(id){if(!state.tasks?.[id])return;await set(ref(db,`families/${familyId}/tasks/${id}`),null)}
   function renderRewards(){
     if(!$("allRewardsGrid"))return;
-    const peopleRanked=Object.entries(state.people||{}).sort((a,b)=>{const ac=Object.keys(state.rewards?.[a[0]]||{}).length,bc=Object.keys(state.rewards?.[b[0]]||{}).length;return bc-ac||String(a[1].name||"").localeCompare(String(b[1].name||""),"de")});
+    const peopleRanked=realPeopleEntries().sort((a,b)=>{const ac=Object.keys(state.rewards?.[a[0]]||{}).length,bc=Object.keys(state.rewards?.[b[0]]||{}).length;return bc-ac||String(a[1].name||"").localeCompare(String(b[1].name||""),"de")});
     $("allRewardsGrid").innerHTML=peopleRanked.map(([pid,p])=>{
       const pts=Number(p.points)||0,base=p.color||'#64748b',rewards=Object.entries(state.rewards?.[pid]||{}).sort((a,b)=>(Number(a[1].cost)||0)-(Number(b[1].cost)||0));
       const owner=(p.name||'?').trim(),initial=escapeHtml(owner.charAt(0).toUpperCase());
@@ -1571,7 +1572,7 @@
     document.querySelectorAll("[data-wish-date]").forEach(sel=>sel.onchange=()=>{if(sel.value)scheduleMealWish(sel.dataset.wishDate,sel.value)});
   }
   function renderFamily(){
-    $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>`<div class="member-compact"><div class="member-compact-name"><span class="member-color" style="background:${p.color||'#666'}"></span><b>${escapeHtml(p.name)}</b></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`).join("");
+    $("familyGrid").innerHTML=realPeopleEntries().map(([id,p])=>`<div class="member-compact"><div class="member-compact-name"><span class="member-color" style="background:${p.color||'#666'}"></span><b>${escapeHtml(p.name)}</b></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`).join("");
     document.querySelectorAll("[data-edit-member]").forEach(b=>b.onclick=()=>openMemberEdit(b.dataset.editMember));
   }
   function renderMemberColors(){
@@ -1588,7 +1589,7 @@
   }
   async function toggleTask(id){
     const t=state.tasks[id],p=person(t.person),pts=10,current=Number(p.points)||0;
-    const pointChanges=(delta)=>Object.fromEntries(Object.entries(state.people||{}).map(([personId,entry])=>[`people/${personId}/points`,Math.max(0,(Number(entry.points)||0)+delta)]));
+    const pointChanges=(delta)=>Object.fromEntries(realPeopleEntries().map(([personId,entry])=>[`people/${personId}/points`,Math.max(0,(Number(entry.points)||0)+delta)]));
     if(t.recurring){
       if(!routineCanComplete(t))return;
       await update(familyRef(),{
