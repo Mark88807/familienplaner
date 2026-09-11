@@ -1,0 +1,51 @@
+name: Remove synthetic Alle from person-only views
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          replacements = {
+            '  const person=id=>id==="all"?{name:"Alle",points:0,color:ALL_COLOR}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});': '  const person=id=>id==="all"?{name:"Alle",points:0,color:ALL_COLOR}:(state.people?.[id]||{name:"Unbekannt",points:0,color:"#999"});\n  const realPeopleEntries=()=>Object.entries(state.people||{}).filter(([id])=>id!=="all");',
+            '    const people=Object.entries(state.people||{});': '    const people=realPeopleEntries();',
+            '    Object.keys(state.people||{}).forEach(id=>changes[`people/${id}/points`]=0);': '    realPeopleEntries().forEach(([id])=>changes[`people/${id}/points`]=0);',
+            '      const mamaEntry=Object.entries(state.people).find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");': '      const mamaEntry=realPeopleEntries().find(([id,p])=>(p.name||"").trim().toLowerCase()==="mama");',
+            '      if(!selectedPerson||!state.people[selectedPerson])selectedPerson=Object.keys(state.people)[0]||null;': '      if(!selectedPerson||selectedPerson==="all"||!state.people[selectedPerson])selectedPerson=realPeopleEntries()[0]?.[0]||null;',
+            '    const entries=Object.entries(state.people||{}),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");': '    const entries=realPeopleEntries(),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");',
+            '    return Object.entries(state.people||{}).sort((a,b)=>Number(state.eventPersonRecent?.[b[0]]||0)-Number(state.eventPersonRecent?.[a[0]]||0));': '    return realPeopleEntries().sort((a,b)=>Number(state.eventPersonRecent?.[b[0]]||0)-Number(state.eventPersonRecent?.[a[0]]||0));',
+            '    $("dashboardProgress").innerHTML=Object.entries(state.people).map(([id,p])=>{': '    $("dashboardProgress").innerHTML=realPeopleEntries().map(([id,p])=>{',
+            '    const total=Object.values(state.people).reduce((n,p)=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;': '    const total=realPeopleEntries().reduce((n,[id,p])=>n+(Number(p.points)||0),0),mod=total%50,remain=mod===0?50:50-mod;',
+            '    const peopleRanked=Object.entries(state.people||{}).sort((a,b)=>{const ac=Object.keys(state.rewards?.[a[0]]||{}).length,bc=Object.keys(state.rewards?.[b[0]]||{}).length;return bc-ac||String(a[1].name||"").localeCompare(String(b[1].name||""),"de")});': '    const peopleRanked=realPeopleEntries().sort((a,b)=>{const ac=Object.keys(state.rewards?.[a[0]]||{}).length,bc=Object.keys(state.rewards?.[b[0]]||{}).length;return bc-ac||String(a[1].name||"").localeCompare(String(b[1].name||""),"de")});',
+            '    $("familyGrid").innerHTML=Object.entries(state.people).map(([id,p])=>`<div class="member-compact"><div class="member-compact-name"><span class="member-color" style="background:${p.color||\'#666\'}"></span><b>${escapeHtml(p.name)}</b></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`).join("");': '    $("familyGrid").innerHTML=realPeopleEntries().map(([id,p])=>`<div class="member-compact"><div class="member-compact-name"><span class="member-color" style="background:${p.color||\'#666\'}"></span><b>${escapeHtml(p.name)}</b></div><button class="mini" data-edit-member="${id}">Ändern</button></div>`).join("");',
+            '    const pointChanges=(delta)=>Object.fromEntries(Object.entries(state.people||{}).map(([personId,entry])=>[`people/${personId}/points`,Math.max(0,(Number(entry.points)||0)+delta)]));': '    const pointChanges=(delta)=>Object.fromEntries(realPeopleEntries().map(([personId,entry])=>[`people/${personId}/points`,Math.max(0,(Number(entry.points)||0)+delta)]));',
+          }
+          for old, new in replacements.items():
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one match, got {count}: {old[:90]}')
+              s = s.replace(old, new)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch and remove one-shot workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm --ignore-unmatch .github/workflows/remove-all-person.yml
+          git add index.html
+          git commit -m "Alle nur noch bei Aufgaben und Terminen anzeigen"
+          git push
