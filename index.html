@@ -1325,13 +1325,30 @@
   function birthdayAge(b,year){
     const p=birthdayParts(b?.date);return p?.year?year-p.year:null;
   }
-  function birthdaysToday(){
-    const today=new Date(),month=today.getMonth()+1,day=today.getDate(),year=today.getFullYear(),displayDate=isoLocal(today);
-    return Object.entries(state.birthdays||{}).flatMap(([id,b])=>{
-      const bp=birthdayParts(b.date);if(!bp||!b.name||bp.month!==month||bp.day!==day)return[];
-      return[{id,...b,displayDate,age:birthdayAge(b,year)}];
-    }).sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  function birthdaysThisWeek(today=new Date()){
+    const day=new Date(today);day.setHours(12,0,0,0);
+    const daysRemaining=6-(day.getDay()+6)%7,rows=[];
+    for(let offset=0;offset<=daysRemaining;offset++){
+      const month=day.getMonth()+1,date=day.getDate(),year=day.getFullYear(),displayDate=isoLocal(day);
+      for(const [id,b] of Object.entries(state.birthdays||{})){
+        const bp=birthdayParts(b.date);if(!bp||!b.name||bp.month!==month||bp.day!==date)continue;
+        rows.push({id,...b,displayDate,age:birthdayAge(b,year)});
+      }
+      day.setDate(day.getDate()+1);
+    }
+    return rows.sort((a,b)=>a.displayDate.localeCompare(b.displayDate)||a.name.localeCompare(b.name,"de"));
   }
+  let dashboardDay=isoLocal(new Date()),dashboardDayTimer;
+  function refreshDashboardOnDayChange(){
+    const now=new Date(),today=isoLocal(now);
+    if(today!==dashboardDay){dashboardDay=today;renderDashboard()}
+    clearTimeout(dashboardDayTimer);
+    const midnight=new Date(now);midnight.setHours(24,0,0,0);
+    dashboardDayTimer=setTimeout(refreshDashboardOnDayChange,midnight-now);
+  }
+  refreshDashboardOnDayChange();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshDashboardOnDayChange()});
+  window.addEventListener("focus",refreshDashboardOnDayChange);
   function renderDashboard(){
     const {startIso,endIso,start}=currentWeekRange();
     const todayBase=new Date();todayBase.setHours(0,0,0,0);
@@ -1350,9 +1367,9 @@
 
     const events=Object.values(state.events||{}).filter(e=>!eventIsExpired(e)&&e.date>=startIso&&e.date<=endIso).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     const eventItems=events.map(e=>{const p=person(e.person),d=new Date(`${e.date}T12:00:00`),time=(e.time&&e.time!=="00:00")?e.time:"",duration=Number(e.durationHours)>0?`${Number(e.durationHours)} h`:"",initial=escapeHtml((p.name||"?").trim().charAt(0).toUpperCase());return {group:relativeInfo(d,time),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><span class="dashboard-person-dot" style="background:${p.color||'#64748b'}">${initial}</span><span>${escapeHtml(e.name)}</span></div>${duration?`<div class="dash-row-meta">${duration}</div>`:""}</div></div>`}});
-    const birthdays=birthdaysToday();
+    const birthdays=birthdaysThisWeek();
     const birthdayItems=birthdays.map(b=>{const d=new Date(`${b.displayDate}T12:00:00`),age=b.age!=null?` · ${b.age} Jahre`:"";return {group:relativeInfo(d),html:`<div class="dash-task"><div class="dash-row-main"><div class="dash-row-title"><b>${escapeHtml(b.name)}</b> · Geburtstag</div><div class="dash-row-meta">Geburtstag${age}</div></div></div>`}});
-    $("dashboardEvents").innerHTML=`<div class="dashboard-events-section">${groupRows(eventItems,"Keine Termine diese Woche.")}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${groupRows(birthdayItems,"Heute keine Geburtstage.")}</div>`;
+    $("dashboardEvents").innerHTML=`<div class="dashboard-events-section">${groupRows(eventItems,"Keine Termine diese Woche.")}</div><div class="dashboard-events-section"><div class="dashboard-section-label">Geburtstage</div>${groupRows(birthdayItems,"Keine weiteren Geburtstage diese Woche.")}</div>`;
 
     const monday=new Date(start);monday.setHours(0,0,0,0);
     const todayDay=todayBase.getDay();
