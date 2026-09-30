@@ -11,7 +11,7 @@ export function createActivities({getState, getFamilyId, write, newId, openModal
   modal.id = 'activityModal'; modal.className = 'modal';
   modal.innerHTML = `<div class="box activity-box" role="dialog" aria-modal="true" aria-labelledby="activityModalTitle"><div class="activity-heading"><h2 id="activityModalTitle">Aktivität hinzufügen</h2><button type="button" class="ghost" data-close aria-label="Schliessen">✕</button></div>
     <div id="activityImportTools"><div class="activity-tabs"><button type="button" class="ghost" data-mode="manual">Selbst eintragen / Link</button><button type="button" class="ghost" data-mode="text">Text importieren</button><button type="button" class="ghost" data-mode="ics">.ics importieren</button></div>
-    <div id="activityTextPanel" hidden><label for="activityImportText">Eine Aktivität pro Zeile</label><p class="muted">Titel | Datum oder Wochentag | Uhrzeit | Dauer | Ort | Link<br>Beispiel: Zoo | Dienstag | 10:00 | 5h<br>Nur ein Titel genügt.</p><textarea id="activityImportText" rows="5" placeholder="Zoo besuchen&#10;Museum besuchen"></textarea></div>
+    <div id="activityTextPanel" hidden><label for="activityImportText">Eine Aktivität pro Zeile</label><p class="muted">Titel | Datum oder Wochentag | Uhrzeit | Dauer | Ort | Link<br>Tabellenzeilen und Links wie [Webseite](https://beispiel.ch) funktionieren ebenfalls.<br>Beispiel: Zoo | Dienstag | 10:00 | 5h<br>Nur ein Titel genügt.</p><textarea id="activityImportText" rows="5" placeholder="Zoo besuchen&#10;Museum besuchen"></textarea></div>
     <div id="activityIcsPanel" hidden><label for="activityImportFile">Kalenderdatei (.ics)</label><input id="activityImportFile" type="file" accept=".ics,text/calendar"><p class="muted">Einzeltermine innerhalb dieser Ferien. Uhrzeiten werden in Schweizer Zeit übernommen. Serientermine werden nicht importiert.</p></div>
     <div id="activityPreviewPanel" hidden><button type="button" class="ghost" id="activityPreviewBtn">Vorschau anzeigen</button><div id="activityPreview" class="activity-preview"></div><button type="button" class="primary" id="activityImportBtn" hidden>Aktivitäten übernehmen</button></div></div>
     <form id="activityForm" class="form">
@@ -187,3 +187,4 @@ export function createActivities({getState, getFamilyId, write, newId, openModal
     }
   };
 }
+

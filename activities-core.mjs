@@ -46,7 +46,7 @@ export function activityUpdates(id, activity, oldEvent = {}, now = Date.now()) {
   } : null;
   return { [`activities/${id}`]: activity, [`events/${eventId}`]: event, ...(activity ? {} : {[`activityVotes/${id}`]:null}) };
 }
-function resolveTextDate(value, holiday) {
+function resolveTextDate(value, holiday, previousDate = '', hasWeekdaySequence = false) {
   if (!value) return '';
   if (validDate(value)) return value;
   const day = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'].indexOf(value.toLowerCase());
@@ -56,24 +56,44 @@ function resolveTextDate(value, holiday) {
   for (let count = 0; count < 370 && d.toISOString().slice(0, 10) <= holiday.end; count++, d.setUTCDate(d.getUTCDate() + 1)) {
     if (d.getUTCDay() === day) matches.push(d.toISOString().slice(0, 10));
   }
+  if (matches.length > 1 && previousDate) {
+    const next = matches.find(date => date > previousDate);
+    if (next) return next;
+  }
+  if (matches.length > 1 && !previousDate && hasWeekdaySequence) return matches[0];
   if (matches.length !== 1) throw new Error('Dieser Wochentag ist nicht eindeutig. Bitte das genaue Datum angeben.');
   return matches[0];
 }
 export function parseActivityText(text, holiday) {
   if (!holiday) throw new Error('Bitte Ferien auswählen.');
-  const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  if (!lines.length || lines.length > 100) throw new Error('Bitte 1 bis 100 Aktivitäten einfügen.');
-  return lines.map((line, index) => {
+  const lines = text.split(/\r?\n/).map((line, index) => ({line:line.trim(), index})).filter(({line}) => line);
+  // Pasted Markdown tables sometimes retain a trailing backslash, and links
+  // arrive as [label](https://…). Both forms should behave like normal fields.
+  const fieldsFor = line => line.replace(/\\\s*$/, '').trim().replace(/^\|\s?/, '').replace(/\s?\|$/, '')
+    .split('|').map(field => field.trim().replace(/^\[[^\]]*\]\((https?:\/\/[^\s)]+)\)$/i, '$1'));
+  const weekdayCount = lines.filter(({line}) => {
+    const parts = fieldsFor(line);
+    return ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'].includes((parts[1] || '').toLowerCase());
+  }).length;
+  const activities = [];
+  let previousDate = '';
+  for (const {line, index} of lines) {
     try {
-      const parts = line.split('|').map(s => s.trim());
+      const parts = fieldsFor(line);
+      if (parts.length === 6 &&
+          (parts.every(part => /^:?-{3,}:?$/.test(part)) ||
+           parts.map(part => part.toLowerCase()).join('|') === 'titel|datum|uhrzeit|dauer|ort|link')) continue;
       if (parts.length > 6) throw new Error('Zu viele Felder: Titel | Datum | Uhrzeit | Dauer | Ort | Link');
       const [name, rawDate = '', time = '', duration = '', location = '', url = ''] = parts;
       if (duration && !/^\d+(?:[.,]\d+)?\s*(?:h|std\.?)?$/i.test(duration)) throw new Error('Dauer in Stunden angeben, z. B. 2,5h.');
-      const date = resolveTextDate(rawDate, holiday);
+      const date = resolveTextDate(rawDate, holiday, previousDate, weekdayCount > 1);
       const a = {name, date, time, durationHours: duration ? Number(duration.replace(',', '.').replace(/\s*(h|std\.?)$/i, '')) : 0, location, url, image: '', category: 'other', weather: 'any', status: date ? 'planned' : 'idea'};
-      return validateActivity(a, holiday);
+      activities.push(validateActivity(a, holiday));
+      if (date) previousDate = date;
     } catch (e) { throw new Error(`Zeile ${index + 1}: ${e.message}`); }
-  });
+  }
+  if (!activities.length || activities.length > 100) throw new Error('Bitte 1 bis 100 Aktivitäten einfügen.');
+  return activities;
 }
 function zoneParts(ms, timeZone) {
   const parts = new Intl.DateTimeFormat('sv-SE', {timeZone, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'}).formatToParts(new Date(ms));
@@ -126,3 +146,4 @@ export function parseActivityIcs(text, holiday) {
   });
 }
 export function importFingerprint(a) { return JSON.stringify([a.name.trim().toLowerCase(), a.date || '', a.time || '', a.url || '']); }
+
