@@ -1564,7 +1564,7 @@
     $("deleteEventBtn").textContent=e.activityId?"Termin entfernen":"Termin löschen";
     openModal("eventDetailModal");
   }
-  function openEventEdit(id){const e=state.events?.[id];if(!e)return;if(e.activityId&&state.activities?.[e.activityId]){closeModal("eventDetailModal");activities.open(e.activityId,true);return;}editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
+  function openEventEdit(id){const e=state.events?.[id];if(!e)return;if(e.activityId&&state.activities?.[e.activityId]){closeModal("eventDetailModal");activities.open(e.activityId);return;}editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
   $("editEventBtn").onclick=()=>{if(selectedEventId)openEventEdit(selectedEventId)};
   async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;const activityId=state.events[id].activityId;if(activityId&&state.activities?.[activityId]){await activities.unplan(activityId);return;}await set(ref(db,`families/${familyId}/events/${id}`),null)}
   $("deleteEventBtn").onclick=async()=>{if(!selectedEventId)return;const id=selectedEventId;selectedEventId=null;await deleteCalendarEvent(id);closeModal("eventDetailModal")};
