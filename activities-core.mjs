@@ -22,14 +22,15 @@ export function validateActivity(a, holiday) {
   return a;
 }
 export const activityEventId = id => `activity_${id}`;
+const isDeviceVoter = id => /^device_[a-zA-Z0-9_-]{8,128}$/.test(id);
 export function activityVoters(state, activityId) {
   return Object.entries(state.activityVotes?.[activityId] || {})
-    .filter(([id, voted]) => voted === true && id !== 'all' && state.people?.[id]?.name && state.people[id].name.trim().toLowerCase() !== 'alle')
+    .filter(([id, voted]) => voted === true && (isDeviceVoter(id) || (id !== 'all' && state.people?.[id]?.name && state.people[id].name.trim().toLowerCase() !== 'alle')))
     .map(([id]) => id);
 }
 export function activityVoteUpdates(state, activityId, personId) {
   if (!state.activities?.[activityId]) throw new Error('Dieser Ausflug wurde inzwischen gelöscht.');
-  if (!personId || personId === 'all' || !state.people?.[personId]?.name || state.people[personId].name.trim().toLowerCase() === 'alle') throw new Error('Bitte ein Familienmitglied wählen.');
+  if (!isDeviceVoter(personId) && (!personId || personId === 'all' || !state.people?.[personId]?.name || state.people[personId].name.trim().toLowerCase() === 'alle')) throw new Error('Bitte ein Familienmitglied wählen.');
   // Leaf writes keep votes from other people and activity edits intact.
   return {[`activityVotes/${activityId}/${personId}`]: state.activityVotes?.[activityId]?.[personId] === true ? null : true};
 }

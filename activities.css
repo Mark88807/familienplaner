@@ -5,19 +5,21 @@
 .activity-toolbar,.activity-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
 .activity-toolbar label{display:grid;gap:5px;font-size:13px;font-weight:650}
 .activity-toolbar select{max-width:100%;border:1px solid var(--line);border-radius:10px;padding:9px;background:var(--card);color:var(--text)}
-.activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .activity-card{border:1px solid var(--line);border-radius:13px;background:var(--card);min-width:0}
-.activity-body{padding:16px}.activity-body h3{margin:0;font-size:17px;overflow-wrap:anywhere}.activity-body p{font-size:13px;margin:7px 0;overflow-wrap:anywhere}
+.activity-body{padding:10px 12px}.activity-body h3{margin:0;font-size:15px;overflow-wrap:anywhere}.activity-body p{font-size:13px;margin:4px 0;overflow-wrap:anywhere}
 .activity-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.activity-edit{padding:5px 9px!important;flex-shrink:0}
-.activity-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}.activity-card-actions button{min-height:40px;font-size:13px;padding:9px 10px}.activity-body>a{font-size:12px;color:var(--accent)}
+.activity-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.activity-card-actions button{min-height:40px;font-size:13px;padding:9px 10px}.activity-body>a{font-size:12px;color:var(--accent)}
 .activity-vote[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .activity-body .activity-voters{font-size:12px;color:var(--muted);margin-top:9px;min-height:18px}
 .activity-empty{padding:25px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);grid-column:1/-1}
 .activity-box{width:min(580px,96vw)!important;max-height:92dvh;overflow-y:auto}
 .activity-box label{display:grid;gap:5px;font-size:13px}.activity-box input,.activity-box select,.activity-box textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--card);color:var(--text)}
-.activity-box textarea{resize:vertical}.activity-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.activity-box textarea{resize:vertical}.activity-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .activity-box summary{padding:8px 0;cursor:pointer;font-size:13px}.activity-preview{max-height:260px;overflow:auto}.activity-preview p{padding:10px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 #activityMessage{font-size:13px;white-space:pre-wrap}#activityMessage:empty{display:none}.activity-tabs button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
 @media(max-width:480px){.activity-fields{grid-template-columns:1fr}.activity-toolbar label{width:100%}.activity-heading>button{width:100%}.activity-box .activity-heading>button{width:auto}.activity-card-actions button,.activity-edit{min-height:44px}.activity-edit{min-width:44px}.activity-vote-text{display:none}}
 
 @media(max-width:600px){.activity-grid{grid-template-columns:1fr}}
+
+.activity-notes{white-space:pre-wrap}.activity-toolbar:has(>label[hidden]:only-child){display:none} .activity-card-heading{align-items:center} .activity-body .activity-card-actions{display:inline-flex;margin-right:10px}
