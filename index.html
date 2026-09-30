@@ -8,6 +8,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="familienplaner-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="familienplaner-icon-180.png">
+  <link rel="stylesheet" href="activities.css">
   <style>
     :root{
       --accent:#2f73d9;--accent-soft:#edf5ff;--bg:#f5f9fd;--card:#fff;--text:#172133;
@@ -17,7 +18,7 @@
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#f3f8fd 55%,#f7fbff 100%);color:var(--text)}
     button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
-    .shell{min-height:100vh;display:grid;grid-template-columns:208px 1fr}
+    .shell{min-height:100vh;display:grid;grid-template-columns:208px minmax(0,1fr)}
     aside{position:sticky;top:0;height:100vh;padding:20px 14px;background:linear-gradient(180deg,#ffffff 0%,#f3f8ff 100%);border-right:1px solid var(--line);display:flex;flex-direction:column}
     nav{display:grid;gap:6px}
     nav button{border:0;background:transparent;color:#344139;padding:11px 12px;text-align:left;border-radius:12px}
@@ -606,6 +607,7 @@
     <section class="view" id="calendar">
       <div class="top"><div><h1>Kalender</h1><div class="sub" id="calendarPeriodTitle"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">Monat</button><button class="ghost" id="yearViewBtn">Jahr</button></div><div class="calendar-switch"><button class="ghost" id="calendarPrevBtn" aria-label="Vorheriger Zeitraum">‹</button><button class="ghost" id="calendarNextBtn" aria-label="Nächster Zeitraum">›</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openHolidayModal()">+ Ferien</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
+      <div class="card" id="holidayActivities"></div>
     </section>
 
 
@@ -798,6 +800,7 @@
 <div class="modal" id="codeModal"><div class="box"><h2>Familiencode</h2><p>Diesen Code auf einem weiteren Familiengerät einmalig eingeben.</p><div class="code" id="codeValue"></div><div class="actions"><button class="ghost" id="copyCodeBtn">Kopieren</button><button class="primary" onclick="closeModal('codeModal')">Fertig</button></div></div></div>
 
 <script type="module">
+  import { createActivities } from "./activities.mjs";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
   import { getDatabase, ref, onValue, get, set, update, push } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
@@ -936,7 +939,7 @@
     const eventMemory=Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const mealMemory=Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const rewardMemory={};
-    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,rewardMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
+    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,activities:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,rewardMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
     realPeopleEntries().forEach(([id])=>changes[`people/${id}/points`]=0);
     await update(familyRef(),changes);return true;
   }
@@ -975,7 +978,7 @@
   }
 
   function render(){
-    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();renderRecipePreviews();
+    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();activities.render();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();renderRecipePreviews();
     $("familyLabel").textContent=state.name||"Familie";
     $("dashboardTitle").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long"}).format(new Date());
     $("dashboardDate").textContent="";
@@ -1558,11 +1561,12 @@
     $("eventDetailTitle").textContent=e.name||"Termin";
     const reminderNames=normalizeReminderFor(e.reminderFor).map(id=>state.people?.[id]?.name||id);
     $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div><div><b>Erinnerung</b><div>${escapeHtml(reminderNames.length?reminderNames.join(", "):"Niemand")}</div></div>`;
+    $("deleteEventBtn").textContent=e.activityId?"Zurück zu Ideen":"Termin löschen";
     openModal("eventDetailModal");
   }
-  function openEventEdit(id){const e=state.events?.[id];if(!e)return;editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
+  function openEventEdit(id){const e=state.events?.[id];if(!e)return;if(e.activityId&&state.activities?.[e.activityId]){closeModal("eventDetailModal");activities.open(e.activityId);return;}editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
   $("editEventBtn").onclick=()=>{if(selectedEventId)openEventEdit(selectedEventId)};
-  async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;await set(ref(db,`families/${familyId}/events/${id}`),null)}
+  async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;const activityId=state.events[id].activityId;if(activityId&&state.activities?.[activityId]){await activities.unplan(activityId);return;}await set(ref(db,`families/${familyId}/events/${id}`),null)}
   $("deleteEventBtn").onclick=async()=>{if(!selectedEventId)return;const id=selectedEventId;selectedEventId=null;await deleteCalendarEvent(id);closeModal("eventDetailModal")};
   $("calendarGrid").addEventListener("click",e=>{const item=e.target.closest("[data-event-id]");if(item)openCalendarEvent(item.dataset.eventId)});
   $("calendarGrid").addEventListener("keydown",e=>{const item=e.target.closest("[data-event-id]");if(item&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openCalendarEvent(item.dataset.eventId)}});
@@ -1772,6 +1776,13 @@
   $("mealTodayBtn").onclick=()=>{mealCursor=new Date();renderMeals()};
   $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
+  const activities=createActivities({
+    getState:()=>state,
+    write:changes=>{if(!familyId)throw new Error("Bitte zuerst einer Familie beitreten.");return update(familyRef(),changes)},
+    newId:()=>push(ref(db,`families/${familyId}/activities`)).key,
+    openModal:window.openModal,closeModal:window.closeModal,escapeHtml,notify:showToast
+  });
+
   let bootFinished=false;
   const showBootError=(msg)=>{
     if(bootFinished)return;
@@ -1799,3 +1810,4 @@
 </script>
 </body>
 </html>
+

@@ -40,7 +40,9 @@ jobs:
           CALENDAR_FEEDS_JSON: ${{ secrets.CALENDAR_FEEDS_JSON }}
         run: |
           mkdir -p _site
+          node --test scripts/*.test.mjs
           cp index.html _site/index.html
+          cp activities.mjs activities-core.mjs activities.css _site/
           cp manifest.webmanifest familienplaner-icon.svg familienplaner-icon-180.png familienplaner-icon-192.png familienplaner-icon-512.png _site/
           node scripts/generate-calendars.mjs _site
       - name: Änderungen ermitteln
