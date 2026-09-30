@@ -23,6 +23,30 @@ test('text import accepts ideas, exact dates, unique weekdays and decimal hours'
   assert.throws(() => parseActivityText('Zoo | 2026-10-13 | 27:30', holiday), /Uhrzeit/);
   assert.throws(() => parseActivityText('Zoo | 2026-10-13 | 10:00 | morgen', holiday), /Dauer/);
 });
+test('text import accepts Markdown table rows with outer pipes and a header', () => {
+  const week = {start:'2026-10-10', end:'2026-10-24'};
+  const rows = parseActivityText(`| Titel | Datum | Uhrzeit | Dauer | Ort | Link |
+| --- | --- | --- | --- | --- | --- |
+| Sion entdecken | Montag | 10:00 | 5h | Sion | https://siontourisme.ch |
+| Unterirdischer See | Dienstag | 10:00 | 1h | Saint-Léonard | https://lac-souterrain.com |
+| Lac de Tseuzier | Mittwoch | 10:00 | 3h | Anzère / Tseuzier | https://www.valais.ch |
+| Grande Dixence | Donnerstag | 10:00 | 5h | Hérémence | https://www.grande-dixence.ch |
+| Escape Room | Freitag | 14:00 | 2h | Sion | https://escapeworld.ch |
+| Leukerbad Therme | Samstag | 11:00 | 4h | Leukerbad | https://www.leukerbad.ch |`, week);
+  assert.equal(rows.length, 6);
+  assert.deepEqual(rows.map(row => row.date), ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17']);
+  assert.equal(rows[0].name, 'Sion entdecken');
+  assert.equal(rows[0].url, 'https://siontourisme.ch');
+  assert.equal(rows[1].location, 'Saint-Léonard');
+  assert.throws(() => parseActivityText('| Titel | Datum | Uhrzeit | Dauer | Ort | Link |', week), /1 bis 100/);
+});
+test('text import accepts pasted Markdown links and escaped table line endings', () => {
+  const week = {start:'2026-10-10', end:'2026-10-17'};
+  const [row] = parseActivityText('| Sion entdecken | Montag | 10:00 | 5h | Sion | [Sion Tourismus](https://siontourisme.ch) |\\', week);
+  assert.equal(row.name, 'Sion entdecken');
+  assert.equal(row.date, '2026-10-12');
+  assert.equal(row.url, 'https://siontourisme.ch');
+});
 test('status, dates, durations and URL schemes are validated before storage', () => {
   assert.equal(validDate('2026-02-30'),false);
   assert.equal(safeUrl('javascript:alert(1)'), '');
@@ -68,3 +92,4 @@ test('deleted family members and false votes are excluded from totals', () => {
   const state={people:{a:{name:'Anna'},b:{name:'Ben'},all:{name:'Alle'}},activityVotes:{trip:{a:true,b:false,deleted:true,all:true}}};
   assert.deepEqual(activityVoters(state,'trip'),['a']);
 });
+
