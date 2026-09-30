@@ -1,25 +1,23 @@
 #holidayActivities{margin-top:20px}
+#holidayActivities [hidden],.activity-box [hidden]{display:none!important}
 .activity-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.activity-heading h2{margin:0;font-size:20px}.activity-heading p{margin:6px 0 14px}
-.activity-toolbar,.activity-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.activity-heading h2{margin:0;font-size:20px}.activity-heading p{margin:6px 0 0}
+.activity-toolbar,.activity-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
 .activity-toolbar label{display:grid;gap:5px;font-size:13px;font-weight:650}
 .activity-toolbar select{max-width:100%;border:1px solid var(--line);border-radius:10px;padding:9px;background:var(--card);color:var(--text)}
-.activity-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:15px}
-.activity-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
-.activity-cover{position:relative;height:125px;display:grid;place-items:center;background:linear-gradient(140deg,#e4f5e8,#d3e8fb)}
-.activity-cover[data-category=hike]{background:linear-gradient(140deg,#d3efd6,#c5e2de)}
-.activity-cover[data-category=boat]{background:linear-gradient(140deg,#d5eafa,#b2d9f3)}
-.activity-cover[data-category=museum]{background:linear-gradient(140deg,#eee5fa,#d4dbfb)}
-.activity-cover[data-category=leisure]{background:linear-gradient(140deg,#fff0cd,#e4efca)}
-.activity-cover>span{font-size:54px}.activity-cover img{position:absolute;width:100%;height:100%;object-fit:cover}
-.activity-body{padding:15px}.activity-body h3{margin:10px 0;font-size:18px;overflow-wrap:anywhere}.activity-body p{font-size:13px;margin:8px 0;overflow-wrap:anywhere}
-.activity-status{font-size:12px;background:var(--accent-soft);border-radius:8px;padding:5px 8px;font-weight:700}
-.activity-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.activity-card-actions a{text-decoration:none;font-size:13px;display:inline-flex;align-items:center}
+.activity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.activity-card{border:1px solid var(--line);border-radius:13px;background:var(--card);min-width:0}
+.activity-body{padding:16px}.activity-body h3{margin:0;font-size:17px;overflow-wrap:anywhere}.activity-body p{font-size:13px;margin:7px 0;overflow-wrap:anywhere}
+.activity-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.activity-edit{padding:5px 9px!important;flex-shrink:0}
+.activity-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}.activity-card-actions button{min-height:40px;font-size:13px;padding:9px 10px}.activity-body>a{font-size:12px;color:var(--accent)}
+.activity-vote[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.activity-body .activity-voters{font-size:12px;color:var(--muted);margin-top:9px;min-height:18px}
 .activity-empty{padding:25px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);grid-column:1/-1}
-.activity-note{white-space:pre-wrap;max-height:100px;overflow:auto}
-.activity-box{width:min(640px,96vw)!important;max-height:92dvh;overflow-y:auto}
+.activity-box{width:min(580px,96vw)!important;max-height:92dvh;overflow-y:auto}
 .activity-box label{display:grid;gap:5px;font-size:13px}.activity-box input,.activity-box select,.activity-box textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--card);color:var(--text)}
 .activity-box textarea{resize:vertical}.activity-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.activity-box [hidden]{display:none!important}.activity-preview{max-height:260px;overflow:auto}.activity-preview p{padding:10px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.activity-box summary{padding:8px 0;cursor:pointer;font-size:13px}.activity-preview{max-height:260px;overflow:auto}.activity-preview p{padding:10px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 #activityMessage{font-size:13px;white-space:pre-wrap}#activityMessage:empty{display:none}.activity-tabs button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
-@media(max-width:480px){.activity-fields{grid-template-columns:1fr}.activity-toolbar label{width:100%}.activity-heading>button{width:100%}.activity-box .activity-heading>button{width:auto}}
+@media(max-width:480px){.activity-fields{grid-template-columns:1fr}.activity-toolbar label{width:100%}.activity-heading>button{width:100%}.activity-box .activity-heading>button{width:auto}.activity-card-actions button,.activity-edit{min-height:44px}.activity-edit{min-width:44px}.activity-vote-text{display:none}}
+
+@media(max-width:600px){.activity-grid{grid-template-columns:1fr}}

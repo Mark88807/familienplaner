@@ -939,7 +939,7 @@
     const eventMemory=Object.fromEntries(EVENT_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const mealMemory=Object.fromEntries(MEAL_PREFILL.map((name,i)=>["seed"+i,{name,uses:0,lastUsed:0,prefill:true}]));
     const rewardMemory={};
-    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,activities:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,rewardMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
+    const changes={tasks:null,rewards:null,rewardLog:null,events:null,holidays:null,activities:null,activityVotes:null,birthdays:null,meals:null,mealWishes:null,taskMemory,eventMemory,rewardMemory,mealMemory,"meta/dataResetVersion":DATA_RESET_VERSION};
     realPeopleEntries().forEach(([id])=>changes[`people/${id}/points`]=0);
     await update(familyRef(),changes);return true;
   }
@@ -1561,10 +1561,10 @@
     $("eventDetailTitle").textContent=e.name||"Termin";
     const reminderNames=normalizeReminderFor(e.reminderFor).map(id=>state.people?.[id]?.name||id);
     $("eventDetailContent").innerHTML=`<div><b>Datum</b><div>${escapeHtml(dateLabel)}</div></div><div><b>Uhrzeit</b><div>${escapeHtml(eventTimeLabel(e))}</div></div><div><b>Person</b><div><span class="member-color" style="background:${p.color||ALL_COLOR}"></span>${escapeHtml(p.name)}</div></div><div><b>Erinnerung</b><div>${escapeHtml(reminderNames.length?reminderNames.join(", "):"Niemand")}</div></div>`;
-    $("deleteEventBtn").textContent=e.activityId?"Zurück zu Ideen":"Termin löschen";
+    $("deleteEventBtn").textContent=e.activityId?"Termin entfernen":"Termin löschen";
     openModal("eventDetailModal");
   }
-  function openEventEdit(id){const e=state.events?.[id];if(!e)return;if(e.activityId&&state.activities?.[e.activityId]){closeModal("eventDetailModal");activities.open(e.activityId);return;}editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
+  function openEventEdit(id){const e=state.events?.[id];if(!e)return;if(e.activityId&&state.activities?.[e.activityId]){closeModal("eventDetailModal");activities.open(e.activityId,true);return;}editingEventId=id;selectedEventId=id;$("eventModalTitle").textContent="Termin bearbeiten";$("eventName").value=e.name||"";setEventDateTime(e.date||"",e.time||"12:00");setEventDuration(e.durationHours||"");renderEventPersonQuick();setEventPerson(e.person||"all");setEventReminderFor(e.reminderFor||[]);closeModal("eventDetailModal");openModal("eventModal")}
   $("editEventBtn").onclick=()=>{if(selectedEventId)openEventEdit(selectedEventId)};
   async function deleteCalendarEvent(id){if(!id||!state.events?.[id])return;const activityId=state.events[id].activityId;if(activityId&&state.activities?.[activityId]){await activities.unplan(activityId);return;}await set(ref(db,`families/${familyId}/events/${id}`),null)}
   $("deleteEventBtn").onclick=async()=>{if(!selectedEventId)return;const id=selectedEventId;selectedEventId=null;await deleteCalendarEvent(id);closeModal("eventDetailModal")};
@@ -1777,7 +1777,7 @@
   $("createFamilyBtn").onclick=createFamily;$("joinFamilyBtn").onclick=joinFamily;
 
   const activities=createActivities({
-    getState:()=>state,
+    getState:()=>state,getFamilyId:()=>familyId,
     write:changes=>{if(!familyId)throw new Error("Bitte zuerst einer Familie beitreten.");return update(familyRef(),changes)},
     newId:()=>push(ref(db,`families/${familyId}/activities`)).key,
     openModal:window.openModal,closeModal:window.closeModal,escapeHtml,notify:showToast

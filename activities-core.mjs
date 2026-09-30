@@ -22,6 +22,17 @@ export function validateActivity(a, holiday) {
   return a;
 }
 export const activityEventId = id => `activity_${id}`;
+export function activityVoters(state, activityId) {
+  return Object.entries(state.activityVotes?.[activityId] || {})
+    .filter(([id, voted]) => voted === true && id !== 'all' && state.people?.[id]?.name && state.people[id].name.trim().toLowerCase() !== 'alle')
+    .map(([id]) => id);
+}
+export function activityVoteUpdates(state, activityId, personId) {
+  if (!state.activities?.[activityId]) throw new Error('Dieser Ausflug wurde inzwischen gelöscht.');
+  if (!personId || personId === 'all' || !state.people?.[personId]?.name || state.people[personId].name.trim().toLowerCase() === 'alle') throw new Error('Bitte ein Familienmitglied wählen.');
+  // Leaf writes keep votes from other people and activity edits intact.
+  return {[`activityVotes/${activityId}/${personId}`]: state.activityVotes?.[activityId]?.[personId] === true ? null : true};
+}
 export function activityUpdates(id, activity, oldEvent = {}, now = Date.now()) {
   const eventId = activityEventId(id);
   const event = activity && activity.status !== 'idea' ? {
@@ -32,7 +43,7 @@ export function activityUpdates(id, activity, oldEvent = {}, now = Date.now()) {
     description: [activity.location, activity.url, activity.notes].filter(Boolean).join('\n'),
     createdAt: oldEvent.createdAt || now, updatedAt: now
   } : null;
-  return { [`activities/${id}`]: activity, [`events/${eventId}`]: event };
+  return { [`activities/${id}`]: activity, [`events/${eventId}`]: event, ...(activity ? {} : {[`activityVotes/${id}`]:null}) };
 }
 function resolveTextDate(value, holiday) {
   if (!value) return '';

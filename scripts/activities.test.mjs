@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {safeUrl, validDate, validateActivity, activityUpdates, parseActivityText, parseActivityIcs, importFingerprint} from '../activities-core.mjs';
+import {safeUrl, validDate, validateActivity, activityUpdates, parseActivityText, parseActivityIcs, importFingerprint, activityVoters, activityVoteUpdates} from '../activities-core.mjs';
 const holiday = {start:'2026-10-10', end:'2026-10-17'};
 const activity = {name:'Zoo', holidayId:'trip', status:'idea', date:'', time:'', durationHours:5};
 test('ideas do not create events; planning, editing and unplanning use one stable event', () => {
@@ -12,7 +12,7 @@ test('ideas do not create events; planning, editing and unplanning use one stabl
   assert.equal(changes['events/activity_a'].createdAt, 42);
   assert.deepEqual(changes['events/activity_a'].reminderFor, ['mama']);
   assert.match(changes['events/activity_a'].description, /Zürich/);
-  assert.deepEqual(activityUpdates('a', null), {'activities/a':null, 'events/activity_a':null});
+  assert.deepEqual(activityUpdates('a', null), {'activities/a':null, 'events/activity_a':null, 'activityVotes/a':null});
 });
 test('text import accepts ideas, exact dates, unique weekdays and decimal hours', () => {
   const [idea, planned] = parseActivityText('Minigolf\nZoo | Dienstag | 10:00 | 2,5h | Zürich | https://zoo.ch', holiday);
@@ -53,4 +53,18 @@ test('ICS supports named zones, floating dates and all-day events', () => {
 test('duplicate detection ignores title case but distinguishes dates', () => {
   assert.equal(importFingerprint({...activity,name:' Zoo '}),importFingerprint({...activity,name:'zoo'}));
   assert.notEqual(importFingerprint(activity),importFingerprint({...activity,date:'2026-10-13'}));
+});
+test('one vote per family member; withdrawing does not overwrite other votes', () => {
+  const state={people:{a:{name:'Anna'},b:{name:'Ben'}},activities:{trip:activity},activityVotes:{trip:{a:true}}};
+  assert.deepEqual(activityVoters(state,'trip'),['a']);
+  assert.deepEqual(activityVoteUpdates(state,'trip','a'),{'activityVotes/trip/a':null});
+  assert.deepEqual(activityVoteUpdates(state,'trip','b'),{'activityVotes/trip/b':true});
+  assert.equal(activityUpdates('trip',activity)['activityVotes/trip'],undefined);
+  assert.throws(()=>activityVoteUpdates(state,'trip',''),/Familienmitglied/);
+  assert.throws(()=>activityVoteUpdates(state,'trip','unknown'),/Familienmitglied/);
+  assert.throws(()=>activityVoteUpdates(state,'missing','a'),/gelöscht/);
+});
+test('deleted family members and false votes are excluded from totals', () => {
+  const state={people:{a:{name:'Anna'},b:{name:'Ben'},all:{name:'Alle'}},activityVotes:{trip:{a:true,b:false,deleted:true,all:true}}};
+  assert.deepEqual(activityVoters(state,'trip'),['a']);
 });
