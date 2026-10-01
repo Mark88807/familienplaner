@@ -10,7 +10,7 @@
 .activity-row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:8px 10px;border-top:1px solid var(--line)}
 .activity-row-time{font-size:13px;font-weight:800;color:var(--accent);align-self:start;padding-top:2px}
 .activity-row-main{min-width:0;color:inherit;text-decoration:none}.activity-row-main[href]{cursor:pointer}.activity-row-main[href]:hover .activity-row-title{text-decoration:underline;color:var(--accent)}
-.activity-row-title{font-size:14px;font-weight:750;line-height:1.25;overflow-wrap:anywhere}.activity-row-details{font-size:12px;color:var(--muted);line-height:1.35;margin-top:2px;overflow-wrap:anywhere}
+.activity-row-title{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:14px;font-weight:750;line-height:1.25;overflow-wrap:anywhere}.activity-link-badge{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--accent);border-radius:999px;padding:2px 7px;color:var(--accent);font-size:10px;font-weight:700;line-height:1.3;white-space:nowrap}.activity-row-details{font-size:12px;color:var(--muted);line-height:1.35;margin-top:2px;overflow-wrap:anywhere}
 .activity-row-actions{display:flex;align-items:center;gap:6px}.activity-edit{padding:4px 7px!important;flex-shrink:0}.activity-row-actions button{min-height:34px;font-size:12px;padding:6px 8px}
 .activity-vote[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .activity-body .activity-voters{font-size:12px;color:var(--muted);margin-top:9px;min-height:18px}
@@ -25,4 +25,3 @@
 @media(max-width:600px){.activity-grid{grid-template-columns:1fr}}
 
 .activity-notes{white-space:pre-wrap;font-size:12px;line-height:1.3;margin-top:3px}.activity-toolbar:has(>label[hidden]:only-child){display:none}
-

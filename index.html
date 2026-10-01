@@ -554,6 +554,7 @@
         <div class="desktop-actions" style="display:flex;gap:8px">
           <button class="primary" onclick="openTaskModal()">+ Aufgabe</button>
           <button class="primary" onclick="openEventModal()">+ Termin</button>
+          <button class="primary" id="dashboardActivityBtn">+ Aktivität</button>
         </div>
       </div>
 
@@ -1785,6 +1786,7 @@
     newId:()=>push(ref(db,`families/${familyId}/activities`)).key,
     openModal:window.openModal,closeModal:window.closeModal,escapeHtml,notify:showToast
   });
+  $("dashboardActivityBtn").onclick=()=>{switchView("calendar");activities.open()};
 
   let bootFinished=false;
   const showBootError=(msg)=>{
@@ -1813,5 +1815,4 @@
 </script>
 </body>
 </html>
-
 
