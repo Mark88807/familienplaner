@@ -101,6 +101,7 @@
     .memory-overview{display:grid;gap:12px}.memory-total{font-weight:850}.memory-help{font-size:12px;color:var(--muted);line-height:1.45}.memory-group{border-top:1px solid var(--line);padding-top:10px}.memory-group:first-of-type{border-top:0}.memory-group summary{cursor:pointer;font-weight:800}.memory-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;max-height:220px;overflow:auto}.memory-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 9px;font-size:12px}.memory-meta{font-size:11px;color:var(--muted);margin-top:3px}
     
     .holiday-band{padding:5px 7px;border-radius:8px;background:linear-gradient(135deg,#eaf2ff,#f5f9ff);color:#315f9e;font-size:11px;font-weight:800;border-left:3px solid #7fa9e8}
+    .holiday-list{display:grid;gap:8px}.holiday-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}.holiday-row .muted{font-size:12px;margin-top:3px}
     .mini{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;font-size:12px;font-weight:700}
     .mini.primary-mini{background:var(--accent);border-color:var(--accent);color:#fff}
     .log-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -608,6 +609,7 @@
     <section class="view" id="calendar">
       <div class="top"><div><h1>Kalender</h1><div class="sub" id="calendarPeriodTitle"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="calendar-switch"><button class="ghost active" id="weekViewBtn">Woche</button><button class="ghost" id="monthViewBtn">Monat</button><button class="ghost" id="yearViewBtn">Jahr</button></div><div class="calendar-switch"><button class="ghost" id="calendarPrevBtn" aria-label="Vorheriger Zeitraum">‹</button><button class="ghost" id="calendarNextBtn" aria-label="Nächster Zeitraum">›</button></div><button class="ghost" onclick="openModal('importModal')">.ics</button><button class="ghost" onclick="openHolidayModal()">+ Ferien</button><button class="primary" onclick="openEventModal()">+ Termin</button></div></div>
       <div class="card calendar-wrap"><div class="calendar" id="calendarGrid"></div></div>
+      <div class="card settings-section" id="holidayList"></div>
       <div class="card" id="holidayActivities"></div>
     </section>
 
@@ -742,8 +744,9 @@
 
 
 
-<div class="modal" id="holidayModal"><div class="box"><h2>Ferien für alle</h2><div class="form">
+<div class="modal" id="holidayModal"><div class="box"><h2>Ferien eintragen</h2><div class="form">
   <input id="holidayName" placeholder="z. B. Herbstferien">
+  <label class="muted" for="holidayPerson">Für wen?</label><select id="holidayPerson"><option value="all">Alle</option></select>
   <label class="muted">Von</label><input id="holidayStart" type="date">
   <label class="muted">Bis</label><input id="holidayEnd" type="date">
   <div class="actions"><button class="ghost" onclick="closeModal('holidayModal')">Abbrechen</button><button class="primary" id="saveHolidayBtn">Speichern</button></div>
@@ -899,7 +902,7 @@
     wrap.querySelectorAll("[data-reminder-person]").forEach(b=>b.onclick=()=>toggleEventReminderPerson(b.dataset.reminderPerson));
   }
   window.openEventModal=()=>{editingEventId=null;$("eventModalTitle").textContent="Termin hinzufügen";setEventDuration("");setEventReminderFor([]);if(!$("eventDate").value){const d=new Date();d.setDate(d.getDate()+1);d.setMinutes(0,0,0);d.setHours(d.getHours()+1);setEventDateTime(isoLocal(d),`${String(d.getHours()).padStart(2,"0")}:00`)}renderEventSuggestions();renderEventPersonQuick();renderEventReminderQuick();openModal("eventModal")};
-  window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);openModal("holidayModal")};
+  window.openHolidayModal=()=>{const d=new Date();$("holidayStart").value=isoLocal(d);$("holidayEnd").value=isoLocal(d);$("holidayPerson").value="all";openModal("holidayModal")};
 
   function switchView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===id))}
   document.addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)switchView(btn.dataset.view)});
@@ -979,7 +982,7 @@
   }
 
   function render(){
-    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();activities.render();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();renderRecipePreviews();
+    fillPeople();renderDashboard();renderTasks();renderTaskLog();renderRewards();renderRewardLog();renderCalendar();renderHolidays();activities.render();renderMeals();renderFamily();renderBirthdays();renderMealWishes();renderTaskSuggestions();renderMemoryOverview();renderRecipePreviews();
     $("familyLabel").textContent=state.name||"Familie";
     $("dashboardTitle").textContent=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long"}).format(new Date());
     $("dashboardDate").textContent="";
@@ -988,6 +991,7 @@
     const entries=realPeopleEntries(),opts=entries.map(([id,p])=>`<option value="${id}">${escapeHtml(p.name)}</option>`).join("");
     if($("taskPerson"))$("taskPerson").innerHTML=`<option value="all">Alle</option>${opts}`;
     ["rewardPerson","icsDefaultPerson","mealWishPerson"].forEach(id=>{if($(id))$(id).innerHTML=opts});
+    if($("holidayPerson"))$("holidayPerson").innerHTML='<option value="all">Alle</option>'+opts;
     renderEventPersonQuick();
   }
   function eventPeopleByRecent(){
@@ -1518,6 +1522,36 @@
   function holidaysForDate(iso){
     return Object.values(state.holidays||{}).filter(h=>h.start<=iso && h.end>=iso);
   }
+  function holidayPersonName(holiday){
+    const id=holiday?.person||(holiday?.forAll===false?"":"all");
+    return id&&id!=="all"?person(id).name:"Alle";
+  }
+  function holidayCalendarLabel(holiday){
+    return String(holiday.name||"Ferien")+" · "+holidayPersonName(holiday);
+  }
+  function holidayDateLabel(value){
+    if(!value)return "";
+    return new Intl.DateTimeFormat("de-CH",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(value+"T12:00:00"));
+  }
+  function renderHolidays(){
+    const box=$("holidayList");if(!box)return;
+    const entries=Object.entries(state.holidays||{}).sort((a,b)=>(a[1].start||"").localeCompare(b[1].start||""));
+    const rows=entries.map(([id,h])=>'<div class="holiday-row"><div><b>'+escapeHtml(h.name||"Ferien")+'</b><div class="muted">'+holidayDateLabel(h.start)+' – '+holidayDateLabel(h.end)+' · '+escapeHtml(holidayPersonName(h))+'</div></div><button type="button" class="danger" data-delete-holiday="'+escapeHtml(id)+'" aria-label="Ferien '+escapeHtml(h.name||"")+' löschen" style="padding:7px 10px">Löschen</button></div>').join("");
+    box.innerHTML='<div class="settings-head"><div><div class="title">Eingetragene Ferien</div><div class="muted" style="font-size:12px">Ferien und zugehörige Ausflüge lassen sich hier entfernen.</div></div></div>'+(rows?'<div class="holiday-list">'+rows+'</div>':'<div class="muted">Noch keine Ferien eingetragen.</div>');
+    box.querySelectorAll("[data-delete-holiday]").forEach(button=>button.onclick=()=>deleteHoliday(button.dataset.deleteHoliday));
+  }
+  async function deleteHoliday(id){
+    const holiday=state.holidays?.[id];if(!holiday)return;
+    const attachedActivities=Object.entries(state.activities||{}).filter(([,activity])=>activity.holidayId===id);
+    const activityIds=new Set(attachedActivities.map(([activityId])=>activityId));
+    const attachedEvents=Object.entries(state.events||{}).filter(([,event])=>activityIds.has(event.activityId));
+    const dependentText=attachedActivities.length?" "+attachedActivities.length+" zugehörige Ausflüge"+(attachedEvents.length?" und "+attachedEvents.length+" Kalendereinträge":"")+" werden ebenfalls gelöscht.":"";
+    if(!confirm('Ferien "'+(holiday.name||"Ferien")+'" löschen?'+dependentText))return;
+    const changes={};changes["holidays/"+id]=null;
+    attachedActivities.forEach(([activityId])=>changes["activities/"+activityId]=null);
+    attachedEvents.forEach(([eventId])=>changes["events/"+eventId]=null);
+    await update(familyRef(),changes);
+  }
   function eventEndDate(e){
     if(!e?.date)return null;
     const time=(e.time&&/^\d{2}:\d{2}$/.test(e.time))?e.time:"23:59";
@@ -1534,7 +1568,7 @@
       const now=new Date(),day=(cursor.getDay()+6)%7,monday=new Date(cursor);monday.setHours(0,0,0,0);monday.setDate(cursor.getDate()-day);
       const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
-      $("calendarGrid").innerHTML=`<div class="mobile-calendar-list">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),label=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="mobile-cal-day ${today?'today':''}"><div class="mobile-cal-date">${label}</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-cal-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="border-left-color:${p.color||ALL_COLOR};background:${p.color||ALL_COLOR}18;color:${p.color||ALL_COLOR}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><div><b>${escapeHtml(e.name)}</b><div class="muted">${escapeHtml(p.name)} · ${escapeHtml(eventTimeLabel(e))}</div></div></div>`}).join(""):`<div class="mobile-cal-empty">Keine Termine</div>`}</div>`}).join("")}</div>`;
+      $("calendarGrid").innerHTML=`<div class="mobile-calendar-list">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(now),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso),label=new Intl.DateTimeFormat("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}).format(d);return `<div class="mobile-cal-day ${today?'today':''}"><div class="mobile-cal-date">${label}</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(holidayCalendarLabel(x))}</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-cal-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="border-left-color:${p.color||ALL_COLOR};background:${p.color||ALL_COLOR}18;color:${p.color||ALL_COLOR}"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><div><b>${escapeHtml(e.name)}</b><div class="muted">${escapeHtml(p.name)} · ${escapeHtml(eventTimeLabel(e))}</div></div></div>`}).join(""):`<div class="mobile-cal-empty">Keine Termine</div>`}</div>`}).join("")}</div>`;
       return;
     }
     if(calendarMode==="month"){
@@ -1543,12 +1577,12 @@
       $("calendarGrid").style.display="block";$("calendarGrid").style.minWidth="0";
       if(window.matchMedia("(max-width: 780px)").matches){
         const fmtDay=d=>new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(d).replace(".","").slice(0,2);
-        $("calendarGrid").innerHTML=`<div class="mobile-sixweeks"><section class="mobile-week-block">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(new Date()),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso);return `<div class="mobile-week-day ${today?'today':''}"><div class="mobile-week-date"><b>${fmtDay(d)}</b><span>${String(d.getDate()).padStart(2,"0")}.</span></div><div class="mobile-week-content">${hols.map(x=>`<div class="mobile-week-holiday">${escapeHtml(x.name)}</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-week-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="border-left:3px solid ${p.color||ALL_COLOR};background:${p.color||ALL_COLOR}14;border-radius:8px;padding:6px 7px"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><span>${escapeHtml(eventTimeLabel(e))} · <b>${escapeHtml(e.name)}</b>${p.name?` · ${escapeHtml(p.name)}`:""}</span></div>`}).join(""):(!hols.length?'<span class="mobile-week-empty">—</span>':"")}</div></div>`}).join("")}</section></div>`;
+        $("calendarGrid").innerHTML=`<div class="mobile-sixweeks"><section class="mobile-week-block">${dates.map(d=>{const iso=isoLocal(d),today=iso===isoLocal(new Date()),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),hols=holidaysForDate(iso);return `<div class="mobile-week-day ${today?'today':''}"><div class="mobile-week-date"><b>${fmtDay(d)}</b><span>${String(d.getDate()).padStart(2,"0")}.</span></div><div class="mobile-week-content">${hols.map(x=>`<div class="mobile-week-holiday">${escapeHtml(holidayCalendarLabel(x))}</div>`).join("")}${evs.length?evs.map(e=>{const p=person(e.person);return `<div class="mobile-week-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="border-left:3px solid ${p.color||ALL_COLOR};background:${p.color||ALL_COLOR}14;border-radius:8px;padding:6px 7px"><span class="member-color" style="background:${p.color||ALL_COLOR}"></span><span>${escapeHtml(eventTimeLabel(e))} · <b>${escapeHtml(e.name)}</b>${p.name?` · ${escapeHtml(p.name)}`:""}</span></div>`}).join(""):(!hols.length?'<span class="mobile-week-empty">—</span>':"")}</div></div>`}).join("")}</section></div>`;
         return;
       }
       const heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
       const blanks=Array.from({length:offset},()=>'<div class="sixweek-day" aria-hidden="true"></div>').join("");
-      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${blanks}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
+      $("calendarGrid").innerHTML=`<div class="sixweek-grid">${heads.map(h=>`<div class="sixweek-head">${h}</div>`).join("")}${blanks}${dates.map(d=>{const iso=isoLocal(d),evs=events.filter(e=>e.date===iso).sort((a,b)=>(a.time||"").localeCompare(b.time||"")).slice(0,3),hols=holidaysForDate(iso),today=iso===isoLocal(new Date());return `<div class="sixweek-day ${today?'today':''}"><div class="sixweek-date">${d.getDate()}.</div>${hols.map(x=>`<div class="holiday-band">${escapeHtml(holidayCalendarLabel(x))}</div>`).join("")}${evs.map(e=>`<div class="sixweek-event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(eventTimeLabel(e))} ${escapeHtml(e.name)}</div>`).join("")}</div>`}).join("")}</div>`;return;
     }
     if(calendarMode==="year"){
       const now=new Date(),monthCount=12,startMonth=0,startYear=cursor.getFullYear(),heads=["Mo","Di","Mi","Do","Fr","Sa","So"];
@@ -1558,7 +1592,7 @@
     $("calendarGrid").style.display="grid";$("calendarGrid").style.minWidth="730px";
     const days=["Mo","Di","Mi","Do","Fr","Sa","So"],now=new Date(),day=(cursor.getDay()+6)%7,monday=new Date(cursor);monday.setHours(0,0,0,0);monday.setDate(cursor.getDate()-day);
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d});let html=`<div></div>${dates.map((d,i)=>`<div class="head">${days[i]}<br>${d.getDate()}.</div>`).join("")}`,hours=[8,10,12,14,16,18,20];
-    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(x.name)} · alle</div>`).join(""):""}${evs.map(e=>`<div class="event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
+    hours.forEach(h=>{html+=`<div class="muted">${String(h).padStart(2,"0")}:00</div>`;dates.forEach(d=>{const iso=isoLocal(d),evs=events.filter(e=>{if(e.date!==iso)return false;if(!e.time||e.time==="00:00")return h===8;const eh=Number(e.time.slice(0,2));return eh>=h&&eh<h+2}),hols=holidaysForDate(iso);html+=`<div>${h===8?hols.map(x=>`<div class="holiday-band">${escapeHtml(holidayCalendarLabel(x))}</div>`).join(""):""}${evs.map(e=>`<div class="event" data-event-id="${e.id}" role="button" tabindex="0" title="Termin öffnen" style="background:${person(e.person).color||ALL_COLOR}18;color:${person(e.person).color||ALL_COLOR};border-left:3px solid ${person(e.person).color||ALL_COLOR}">${escapeHtml(e.name)}<br><small>${escapeHtml(person(e.person).name)} · ${escapeHtml(eventTimeLabel(e))}</small></div>`).join("")}</div>`})});$("calendarGrid").innerHTML=html
   }
   function openCalendarEvent(id){
     const e=state.events?.[id];if(!e)return;selectedEventId=id;const p=person(e.person),d=new Date(`${e.date}T12:00:00`),dateLabel=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}).format(d);
@@ -1738,11 +1772,11 @@
   $("saveMealWishBtn").onclick=async()=>{const name=$("mealWishName").value.trim(),personId=$("mealWishPerson").value;if(!name||!personId)return;const key=push(ref(db,`families/${familyId}/mealWishes`)).key;await set(ref(db,`families/${familyId}/mealWishes/${key}`),{name,person:personId,createdAt:Date.now()});await rememberMeal(name);$("mealWishName").value="";closeModal("mealWishModal")};
 
   $("saveHolidayBtn").onclick=async()=>{
-    const name=$("holidayName").value.trim(),start=$("holidayStart").value,end=$("holidayEnd").value;
+    const name=$("holidayName").value.trim(),start=$("holidayStart").value,end=$("holidayEnd").value,personId=$("holidayPerson").value||"all";
     if(!name||!start||!end)return;
     if(end<start){alert("Das Enddatum liegt vor dem Startdatum.");return}
     const key=push(ref(db,`families/${familyId}/holidays`)).key;
-    await set(ref(db,`families/${familyId}/holidays/${key}`),{name,start,end,forAll:true,createdAt:Date.now()});
+    await set(ref(db,`families/${familyId}/holidays/${key}`),{name,start,end,person:personId,forAll:personId==="all",createdAt:Date.now()});
     $("holidayName").value="";
     closeModal("holidayModal");
   };
