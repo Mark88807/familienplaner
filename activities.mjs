@@ -68,7 +68,7 @@ export function createActivities({getState, getFamilyId, write, newId, openModal
   function render() {
     const state = getState(), holidays = Object.entries(state.holidays || {}).sort((a,b) => a[1].start.localeCompare(b[1].start));
     if (!state.holidays?.[holidayId]) holidayId = holidays.find(([,h]) => h.end >= new Date().toLocaleDateString('sv-SE'))?.[0] || holidays.at(-1)?.[0] || '';
-    $('activityHoliday').innerHTML = holidays.map(([id,h]) => `<option value="${esc(id)}">${esc(h.name)}</option>`).join('') || '<option value="">Noch keine Ferien</option>';
+    $('activityHoliday').innerHTML = holidays.map(([id,h]) => `<option value="${esc(id)}">${esc(h.name)} · ${esc(h.person&&h.person!=="all"?(state.people?.[h.person]?.name||"Unbekannt"):"Alle")}</option>`).join('') || '<option value="">Noch keine Ferien</option>';
     $('activityHoliday').value = holidayId; $('activityAdd').disabled = !holidayId;
     $('activityHolidayLabel').hidden = holidays.length === 1;
     if (votingFamily !== getFamilyId()) {
@@ -83,7 +83,7 @@ export function createActivities({getState, getFamilyId, write, newId, openModal
     if (!voterId.startsWith('device_') && !state.people?.[voterId]) {voterId = `device_${crypto.randomUUID()}`; try {localStorage.removeItem(`familienplaner_activity_voter_${votingFamily}`);localStorage.setItem(`familienplaner_activity_device_${votingFamily}`,voterId);} catch {}}
     const h = state.holidays?.[holidayId];
     const activities = Object.entries(state.activities || {}).filter(([,a]) => a.holidayId === holidayId);
-    $('activityTripDates').textContent = h ? `${h.name} · ${dateLabel(h.start)} – ${dateLabel(h.end)}` : '';
+    $('activityTripDates').textContent = h ? `${h.name} · ${h.person&&h.person!=="all"?(state.people?.[h.person]?.name||"Unbekannt"):"Alle"} · ${dateLabel(h.start)} – ${dateLabel(h.end)}` : '';
     const visible = activities.sort((a,b) => (a[1].date || '9999-12-31').localeCompare(b[1].date || '9999-12-31') || (a[1].time || '99:99').localeCompare(b[1].time || '99:99') || (Number(a[1].createdAt)||0) - (Number(b[1].createdAt)||0) || a[0].localeCompare(b[0]));
     const dayLabel = date => new Intl.DateTimeFormat('de-CH', {weekday:'long', day:'2-digit', month:'long', year:'numeric'}).format(new Date(`${date}T12:00:00`));
     const row = ([id,a]) => {
